@@ -8,11 +8,19 @@ type RouteSummaryProps = {
 };
 
 export default function RouteSummary({ showDistance }: RouteSummaryProps) {
+<<<<<<< deepsource-autofix-de12d177
   const [summary, setSummary] = useState<{ total_jobs: number; total_distance: number; vehicles: number; } | null>(null);
 
   useEffect(() => {
     supabase
       .from<{ total_jobs: number; total_distance: number; vehicles: number; }>("route_summary")
+=======
+  const [summary, setSummary] = useState<{ total_jobs: number; total_distance: number; vehicles: number } | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from<{ total_jobs: number; total_distance: number; vehicles: number }>("route_summary")
+>>>>>>> main
       .select("*")
       .single()
       .then(({ data }) => {

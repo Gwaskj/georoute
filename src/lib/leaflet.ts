@@ -1,9 +1,7 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-interface IconDefaultPrototype {
-  _getIconUrl?: () => string;
-}
+type IconDefaultPrototype = { _getIconUrl?: unknown };
 
 delete (L.Icon.Default.prototype as IconDefaultPrototype)._getIconUrl;
 
