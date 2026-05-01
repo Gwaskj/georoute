@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "strict": true,
+    "jsx": "preserve",
+    "target": "ES2022",
+    "module": "ESNext",
+    "allowJs": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}
