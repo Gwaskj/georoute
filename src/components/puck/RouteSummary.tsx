@@ -8,11 +8,11 @@ type RouteSummaryProps = {
 };
 
 export default function RouteSummary({ showDistance }: RouteSummaryProps) {
-  const [summary, setSummary] = useState<any>(null);
+  const [summary, setSummary] = useState<{ total_jobs: number; total_distance: number; vehicles: number } | null>(null);
 
   useEffect(() => {
     supabase
-      .from("route_summary")
+      .from<{ total_jobs: number; total_distance: number; vehicles: number }>("route_summary")
       .select("*")
       .single()
       .then(({ data }) => {

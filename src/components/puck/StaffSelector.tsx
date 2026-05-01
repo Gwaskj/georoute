@@ -7,8 +7,14 @@ type StaffSelectorProps = {
   title: string;
 };
 
+interface Staff {
+  id: number;
+  name: string;
+  role: string;
+}
+
 export default function StaffSelector({ title }: StaffSelectorProps) {
-  const [staff, setStaff] = useState<any[]>([]);
+  const [staff, setStaff] = useState<Staff[]>([]);
 
   useEffect(() => {
     supabase.from("staff").select("*").then(({ data }) => {

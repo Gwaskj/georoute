@@ -10,7 +10,7 @@ type GenerateScheduleProps = {
 export default function GenerateSchedule({ algorithm }: GenerateScheduleProps) {
   const supabase = createClientComponentClient();
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<unknown | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleGenerate() {
