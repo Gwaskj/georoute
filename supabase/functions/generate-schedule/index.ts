@@ -247,7 +247,7 @@ serve(async (req) => {
 
 // Helpers
 
-function json(body: unknown, init: ResponseInit = {}) {
+export function json(body: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(body), {
     ...init,
     headers: {
@@ -257,9 +257,9 @@ function json(body: unknown, init: ResponseInit = {}) {
   });
 }
 
-async function sha1(input: string): Promise<string> {
+const sha1 = async (input: string): Promise<string> => {
   const data = new TextEncoder().encode(input);
   const hashBuffer = await crypto.subtle.digest("SHA-1", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+};
