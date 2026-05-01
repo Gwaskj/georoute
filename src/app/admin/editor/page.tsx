@@ -6,7 +6,7 @@ import { puckConfig } from "@/puck/puck.config";
 
 export default function PuckEditorPage() {
   // Puck v1 requires untyped data
-  const [data, setData] = useState<any>({ content: [] });
+  const [data, setData] = useState<{ content: unknown[] }>({ content: [] });
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
