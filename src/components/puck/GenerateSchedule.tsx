@@ -1,20 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@supabase/auth-helpers-nextjs";
 
 type GenerateScheduleProps = {
   algorithm: string; // from Puck (string)
 };
 
 export default function GenerateSchedule({ algorithm }: GenerateScheduleProps) {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   const [loading, setLoading] = useState(false);
-<<<<<<< deepsource-autofix-de12d177
-  const [result, setResult] = useState<unknown>(null);
-=======
   const [result, setResult] = useState<unknown | null>(null);
->>>>>>> main
   const [error, setError] = useState<string | null>(null);
 
   async function handleGenerate(): Promise<void> {
