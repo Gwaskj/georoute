@@ -10,10 +10,14 @@ type GenerateScheduleProps = {
 export default function GenerateSchedule({ algorithm }: GenerateScheduleProps) {
   const supabase = createClientComponentClient();
   const [loading, setLoading] = useState(false);
+<<<<<<< deepsource-autofix-de12d177
+  const [result, setResult] = useState<unknown>(null);
+=======
   const [result, setResult] = useState<unknown | null>(null);
+>>>>>>> main
   const [error, setError] = useState<string | null>(null);
 
-  async function handleGenerate() {
+  async function handleGenerate(): Promise<void> {
     setLoading(true);
     setError(null);
 
