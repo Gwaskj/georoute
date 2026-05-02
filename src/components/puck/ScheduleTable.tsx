@@ -61,6 +61,7 @@ export default function ScheduleTable({ showTimes }: ScheduleTableProps) {
           clients: Array.isArray(record.clients) ? record.clients : record.clients != null ? [record.clients] : [],
         };
       });
+      setRows(normalized);
       setLoading(false);
     }
 
