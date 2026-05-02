@@ -10,7 +10,7 @@ type GenerateScheduleProps = {
 // Shape returned by your Edge Function
 type ScheduleResult = {
   status: string;
-  [key: string]: any; // flexible for now
+  [key: string]: unknown; // flexible for now
 };
 
 export default function GenerateSchedule({ algorithm }: GenerateScheduleProps) {

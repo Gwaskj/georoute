@@ -7,7 +7,7 @@ import styles from "./PuckEditorPage.module.css";
 
 export default function PuckEditorPage() {
   // Puck v1 expects untyped JSON-like data
-  const [data, setData] = useState<any>({ content: [] });
+  const [data, setData] = useState<{ content: unknown[] }>({ content: [] });
 
   return (
     <div className={styles.page}>
