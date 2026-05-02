@@ -2,8 +2,10 @@
 
 import dynamic from "next/dynamic";
 
-const MapVisualizer = dynamic(() => import("./MapVisualizer"), {
+const Map = dynamic(() => import("./MapVisualizer"), {
   ssr: false,
 });
 
-export default MapVisualizer;
+export default function MapVisualizerClient(props: any) {
+  return <Map {...props} />;
+}

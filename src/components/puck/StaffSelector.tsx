@@ -17,9 +17,12 @@ export default function StaffSelector({ title }: StaffSelectorProps) {
   const [staff, setStaff] = useState<Staff[]>([]);
 
   useEffect(() => {
-    supabase.from<Staff>("staff").select("*").then(({ data }) => {
-      setStaff(data ?? []);
-    });
+    supabase
+      .from("staff") // ✅ FIXED: remove generics — your client is already typed
+      .select("*")
+      .then(({ data }) => {
+        setStaff((data as Staff[]) ?? []);
+      });
   }, []);
 
   return (

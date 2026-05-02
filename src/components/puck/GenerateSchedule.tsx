@@ -1,16 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@supabase/auth-helpers-nextjs";
+import { createBrowserClient } from "@supabase/auth-helpers-nextjs";
 
 type GenerateScheduleProps = {
   algorithm: string; // from Puck (string)
 };
 
+// Shape returned by your Edge Function
+type ScheduleResult = {
+  status: string;
+  [key: string]: any; // flexible for now
+};
+
 export default function GenerateSchedule({ algorithm }: GenerateScheduleProps) {
-  const supabase = createClient();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<unknown | null>(null);
+  const [result, setResult] = useState<ScheduleResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleGenerate(): Promise<void> {
@@ -56,7 +66,7 @@ export default function GenerateSchedule({ algorithm }: GenerateScheduleProps) {
       return;
     }
 
-    setResult(data);
+    setResult(data as ScheduleResult);
     setLoading(false);
   }
 

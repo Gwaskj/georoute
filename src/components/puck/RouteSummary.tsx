@@ -3,50 +3,40 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-type RouteSummaryProps = {
-  showDistance: boolean;
+type RouteSummary = {
+  total_jobs: number;
+  total_distance: number;
+  vehicles: number;
 };
 
-export default function RouteSummary({ showDistance }: RouteSummaryProps) {
-<<<<<<< deepsource-autofix-de12d177
-  const [summary, setSummary] = useState<{ total_jobs: number; total_distance: number; vehicles: number; } | null>(null);
+export default function RouteSummary() {
+  const [summary, setSummary] = useState<RouteSummary | null>(null);
 
   useEffect(() => {
     supabase
-      .from<{ total_jobs: number; total_distance: number; vehicles: number; }>("route_summary")
-=======
-  const [summary, setSummary] = useState<{ total_jobs: number; total_distance: number; vehicles: number } | null>(null);
-
-  useEffect(() => {
-    supabase
-      .from<{ total_jobs: number; total_distance: number; vehicles: number }>("route_summary")
->>>>>>> main
+      .from("route_summary") // ✅ FIXED: remove generics
       .select("*")
       .single()
       .then(({ data }) => {
-        setSummary(data ?? null);
+        setSummary(data as RouteSummary ?? null);
       });
   }, []);
 
-  if (!summary) {
-    return (
-      <div className="w-full rounded border bg-white p-4">
-        <p className="text-sm text-gray-500">No summary available.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full rounded border bg-white p-4">
-      <h2 className="text-lg font-semibold mb-2">Route Summary</h2>
+      <h2 className="text-lg font-semibold mb-3">Route Summary</h2>
 
-      <ul className="text-sm text-gray-600 space-y-1">
-        <li>Total jobs: {summary.total_jobs}</li>
-        {showDistance && (
-          <li>Total distance: {summary.total_distance} km</li>
-        )}
-        <li>Vehicles: {summary.vehicles}</li>
-      </ul>
+      {!summary && (
+        <p className="text-sm text-gray-500">No summary available.</p>
+      )}
+
+      {summary && (
+        <ul className="text-sm space-y-1">
+          <li>Total Jobs: {summary.total_jobs}</li>
+          <li>Total Distance: {summary.total_distance} km</li>
+          <li>Vehicles Used: {summary.vehicles}</li>
+        </ul>
+      )}
     </div>
   );
 }

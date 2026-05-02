@@ -7,18 +7,22 @@ type ScheduleTableProps = {
   showTimes: boolean;
 };
 
+type StaffMember = {
+  id: string;
+  name: string;
+};
+
+type Client = {
+  id: string;
+  name: string;
+};
+
 type AppointmentRow = {
   id: string;
   start_time: string | null;
   end_time: string | null;
-  staff: {
-    id: string;
-    name: string;
-  } | null;
-  clients: {
-    id: string;
-    name: string;
-  } | null;
+  staff: StaffMember[];   // ✅ FIXED: now supports multiple staff
+  clients: Client[];      // already correct for multi-client
 };
 
 export default function ScheduleTable({ showTimes }: ScheduleTableProps) {
@@ -46,7 +50,14 @@ export default function ScheduleTable({ showTimes }: ScheduleTableProps) {
         `)
         .order("start_time", { ascending: true });
 
-      setRows(data ?? []);
+      // Ensure arrays (Supabase returns null if no join rows)
+      const normalized = (data ?? []).map((row: any) => ({
+        ...row,
+        staff: Array.isArray(row.staff) ? row.staff : row.staff ? [row.staff] : [],
+        clients: Array.isArray(row.clients) ? row.clients : row.clients ? [row.clients] : [],
+      }));
+
+      setRows(normalized);
       setLoading(false);
     }
 
@@ -69,7 +80,7 @@ export default function ScheduleTable({ showTimes }: ScheduleTableProps) {
         <thead>
           <tr className="border-b">
             <th className="text-left py-2">Staff</th>
-            <th className="text-left py-2">Client</th>
+            <th className="text-left py-2">Clients</th>
             {showTimes && <th className="text-left py-2">Start</th>}
             {showTimes && <th className="text-left py-2">End</th>}
           </tr>
@@ -78,8 +89,17 @@ export default function ScheduleTable({ showTimes }: ScheduleTableProps) {
         <tbody>
           {rows.map((row) => (
             <tr key={row.id} className="border-b">
-              <td className="py-2">{row.staff?.name ?? "—"}</td>
-              <td className="py-2">{row.clients?.name ?? "—"}</td>
+              <td className="py-2">
+                {row.staff.length > 0
+                  ? row.staff.map((s) => s.name).join(", ")
+                  : "—"}
+              </td>
+
+              <td className="py-2">
+                {row.clients.length > 0
+                  ? row.clients.map((c) => c.name).join(", ")
+                  : "—"}
+              </td>
 
               {showTimes && (
                 <td className="py-2">
