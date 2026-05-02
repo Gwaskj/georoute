@@ -1,0 +1,12 @@
+version = 1
+
+[[analyzers]]
+name = "javascript"
+enabled = true
+
+  [analyzers.meta]
+  runtime = "node"
+  environment = ["browser", "node"]
+  dialect = "typescript"
+  module_system = "es"
+  max_line_length = 120
