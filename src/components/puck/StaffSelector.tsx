@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type StaffSelectorProps = {
-  title: string;
+  title?: string;
+  [key: string]: any;
 };
 
 type Staff = {
@@ -13,17 +14,18 @@ type Staff = {
   role: string;
 };
 
-export default function StaffSelector({ title }: StaffSelectorProps) {
+export default function StaffSelector({ title = "Staff" }: StaffSelectorProps) {
+  const supabase = createSupabaseBrowserClient();
   const [staff, setStaff] = useState<Staff[]>([]);
 
   useEffect(() => {
     supabase
-      .from("staff") // ✅ FIXED: remove generics — your client is already typed
+      .from("staff")
       .select("*")
       .then(({ data }) => {
-        setStaff((data as Staff[]) ?? []);
+        setStaff((data ?? []) as Staff[]);
       });
-  }, []);
+  }, [supabase]);
 
   return (
     <div className="w-full rounded border bg-white p-4">
