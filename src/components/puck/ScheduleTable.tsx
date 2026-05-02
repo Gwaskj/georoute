@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type ScheduleTableProps = {
-  showTimes: boolean;
+  showTimes?: boolean;
+  [key: string]: any; // allow Puck-injected props
 };
 
 type StaffMember = {
@@ -21,11 +22,12 @@ type AppointmentRow = {
   id: string;
   start_time: string | null;
   end_time: string | null;
-  staff: StaffMember[];   // ✅ FIXED: now supports multiple staff
-  clients: Client[];      // already correct for multi-client
+  staff: StaffMember[];
+  clients: Client[];
 };
 
-export default function ScheduleTable({ showTimes }: ScheduleTableProps) {
+export default function ScheduleTable({ showTimes = true }: ScheduleTableProps) {
+  const supabase = createSupabaseBrowserClient();
   const [rows, setRows] = useState<AppointmentRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,23 +52,26 @@ export default function ScheduleTable({ showTimes }: ScheduleTableProps) {
         `)
         .order("start_time", { ascending: true });
 
-      // Ensure arrays (Supabase returns null if no join rows)
-      const normalized = (data ?? []).map((row: unknown) => {
-        const record = typeof row === 'object' && row !== null
-          ? (row as { staff?: unknown; clients?: unknown; [key: string]: unknown })
-          : {};
-        return {
-          ...record,
-          staff: Array.isArray(record.staff) ? record.staff : record.staff != null ? [record.staff] : [],
-          clients: Array.isArray(record.clients) ? record.clients : record.clients != null ? [record.clients] : [],
-        };
-      });
+      const normalized = (data ?? []).map((row: any) => ({
+        ...row,
+        staff: Array.isArray(row.staff)
+          ? row.staff
+          : row.staff
+          ? [row.staff]
+          : [],
+        clients: Array.isArray(row.clients)
+          ? row.clients
+          : row.clients
+          ? [row.clients]
+          : [],
+      }));
+
       setRows(normalized);
       setLoading(false);
     }
 
     load();
-  }, []);
+  }, [supabase]);
 
   if (loading) {
     return (

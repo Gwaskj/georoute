@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type RouteSummary = {
   total_jobs: number;
@@ -10,17 +10,18 @@ type RouteSummary = {
 };
 
 export default function RouteSummary() {
+  const supabase = createSupabaseBrowserClient();
   const [summary, setSummary] = useState<RouteSummary | null>(null);
 
   useEffect(() => {
     supabase
-      .from("route_summary") // ✅ FIXED: remove generics
+      .from("route_summary")
       .select("*")
       .single()
       .then(({ data }) => {
-        setSummary(data as RouteSummary ?? null);
+        setSummary((data ?? null) as RouteSummary | null);
       });
-  }, []);
+  }, [supabase]);
 
   return (
     <div className="w-full rounded border bg-white p-4">
