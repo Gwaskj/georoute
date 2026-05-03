@@ -1,36 +1,43 @@
 "use client";
 
 import { useNode } from "@craftjs/core";
-import { ReactNode } from "react";
-import { TextBlockSettings } from "./TextBlockSettings";
 
-interface TextBlockProps {
+export type TextBlockProps = {
   text: string;
-}
+  fontSize: number;
+  color: string;
+  align: "left" | "center" | "right";
+};
 
-export function TextBlock({ text }: TextBlockProps) {
-  const { connectors } = useNode();
+export function TextBlock({ text, fontSize, color, align }: TextBlockProps) {
+  const {
+    connectors: { connect, drag },
+  } = useNode();
 
   return (
     <p
       ref={(ref) => {
-        if (ref) connectors.connect(ref);
+        if (ref) connect(drag(ref));
       }}
-      style={{ fontSize: "16px", margin: 0 }}
+      style={{
+        fontSize,
+        color,
+        textAlign: align,
+        margin: 0,
+        padding: 4,
+      }}
     >
       {text}
     </p>
   );
 }
 
-/* -----------------------------
-   Craft.js metadata
------------------------------- */
 TextBlock.craft = {
+  displayName: "TextBlock",
   props: {
-    text: "New text",
-  },
-  related: {
-    settings: TextBlockSettings,
+    text: "Text",
+    fontSize: 16,
+    color: "#000000",
+    align: "left",
   },
 };

@@ -1,27 +1,41 @@
 "use client";
 
-import { ReactNode } from "react";
-import { useNode } from "@craftjs/core";
+import { Element, useNode } from "@craftjs/core";
 
-interface ContainerProps {
-  children?: ReactNode;
-}
+export type ContainerProps = {
+  padding: number;
+  background: string;
+};
 
-export function Container({ children }: ContainerProps) {
-  const { connectors } = useNode();
+export function Container({ padding, background }: ContainerProps) {
+  const {
+    connectors: { connect, drag },
+  } = useNode();
 
   return (
     <div
       ref={(ref) => {
-        if (ref) connectors.connect(ref);
+        if (ref) connect(drag(ref));
       }}
       style={{
-        padding: "20px",
-        border: "1px dashed #ccc",
-        minHeight: "50px",
+        padding,
+        background,
+        borderRadius: 6,
+        minHeight: 50,
       }}
     >
-      {children}
+      <Element id="container-canvas" canvas />
     </div>
   );
 }
+
+Container.craft = {
+  displayName: "Container",
+  props: {
+    padding: 20,
+    background: "#f5f5f5",
+  },
+  rules: {
+    canMoveIn: () => true,
+  },
+};

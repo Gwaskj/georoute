@@ -2,7 +2,7 @@
 
 import { useNode } from "@craftjs/core";
 
-export function TextBlockSettings() {
+export function MapBlockSettings() {
   const {
     actions: { setProp },
     props,
@@ -12,67 +12,64 @@ export function TextBlockSettings() {
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
-      {/* Text */}
+      {/* Staff ID */}
       <label style={{ display: "grid", gap: 4 }}>
-        <span>Text</span>
+        <span>Staff ID</span>
         <input
           type="text"
-          value={props.text}
+          value={props.staffId ?? ""}
+          placeholder="optional"
           onChange={(e) =>
             setProp((p: any) => {
-              p.text = e.target.value;
+              p.staffId = e.target.value || null;
             })
           }
-          style={{ width: "100%" }}
         />
       </label>
 
-      {/* Font size */}
+      {/* Zoom */}
       <label style={{ display: "grid", gap: 4 }}>
-        <span>Font size</span>
+        <span>Zoom Level</span>
         <input
           type="number"
-          value={props.fontSize}
+          value={props.zoom}
+          min={1}
+          max={20}
           onChange={(e) =>
             setProp((p: any) => {
-              p.fontSize = Number(e.target.value);
+              p.zoom = Number(e.target.value);
             })
           }
-          style={{ width: "100%" }}
         />
       </label>
 
-      {/* Color */}
+      {/* Height */}
       <label style={{ display: "grid", gap: 4 }}>
-        <span>Color</span>
+        <span>Height (px)</span>
         <input
-          type="color"
-          value={props.color}
+          type="number"
+          value={props.height}
           onChange={(e) =>
             setProp((p: any) => {
-              p.color = e.target.value;
+              p.height = Number(e.target.value);
             })
           }
-          style={{ width: "100%" }}
         />
       </label>
 
-      {/* Alignment */}
+      {/* Width */}
       <label style={{ display: "grid", gap: 4 }}>
-        <span>Alignment</span>
-        <select
-          value={props.align}
+        <span>Width (CSS)</span>
+        <input
+          type="text"
+          value={props.width}
+          placeholder="e.g. 100%, 600px"
           onChange={(e) =>
             setProp((p: any) => {
-              p.align = e.target.value as "left" | "center" | "right";
+              p.width = e.target.value;
             })
           }
-          style={{ width: "100%" }}
-        >
-          <option value="left">Left</option>
-          <option value="center">Center</option>
-          <option value="right">Right</option>
-        </select>
+        />
       </label>
     </div>
   );
