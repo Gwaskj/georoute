@@ -1,7 +1,7 @@
 "use client";
 
 import { Element, useNode } from "@craftjs/core";
-import { Column } from "./Column";
+import { Column, ColumnCanvas } from "./Column";
 
 export type ColumnsProps = {
   gap: number;
@@ -24,19 +24,24 @@ export function Columns({ gap }: ColumnsProps) {
       }}
     >
       <Element
+        is={Column}
         id="column-1"
-        is={Column}
         canvas
         padding={16}
         background="#ffffff"
-      />
+      >
+        <Element is={ColumnCanvas} id="column-1-inner" canvas />
+      </Element>
+
       <Element
-        id="column-2"
         is={Column}
+        id="column-2"
         canvas
         padding={16}
         background="#ffffff"
-      />
+      >
+        <Element is={ColumnCanvas} id="column-2-inner" canvas />
+      </Element>
     </div>
   );
 }

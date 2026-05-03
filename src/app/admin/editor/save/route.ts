@@ -3,9 +3,8 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  const { data, is_global } = await req.json();
 
-  // In your environment, cookies() returns a Promise
   const cookieStore = await cookies();
 
   const supabase = createServerClient(
@@ -16,17 +15,18 @@ export async function POST(req: Request) {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set() {
-          // Route Handlers cannot modify cookies
-        },
-        remove() {
-          // Route Handlers cannot modify cookies
-        },
+        set() {},
+        remove() {},
       },
     }
   );
 
-  await supabase.from("layouts").upsert(body);
+  await supabase.from("layouts").upsert({
+    id: "admin-layout",
+    data,
+    is_global,
+    updated_at: new Date().toISOString(),
+  });
 
   return NextResponse.json({ ok: true });
 }

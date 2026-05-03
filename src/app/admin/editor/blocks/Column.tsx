@@ -24,10 +24,22 @@ export function Column({ padding, background }: ColumnProps) {
         minHeight: 50,
       }}
     >
-      <Element id="column-inner" canvas />
+      <Element
+        is={ColumnCanvas}
+        id="column-inner"
+        canvas
+      />
     </div>
   );
 }
+
+export function ColumnCanvas({ children }: any) {
+  return <div>{children}</div>;
+}
+
+ColumnCanvas.craft = {
+  displayName: "ColumnCanvas",
+};
 
 Column.craft = {
   displayName: "Column",

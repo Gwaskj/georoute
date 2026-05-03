@@ -24,10 +24,22 @@ export function Container({ padding, background }: ContainerProps) {
         minHeight: 50,
       }}
     >
-      <Element id="container-canvas" canvas />
+      <Element
+        is={ContainerCanvas}
+        id="container-canvas"
+        canvas
+      />
     </div>
   );
 }
+
+export function ContainerCanvas({ children }: any) {
+  return <div>{children}</div>;
+}
+
+ContainerCanvas.craft = {
+  displayName: "ContainerCanvas",
+};
 
 Container.craft = {
   displayName: "Container",

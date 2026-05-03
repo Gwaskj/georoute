@@ -22,7 +22,9 @@ export function Page({
   return (
     <div
       ref={(ref) => {
-        if (ref) connect(drag(ref));
+        if (ref) {
+          connect(drag(ref));
+        }
       }}
       style={{
         minHeight: "100vh",
@@ -34,10 +36,18 @@ export function Page({
         boxSizing: "border-box",
       }}
     >
-      <Element id="page-canvas" canvas />
+      <Element is={PageCanvas} id="page-canvas" canvas />
     </div>
   );
 }
+
+export function PageCanvas({ children }: any) {
+  return <div>{children}</div>;
+}
+
+PageCanvas.craft = {
+  displayName: "PageCanvas",
+};
 
 Page.craft = {
   displayName: "Page",

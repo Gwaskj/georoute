@@ -3,13 +3,30 @@
 import { useEditor } from "@craftjs/core";
 
 import { Page } from "./Page";
+import type { PageProps } from "./Page";
+
 import { Section } from "./Section";
-import { Container } from "./Container";
+import type { SectionProps } from "./Section";
+
+import { Container, ContainerCanvas } from "./Container";
+import type { ContainerProps } from "./Container";
+
 import { Columns } from "./Columns";
-import { Column } from "./Column";
+import type { ColumnsProps } from "./Columns";
+
+import { Column, ColumnCanvas } from "./Column";
+import type { ColumnProps } from "./Column";
+
 import { TextBlock } from "./TextBlock";
+import type { TextBlockProps } from "./TextBlock";
+
 import { Hero } from "./Hero";
+import type { HeroProps } from "./Hero";
+
 import { MapBlock } from "./MapBlock";
+import type { MapBlockProps } from "./MapBlock";
+
+import { SectionCanvas } from "./Section";
 
 export function Toolbox() {
   const { connectors } = useEditor();
@@ -27,7 +44,7 @@ export function Toolbox() {
     >
       <h3>Blocks</h3>
 
-      <ToolItem
+      <ToolItem<PageProps>
         label="Page"
         create={(ref) =>
           connectors.create(
@@ -42,7 +59,7 @@ export function Toolbox() {
         }
       />
 
-      <ToolItem
+      <ToolItem<SectionProps>
         label="Section"
         create={(ref) =>
           connectors.create(
@@ -52,7 +69,7 @@ export function Toolbox() {
         }
       />
 
-      <ToolItem
+      <ToolItem<ContainerProps>
         label="Container"
         create={(ref) =>
           connectors.create(
@@ -62,12 +79,12 @@ export function Toolbox() {
         }
       />
 
-      <ToolItem
+      <ToolItem<ColumnsProps>
         label="Columns"
         create={(ref) => connectors.create(ref, <Columns gap={16} />)}
       />
 
-      <ToolItem
+      <ToolItem<ColumnProps>
         label="Column"
         create={(ref) =>
           connectors.create(
@@ -77,7 +94,7 @@ export function Toolbox() {
         }
       />
 
-      <ToolItem
+      <ToolItem<TextBlockProps>
         label="Text"
         create={(ref) =>
           connectors.create(
@@ -92,7 +109,7 @@ export function Toolbox() {
         }
       />
 
-      <ToolItem
+      <ToolItem<HeroProps>
         label="Hero"
         create={(ref) =>
           connectors.create(
@@ -109,18 +126,21 @@ export function Toolbox() {
         }
       />
 
-      <ToolItem
+      <ToolItem<MapBlockProps>
         label="Map"
         create={(ref) =>
           connectors.create(
             ref,
             <MapBlock
-              staffId={null}
+              lat={53.0027}
+              lng={-2.1794}
               zoom={12}
               height={300}
               width="100%"
-              lat={53.0027}
-              lng={-2.1794}
+              staffId={null}
+              markers={[]}
+              routes={[]}
+              useGeolocation={false}
             />
           )
         }
@@ -129,12 +149,12 @@ export function Toolbox() {
   );
 }
 
-type ToolItemProps = {
+type ToolItemProps<T> = {
   label: string;
   create: (ref: HTMLDivElement) => void;
 };
 
-function ToolItem({ label, create }: ToolItemProps) {
+function ToolItem<T>({ label, create }: ToolItemProps<T>) {
   return (
     <div
       ref={(ref) => {

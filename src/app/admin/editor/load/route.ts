@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 export async function GET() {
-  // In your environment, cookies() returns a Promise
   const cookieStore = await cookies();
 
   const supabase = createServerClient(
@@ -14,20 +13,19 @@ export async function GET() {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set() {
-          // Route Handlers cannot modify cookies
-        },
-        remove() {
-          // Route Handlers cannot modify cookies
-        },
+        set() {},
+        remove() {},
       },
     }
   );
 
   const { data } = await supabase
     .from("layouts")
-    .select("*")
+    .select("data, is_global")
     .maybeSingle();
 
-  return NextResponse.json(data ?? {});
+  return NextResponse.json({
+    data: data?.data ?? {},
+    is_global: data?.is_global ?? false,
+  });
 }

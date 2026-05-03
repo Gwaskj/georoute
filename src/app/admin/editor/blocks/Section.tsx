@@ -24,10 +24,22 @@ export function Section({ padding, backgroundColor }: SectionProps) {
         borderRadius: 8,
       }}
     >
-      <Element id="section-canvas" canvas />
+      <Element
+        is={SectionCanvas}
+        id="section-canvas"
+        canvas
+      />
     </section>
   );
 }
+
+export function SectionCanvas({ children }: any) {
+  return <div>{children}</div>;
+}
+
+SectionCanvas.craft = {
+  displayName: "SectionCanvas",
+};
 
 Section.craft = {
   displayName: "Section",
