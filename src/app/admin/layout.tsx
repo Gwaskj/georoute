@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
@@ -6,7 +8,12 @@ import "../globals.css";
 import "leaflet/dist/leaflet.css";
 import ClientBoundary from "./ClientBoundary";
 
-export default async function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  // Allow everything in dev so you never get locked out
   if (process.env.NODE_ENV === "development") {
     return <ClientBoundary>{children}</ClientBoundary>;
   }
