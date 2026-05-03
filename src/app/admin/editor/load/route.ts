@@ -1,3 +1,6 @@
+export const dynamic = "force-static";
+export const fetchCache = "force-no-store";
+
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
