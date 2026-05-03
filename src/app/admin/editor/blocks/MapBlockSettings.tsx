@@ -1,13 +1,14 @@
 "use client";
 
 import { useNode } from "@craftjs/core";
+import type { MapBlockProps } from "./MapBlock.client";
 
 export function MapBlockSettings() {
   const {
     actions: { setProp },
     props,
   } = useNode((node) => ({
-    props: node.data.props,
+    props: node.data.props as MapBlockProps,
   }));
 
   return (
@@ -20,7 +21,7 @@ export function MapBlockSettings() {
           value={props.staffId ?? ""}
           placeholder="optional"
           onChange={(e) =>
-            setProp((p: any) => {
+            setProp((p: MapBlockProps) => {
               p.staffId = e.target.value || null;
             })
           }
@@ -36,7 +37,7 @@ export function MapBlockSettings() {
           min={1}
           max={20}
           onChange={(e) =>
-            setProp((p: any) => {
+            setProp((p: MapBlockProps) => {
               p.zoom = Number(e.target.value);
             })
           }
@@ -48,9 +49,9 @@ export function MapBlockSettings() {
         <span>Height (px)</span>
         <input
           type="number"
-          value={props.height}
+          value={typeof props.height === "number" ? props.height : parseInt(props.height)}
           onChange={(e) =>
-            setProp((p: any) => {
+            setProp((p: MapBlockProps) => {
               p.height = Number(e.target.value);
             })
           }
@@ -65,7 +66,7 @@ export function MapBlockSettings() {
           value={props.width}
           placeholder="e.g. 100%, 600px"
           onChange={(e) =>
-            setProp((p: any) => {
+            setProp((p: MapBlockProps) => {
               p.width = e.target.value;
             })
           }

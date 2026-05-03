@@ -1,14 +1,14 @@
 "use client";
 
 import { useNode } from "@craftjs/core";
-import type { ContainerProps } from "./Container";
+import type { ColumnProps } from "./Column";
 
-export function ContainerSettings() {
+export function ColumnSettings() {
   const {
     actions: { setProp },
     props,
   } = useNode((node) => ({
-    props: node.data.props as ContainerProps,
+    props: node.data.props as ColumnProps,
   }));
 
   return (
@@ -20,11 +20,10 @@ export function ContainerSettings() {
           type="number"
           value={props.padding}
           onChange={(e) =>
-            setProp((p: ContainerProps) => {
+            setProp((p: ColumnProps) => {
               p.padding = Number(e.target.value);
             })
           }
-          style={{ width: "100%" }}
         />
       </label>
 
@@ -35,11 +34,10 @@ export function ContainerSettings() {
           type="color"
           value={props.background}
           onChange={(e) =>
-            setProp((p: ContainerProps) => {
+            setProp((p: ColumnProps) => {
               p.background = e.target.value;
             })
           }
-          style={{ width: "100%" }}
         />
       </label>
     </div>

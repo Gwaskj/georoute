@@ -1,13 +1,14 @@
 "use client";
 
 import { useNode } from "@craftjs/core";
+import type { PageProps } from "./Page";
 
 export function PageSettings() {
   const {
     actions: { setProp },
     props,
   } = useNode((node) => ({
-    props: node.data.props,
+    props: node.data.props as PageProps,
   }));
 
   return (
@@ -17,9 +18,9 @@ export function PageSettings() {
         <span>Background Color</span>
         <input
           type="color"
-          value={props.backgroundColor}
+          value={props.backgroundColor ?? "#ffffff"}
           onChange={(e) =>
-            setProp((p: any) => {
+            setProp((p: PageProps) => {
               p.backgroundColor = e.target.value;
             })
           }
@@ -31,10 +32,10 @@ export function PageSettings() {
         <span>Background Image URL</span>
         <input
           type="text"
-          value={props.backgroundImage}
+          value={props.backgroundImage ?? ""}
           placeholder="https://example.com/image.jpg"
           onChange={(e) =>
-            setProp((p: any) => {
+            setProp((p: PageProps) => {
               p.backgroundImage = e.target.value;
             })
           }
@@ -45,13 +46,10 @@ export function PageSettings() {
       <label style={{ display: "grid", gap: 4 }}>
         <span>Background Size</span>
         <select
-          value={props.backgroundSize}
+          value={props.backgroundSize ?? "cover"}
           onChange={(e) =>
-            setProp((p: any) => {
-              p.backgroundSize = e.target.value as
-                | "cover"
-                | "contain"
-                | "auto";
+            setProp((p: PageProps) => {
+              p.backgroundSize = e.target.value;
             })
           }
         >
@@ -65,15 +63,10 @@ export function PageSettings() {
       <label style={{ display: "grid", gap: 4 }}>
         <span>Background Position</span>
         <select
-          value={props.backgroundPosition}
+          value={props.backgroundPosition ?? "center"}
           onChange={(e) =>
-            setProp((p: any) => {
-              p.backgroundPosition = e.target.value as
-                | "center"
-                | "top"
-                | "bottom"
-                | "left"
-                | "right";
+            setProp((p: PageProps) => {
+              p.backgroundPosition = e.target.value;
             })
           }
         >

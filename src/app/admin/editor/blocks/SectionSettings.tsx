@@ -1,14 +1,14 @@
 "use client";
 
 import { useNode } from "@craftjs/core";
-import type { ContainerProps } from "./Container";
+import type { SectionProps } from "./Section";
 
-export function ContainerSettings() {
+export function SectionSettings() {
   const {
     actions: { setProp },
     props,
   } = useNode((node) => ({
-    props: node.data.props as ContainerProps,
+    props: node.data.props as SectionProps,
   }));
 
   return (
@@ -20,26 +20,24 @@ export function ContainerSettings() {
           type="number"
           value={props.padding}
           onChange={(e) =>
-            setProp((p: ContainerProps) => {
+            setProp((p: SectionProps) => {
               p.padding = Number(e.target.value);
             })
           }
-          style={{ width: "100%" }}
         />
       </label>
 
-      {/* Background */}
+      {/* Background Color */}
       <label style={{ display: "grid", gap: 4 }}>
-        <span>Background</span>
+        <span>Background Color</span>
         <input
           type="color"
-          value={props.background}
+          value={props.backgroundColor}
           onChange={(e) =>
-            setProp((p: ContainerProps) => {
-              p.background = e.target.value;
+            setProp((p: SectionProps) => {
+              p.backgroundColor = e.target.value;
             })
           }
-          style={{ width: "100%" }}
         />
       </label>
     </div>

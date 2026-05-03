@@ -1,73 +1,66 @@
 "use client";
 
 import { useNode } from "@craftjs/core";
+import type { TextBlockProps } from "./TextBlock";
 
 export function TextBlockSettings() {
   const {
     actions: { setProp },
     props,
   } = useNode((node) => ({
-    props: node.data.props,
+    props: node.data.props as TextBlockProps,
   }));
 
   return (
-    <div style={{ display: "grid", gap: 16 }}>
-      {/* Text */}
-      <label style={{ display: "grid", gap: 4 }}>
+    <div className="space-y-3">
+      <label className="block">
         <span>Text</span>
         <input
           type="text"
           value={props.text}
           onChange={(e) =>
-            setProp((p: any) => {
+            setProp((p: TextBlockProps) => {
               p.text = e.target.value;
             })
           }
-          style={{ width: "100%" }}
         />
       </label>
 
-      {/* Font size */}
-      <label style={{ display: "grid", gap: 4 }}>
-        <span>Font size</span>
+      <label className="block">
+        <span>Font Size</span>
         <input
           type="number"
           value={props.fontSize}
           onChange={(e) =>
-            setProp((p: any) => {
+            setProp((p: TextBlockProps) => {
               p.fontSize = Number(e.target.value);
             })
           }
-          style={{ width: "100%" }}
         />
       </label>
 
-      {/* Color */}
-      <label style={{ display: "grid", gap: 4 }}>
+      <label className="block">
         <span>Color</span>
         <input
           type="color"
           value={props.color}
           onChange={(e) =>
-            setProp((p: any) => {
+            setProp((p: TextBlockProps) => {
               p.color = e.target.value;
             })
           }
-          style={{ width: "100%" }}
         />
       </label>
 
-      {/* Alignment */}
-      <label style={{ display: "grid", gap: 4 }}>
+      <label className="block">
         <span>Alignment</span>
         <select
           value={props.align}
           onChange={(e) =>
-            setProp((p: any) => {
-              p.align = e.target.value as "left" | "center" | "right";
+            setProp((p: TextBlockProps) => {
+              p.align = e.target.value as TextBlockProps["align"];
             })
           }
-          style={{ width: "100%" }}
         >
           <option value="left">Left</option>
           <option value="center">Center</option>
