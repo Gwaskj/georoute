@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 
 export async function createSupabaseServerClient() {
+  // In your environment, cookies() returns a Promise
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -12,11 +13,11 @@ export async function createSupabaseServerClient() {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: any) {
-          cookieStore.set(name, value, options);
+        set() {
+          // Route Handlers / Server Components cannot modify cookies
         },
-        remove(name: string, options: any) {
-          cookieStore.set(name, "", { ...options, maxAge: 0 });
+        remove() {
+          // Same restriction
         },
       },
     }

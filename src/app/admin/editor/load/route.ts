@@ -3,9 +3,10 @@ export const fetchCache = "force-no-store";
 
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 
 export async function GET() {
+  // In your environment, cookies() returns a Promise
   const cookieStore = await cookies();
 
   const supabase = createServerClient(
@@ -13,8 +14,14 @@ export async function GET() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name) {
+        get(name: string) {
           return cookieStore.get(name)?.value;
+        },
+        set() {
+          // Route Handlers cannot modify cookies
+        },
+        remove() {
+          // Route Handlers cannot modify cookies
         },
       },
     }

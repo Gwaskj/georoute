@@ -1,22 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { createBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { createBrowserClient } from "@supabase/ssr";
 
 type GenerateScheduleProps = {
-  algorithm: string; // from Puck (string)
+  algorithm: string;
 };
 
-// Shape returned by your Edge Function
 type ScheduleResult = {
   status: string;
-  [key: string]: unknown; // flexible for now
+  [key: string]: unknown;
 };
 
 export default function GenerateSchedule({ algorithm }: GenerateScheduleProps) {
   const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
   const [loading, setLoading] = useState(false);
@@ -27,7 +26,6 @@ export default function GenerateSchedule({ algorithm }: GenerateScheduleProps) {
     setLoading(true);
     setError(null);
 
-    // 1. Get current user
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -38,7 +36,6 @@ export default function GenerateSchedule({ algorithm }: GenerateScheduleProps) {
       return;
     }
 
-    // 2. Determine if user is paid
     const { data: profile } = await supabase
       .from("profiles")
       .select("is_paid_user")
@@ -47,7 +44,6 @@ export default function GenerateSchedule({ algorithm }: GenerateScheduleProps) {
 
     const isPaidUser = profile?.is_paid_user === true;
 
-    // 3. Call Edge Function
     const { data, error: fnError } = await supabase.functions.invoke(
       "generate-schedule",
       {
@@ -83,9 +79,7 @@ export default function GenerateSchedule({ algorithm }: GenerateScheduleProps) {
       </button>
 
       {error && (
-        <p className="text-red-600 text-sm mt-3">
-          {error}
-        </p>
+        <p className="text-red-600 text-sm mt-3">{error}</p>
       )}
 
       {result && (

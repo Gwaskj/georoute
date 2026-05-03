@@ -1,36 +1,30 @@
 import { NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 
 export async function GET() {
-  const supabase = createRouteHandlerClient({ cookies });
+  // IMPORTANT: cookies() returns a Promise in your environment
+  const cookieStore = await cookies();
 
-  // Fetch staff
-  const { data, error } = await supabase
-    .from("staff")
-    .select(`
-      id,
-      name,
-      home_lat,
-      home_lng
-    `)
-    .order("created_at", { ascending: true });
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set() {
+          // Route Handlers cannot modify cookies
+        },
+        remove() {
+          // Route Handlers cannot modify cookies
+        },
+      },
+    }
+  );
 
-  if (error) {
-    console.error("Staff API error:", error);
-    return NextResponse.json(
-      { error: "Failed to load staff" },
-      { status: 500 }
-    );
-  }
+  const { data, error } = await supabase.from("staff").select("*");
 
-  // Clean + normalize shape
-  const cleaned = (data ?? []).map((s) => ({
-    id: s.id,
-    name: s.name,
-    home_lat: s.home_lat,
-    home_lng: s.home_lng,
-  }));
-
-  return NextResponse.json(cleaned);
+  return NextResponse.json({ data, error });
 }

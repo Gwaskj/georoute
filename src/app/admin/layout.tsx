@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import type { ReactNode } from "react";
 import "../globals.css";
 import "leaflet/dist/leaflet.css";
@@ -11,6 +11,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     return <ClientBoundary>{children}</ClientBoundary>;
   }
 
+  // In your environment, cookies() returns a Promise
   const cookieStore = await cookies();
 
   const supabase = createServerClient(
@@ -21,15 +22,11 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: any) {
-          try {
-            cookieStore.set({ name, value, ...options });
-          } catch {}
+        set() {
+          // Layouts cannot modify cookies during SSR
         },
-        remove(name: string, options: any) {
-          try {
-            cookieStore.set({ name, value: "", ...options });
-          } catch {}
+        remove() {
+          // Same restriction
         },
       },
     }
