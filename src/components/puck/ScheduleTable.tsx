@@ -5,7 +5,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type ScheduleTableProps = {
   showTimes?: boolean;
-  [key: string]: any; // allow Puck-injected props
+  [key: string]: unknown; // allow Puck-injected props
 };
 
 type StaffMember = {
@@ -52,19 +52,26 @@ export default function ScheduleTable({ showTimes = true }: ScheduleTableProps) 
         `)
         .order("start_time", { ascending: true });
 
-      const normalized = (data ?? []).map((row: any) => ({
-        ...row,
-        staff: Array.isArray(row.staff)
-          ? row.staff
-          : row.staff
-          ? [row.staff]
-          : [],
-        clients: Array.isArray(row.clients)
-          ? row.clients
-          : row.clients
-          ? [row.clients]
-          : [],
-      }));
+      const normalized: AppointmentRow[] = (data ?? []).map((row: Record<string, unknown>) => {
+        const staff = row.staff;
+        const clients = row.clients;
+
+        return {
+          id: row.id as string,
+          start_time: row.start_time as string | null,
+          end_time: row.end_time as string | null,
+          staff: Array.isArray(staff)
+            ? (staff as StaffMember[])
+            : staff
+            ? [staff as StaffMember]
+            : [],
+          clients: Array.isArray(clients)
+            ? (clients as Client[])
+            : clients
+            ? [clients as Client]
+            : [],
+        };
+      });
 
       setRows(normalized);
       setLoading(false);

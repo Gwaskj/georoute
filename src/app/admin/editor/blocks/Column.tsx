@@ -1,6 +1,7 @@
 "use client";
 
 import { Element, useNode } from "@craftjs/core";
+import type { ReactNode } from "react";
 
 export type ColumnProps = {
   padding: number;
@@ -24,16 +25,12 @@ export function Column({ padding, background }: ColumnProps) {
         minHeight: 50,
       }}
     >
-      <Element
-        is={ColumnCanvas}
-        id="column-inner"
-        canvas
-      />
+      <Element is={ColumnCanvas} id="column-inner" canvas />
     </div>
   );
 }
 
-export function ColumnCanvas({ children }: any) {
+export function ColumnCanvas({ children }: { children?: ReactNode }) {
   return <div>{children}</div>;
 }
 

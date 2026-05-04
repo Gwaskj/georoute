@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Editor, Frame, Element, useEditor } from "@craftjs/core";
+
 import { Section, SectionCanvas } from "./blocks/Section";
 import { Container, ContainerCanvas } from "./blocks/Container";
 import { Columns } from "./blocks/Columns";
@@ -10,6 +11,7 @@ import { TextBlock } from "./blocks/TextBlock";
 import { Hero } from "./blocks/Hero";
 import { MapBlock } from "./blocks/MapBlock";
 import { Page, PageCanvas } from "./blocks/Page";
+
 import { Toolbox } from "./blocks/Toolbox";
 import { SettingsPanel } from "./SettingsPanel";
 
@@ -18,15 +20,23 @@ async function loadLayout() {
   return res.json();
 }
 
-async function saveLayout(payload: any) {
+async function saveLayout(payload: { data: unknown; is_global: boolean }) {
   await fetch("/admin/editor/save", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
+type EditorShellProps = {
+  initialData: unknown;
+  applyToAll: boolean;
+  setApplyToAll: (v: boolean) => void;
+  saving: boolean;
+  setSaving: (v: boolean) => void;
+};
+
 export function EditorClient() {
-  const [initialData, setInitialData] = useState<any>(null);
+  const [initialData, setInitialData] = useState<unknown>(null);
   const [applyToAll, setApplyToAll] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -87,7 +97,7 @@ function EditorShell({
   setApplyToAll,
   saving,
   setSaving,
-}: any) {
+}: EditorShellProps) {
   const { query } = useEditor();
 
   const handleSave = async () => {
@@ -102,7 +112,8 @@ function EditorShell({
     setSaving(false);
   };
 
-  const isEmpty = !initialData || Object.keys(initialData).length === 0;
+  const isEmpty =
+    !initialData || (typeof initialData === "object" && Object.keys(initialData as object).length === 0);
 
   return (
     <>
@@ -153,12 +164,8 @@ function EditorShell({
           />
         </Frame>
       ) : (
-        <Frame data={initialData}>
-          <Element
-            is={Page}
-            id="root"
-            canvas
-          />
+        <Frame data={initialData as any}>
+          <Element is={Page} id="root" canvas />
         </Frame>
       )}
     </>

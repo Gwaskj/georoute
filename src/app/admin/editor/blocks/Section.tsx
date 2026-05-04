@@ -1,6 +1,7 @@
 "use client";
 
 import { Element, useNode } from "@craftjs/core";
+import { ReactNode } from "react";
 
 export type SectionProps = {
   padding: number;
@@ -33,7 +34,7 @@ export function Section({ padding, backgroundColor }: SectionProps) {
   );
 }
 
-export function SectionCanvas({ children }: any) {
+export function SectionCanvas({ children }: { children?: ReactNode }) {
   return <div>{children}</div>;
 }
 

@@ -1,13 +1,22 @@
 "use client";
 
 import { useEditor } from "@craftjs/core";
+import type { ReactNode } from "react";
+
+type SelectedNode = {
+  id: string;
+  name: string;
+  props: Record<string, unknown>;
+} | null;
 
 export function SettingsPanel() {
   const { selected, actions } = useEditor((state) => {
     const selectedIds = Array.from(state.events.selected);
     const selectedId = selectedIds[0] ?? null;
 
-    if (!selectedId) return { selected: null };
+    if (!selectedId) {
+      return { selected: null as SelectedNode };
+    }
 
     const node = state.nodes[selectedId];
 
@@ -16,7 +25,7 @@ export function SettingsPanel() {
         id: selectedId,
         name: node.data.displayName,
         props: node.data.props,
-      },
+      } as SelectedNode,
     };
   });
 
@@ -35,8 +44,8 @@ export function SettingsPanel() {
     );
   }
 
-  const updateProp = (key: string, value: any) => {
-    actions.setProp(selected.id, (props: any) => {
+  const updateProp = (key: string, value: unknown) => {
+    actions.setProp(selected.id, (props: Record<string, unknown>) => {
       props[key] = value;
     });
   };
@@ -57,7 +66,6 @@ export function SettingsPanel() {
       <h4 style={{ marginTop: 0 }}>{selected.name} settings</h4>
 
       {Object.entries(props).map(([key, value]) => {
-        // alignment
         if (
           typeof value === "string" &&
           ["left", "center", "right"].includes(value)
@@ -77,7 +85,6 @@ export function SettingsPanel() {
           );
         }
 
-        // color
         if (typeof value === "string" && key.toLowerCase().includes("color")) {
           return (
             <label key={key} style={{ display: "grid", gap: 4 }}>
@@ -91,21 +98,19 @@ export function SettingsPanel() {
           );
         }
 
-        // background image
         if (key === "backgroundImage") {
           return (
             <label key={key} style={{ display: "grid", gap: 4 }}>
               <span>Background Image URL</span>
               <input
                 type="text"
-                value={value}
+                value={value as string}
                 onChange={(e) => updateProp(key, e.target.value)}
               />
             </label>
           );
         }
 
-        // text-like
         if (typeof value === "string") {
           return (
             <label key={key} style={{ display: "grid", gap: 4 }}>
@@ -119,7 +124,6 @@ export function SettingsPanel() {
           );
         }
 
-        // numeric
         if (typeof value === "number") {
           return (
             <label key={key} style={{ display: "grid", gap: 4 }}>

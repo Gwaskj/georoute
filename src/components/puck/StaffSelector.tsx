@@ -5,7 +5,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type StaffSelectorProps = {
   title?: string;
-  [key: string]: any;
+  [key: string]: unknown; // allow Puck-injected props
 };
 
 type Staff = {

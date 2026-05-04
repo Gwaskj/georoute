@@ -3,6 +3,13 @@
 import { useEffect } from "react";
 import L from "leaflet";
 
+export type MapMarker = {
+  lat: number;
+  lng: number;
+};
+
+export type MapRoute = [number, number][];
+
 export type MapBlockProps = {
   lat: number;
   lng: number;
@@ -10,8 +17,8 @@ export type MapBlockProps = {
   height: number;
   width: string | number;
   staffId: string | null;
-  markers: any[];
-  routes: any[];
+  markers: MapMarker[];
+  routes: MapRoute[];
   useGeolocation: boolean;
 };
 

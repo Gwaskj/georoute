@@ -1,6 +1,7 @@
 "use client";
 
 import { Element, useNode } from "@craftjs/core";
+import type { ReactNode } from "react";
 
 export type ContainerProps = {
   padding: number;
@@ -24,16 +25,12 @@ export function Container({ padding, background }: ContainerProps) {
         minHeight: 50,
       }}
     >
-      <Element
-        is={ContainerCanvas}
-        id="container-canvas"
-        canvas
-      />
+      <Element is={ContainerCanvas} id="container-canvas" canvas />
     </div>
   );
 }
 
-export function ContainerCanvas({ children }: any) {
+export function ContainerCanvas({ children }: { children?: ReactNode }) {
   return <div>{children}</div>;
 }
 

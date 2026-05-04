@@ -41,7 +41,7 @@ export function Page({
   );
 }
 
-export function PageCanvas({ children }: any) {
+export function PageCanvas({ children }: { children?: React.ReactNode }) {
   return <div>{children}</div>;
 }
 
