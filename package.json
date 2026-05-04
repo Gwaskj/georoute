@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@craftjs/core": "^0.2.12",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",
     "clsx": "2.1.0",
@@ -18,15 +17,21 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-leaflet": "^4.2.1",
-    "react-leaflet-repository": "https://github.com/PaulLeCam/react-leaflet/archive/refs/tags/v4.2.1.tar.gz"
+    "react-leaflet-repository": "https://github.com/PaulLeCam/react-leaflet/archive/refs/tags/v4.2.1.tar.gz",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.4",
+    "@tailwindcss/vite": "^4.2.4",
     "@types/leaflet": "1.9.21",
-    "@types/node": "20.11.30",
+    "@types/node": "^20.19.0",
     "@types/react": "18.3.28",
     "@types/react-dom": "18.3.7",
+    "autoprefixer": "^10.5.0",
     "eslint": "10.3.0",
     "eslint-config-next": "16.2.4",
+    "postcss": "^8.5.14",
+    "tailwindcss": "^4.2.4",
     "typescript": "5.4.5"
   }
 }

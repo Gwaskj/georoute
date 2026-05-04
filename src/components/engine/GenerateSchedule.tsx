@@ -1,0 +1,111 @@
+"use client";
+
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+
+type GenerateScheduleProps = {
+  algorithm: string;
+};
+
+type ScheduleResult = {
+  status: string;
+  [key: string]: unknown;
+};
+
+export default function GenerateSchedule({ algorithm }: GenerateScheduleProps) {
+  const supabase = createClient();
+
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<ScheduleResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleGenerate(): Promise<void> {
+    setLoading(true);
+    setError(null);
+
+    // 1. Get current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError) {
+      console.error(userError);
+      setError("Authentication error.");
+      setLoading(false);
+      return;
+    }
+
+    if (!user) {
+      setError("You must be logged in to generate a schedule.");
+      setLoading(false);
+      return;
+    }
+
+    // 2. Check paid user status
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("is_paid_user")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error(profileError);
+      setError("Failed to load user profile.");
+      setLoading(false);
+      return;
+    }
+
+    const isPaidUser = profile?.is_paid_user === true;
+
+    // 3. Call Edge Function
+    const { data, error: fnError } = await supabase.functions.invoke(
+      "generate-schedule",
+      {
+        body: {
+          userId: user.id,
+          isPaidUser,
+          algorithm,
+        },
+      }
+    );
+
+    if (fnError) {
+      console.error(fnError);
+      setError("Failed to generate schedule.");
+      setLoading(false);
+      return;
+    }
+
+    setResult(data as ScheduleResult);
+    setLoading(false);
+  }
+
+  return (
+    <div className="w-full rounded border bg-white p-4">
+      <h2 className="text-lg font-semibold mb-3">Generate Schedule</h2>
+
+      <button
+        onClick={handleGenerate}
+        disabled={loading}
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+      >
+        {loading ? "Generating…" : "Generate Schedule"}
+      </button>
+
+      {error && (
+        <p className="text-red-600 text-sm mt-3">{error}</p>
+      )}
+
+      {result && (
+        <div className="mt-4 text-sm">
+          <p className="font-semibold mb-1">Status: {result.status}</p>
+
+          <pre className="bg-gray-100 p-3 rounded text-xs overflow-auto max-h-64">
+            {JSON.stringify(result, null, 2)}
+          </pre>
+        </div>
+      )}
+    </div>
+  );
+}

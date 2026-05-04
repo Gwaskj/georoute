@@ -1,68 +1,22 @@
-import Image from "next/image";
-import styles from "./Home.module.css";
-
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
+    <div className="p-10">
+      <h1 className="text-4xl font-bold text-blue-600">GeoRoute</h1>
 
-        <div>
-          <h1 className={styles.title}>
-            To get started, edit the page.tsx file.
-          </h1>
+      <p className="mt-4 text-lg text-gray-700">
+        Welcome to your scheduling and routing dashboard.
+      </p>
 
-          <p className={styles.text}>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates"
-              className={styles.link}
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn"
-              className={styles.link}
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
+      <div className="mt-8 space-y-4">
+        <p className="text-gray-600">
+          Use the admin panel to manage staff, appointments, schedules, and
+          route visualisation.
+        </p>
 
-        <div className={styles.buttons}>
-          <a
-            className={styles.buttonPrimary}
-            href="https://vercel.com/new"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-
-          <a
-            className={styles.buttonSecondary}
-            href="https://nextjs.org/docs"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        <p className="text-gray-600">
+          This is your main landing page. You can customise it however you like.
+        </p>
+      </div>
     </div>
   );
 }

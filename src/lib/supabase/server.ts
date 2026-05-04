@@ -1,9 +1,8 @@
-import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
-export async function createSupabaseServerClient() {
-  // In your environment, cookies() returns a Promise
-  const cookieStore = await cookies();
+export async function createClient() {
+  const cookieStore = await cookies(); // your environment returns a Promise
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,11 +12,19 @@ export async function createSupabaseServerClient() {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set() {
-          // Route Handlers / Server Components cannot modify cookies
+        set(name: string, value: string, options: any) {
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch {
+            // ignore during SSR
+          }
         },
-        remove() {
-          // Same restriction
+        remove(name: string, options: any) {
+          try {
+            cookieStore.set({ name, value: "", ...options });
+          } catch {
+            // ignore during SSR
+          }
         },
       },
     }

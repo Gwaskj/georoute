@@ -1,57 +1,37 @@
-export const dynamic = "force-dynamic";
-
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
-import type { ReactNode } from "react";
-import "../globals.css";
-import "leaflet/dist/leaflet.css";
-import ClientBoundary from "./ClientBoundary";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  // Allow everything in dev so you never get locked out
-  if (process.env.NODE_ENV === "development") {
-    return <ClientBoundary>{children}</ClientBoundary>;
-  }
+interface AdminLayoutProps {
+  children: React.ReactNode;
+}
 
-  // In your environment, cookies() returns a Promise
-  const cookieStore = await cookies();
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set() {
-          // Layouts cannot modify cookies during SSR
-        },
-        remove() {
-          // Same restriction
-        },
-      },
-    }
-  );
+export default async function AdminLayout({ children }: AdminLayoutProps) {
+  const supabase = await createClient(); // FIXED: await the async client
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/");
+  if (!user || user.email !== process.env.ADMIN_EMAIL) {
+    redirect("/login");
+  }
 
-  const { data: adminRecord } = await supabase
-    .from("admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <aside className="w-64 fixed left-0 top-0 bottom-0 bg-white border-r p-6">
+        <h2 className="text-xl font-semibold mb-6">Admin</h2>
+        <nav className="space-y-4">
+          <a href="/admin" className="block">Dashboard</a>
+          <a href="/admin/schedule" className="block">Schedule</a>
+          <a href="/admin/staff" className="block">Staff</a>
+          <a href="/admin/appointments" className="block">Appointments</a>
+          <a href="/admin/routes" className="block">Routes</a>
+        </nav>
+      </aside>
 
-  if (!adminRecord) redirect("/");
-
-  return <ClientBoundary>{children}</ClientBoundary>;
+      <main className="ml-64 p-10">
+        {children}
+      </main>
+    </div>
+  );
 }
