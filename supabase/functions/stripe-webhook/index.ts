@@ -1,8 +1,11 @@
+// @ts-ignore: Remote module import is valid in Deno
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+// @ts-ignore: Remote module import is valid in Deno
 import Stripe from "https://esm.sh/stripe@12.0.0?target=deno";
+// @ts-ignore: Remote module import is valid in Deno
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-serve(async (req) => {
+serve(async (req: Request) => {
   const body = await req.text();
   const signature = req.headers.get("stripe-signature")!;
 
@@ -19,7 +22,9 @@ serve(async (req) => {
       Deno.env.get("STRIPE_WEBHOOK_SECRET")!
     );
   } catch (err) {
-    return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+    const error = err as Error;
+    console.error("Stripe webhook error:", error.message);
+    return new Response("Invalid signature", { status: 400 });
   }
 
   const supabase = createClient(

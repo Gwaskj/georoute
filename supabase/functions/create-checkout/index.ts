@@ -1,55 +1,68 @@
+// @ts-ignore: Deno remote import
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+// @ts-ignore: Deno remote import
 import Stripe from "https://esm.sh/stripe@12.0.0?target=deno";
+// @ts-ignore: Deno remote import
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-serve(async (req) => {
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+serve(async (req: Request) => {
+  try {
+    const { user_id, price_id } = await req.json();
 
-  const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
-    apiVersion: "2023-10-16",
-  });
+    // @ts-ignore: Deno global
+    const supabase = createClient(
+      // @ts-ignore: Deno global
+      Deno.env.get("SUPABASE_URL")!,
+      // @ts-ignore: Deno global
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
 
-  const { user_id } = await req.json();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("stripe_customer_id, email")
+      .eq("id", user_id)
+      .single();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("stripe_customer_id, email")
-    .eq("id", user_id)
-    .single();
+    const stripe = new Stripe(
+      // @ts-ignore: Deno global
+      Deno.env.get("STRIPE_SECRET_KEY")!,
+      { apiVersion: "2023-10-16" }
+    );
 
-  let customerId = profile?.stripe_customer_id;
+    let customerId = profile?.stripe_customer_id;
 
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: profile.email,
-      metadata: { supabase_user_id: user_id },
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: profile?.email,
+        metadata: { user_id },
+      });
+
+      customerId = customer.id;
+
+      await supabase
+        .from("profiles")
+        .update({ stripe_customer_id: customerId })
+        .eq("id", user_id);
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      line_items: [{ price: price_id, quantity: 1 }],
+      success_url: `${Deno.env.get("SITE_URL")!}/app?success=true`,
+      cancel_url: `${Deno.env.get("SITE_URL")!}/app?canceled=true`,
     });
 
-    customerId = customer.id;
+    return new Response(JSON.stringify({ url: session.url }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
 
-    await supabase
-      .from("profiles")
-      .update({ stripe_customer_id: customerId })
-      .eq("id", user_id);
+  } catch (err) {
+    const error = err as Error;
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500 }
+    );
   }
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    customer: customerId,
-    line_items: [
-      {
-        price: Deno.env.get("STRIPE_PRICE_ID")!,
-        quantity: 1,
-      },
-    ],
-    success_url: `${Deno.env.get("SITE_URL")}/signup?token=success`,
-    cancel_url: `${Deno.env.get("SITE_URL")}/pricing`,
-  });
-
-  return new Response(JSON.stringify({ url: session.url }), {
-    headers: { "Content-Type": "application/json" },
-  });
 });
