@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function Header() {
-  const supabase = createClient();
+  const supabase = createSupabaseBrowserClient();
 
   const [header, setHeader] = useState<{
     title: string;
@@ -31,7 +31,7 @@ export default function Header() {
     }
 
     loadHeader();
-  }, []);
+  }, [supabase]);
 
   return (
     <header className="w-full bg-white shadow-sm">
