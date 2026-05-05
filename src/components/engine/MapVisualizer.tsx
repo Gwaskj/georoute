@@ -6,6 +6,7 @@ import {
   Popup,
   Polyline,
   useMap,
+  ZoomControl,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import styles from "./MapVisualizer.module.css";
@@ -135,6 +136,7 @@ export default function MapVisualizer({
   return (
     <div className={styles.wrapper}>
       <MapContainer className={styles.map}>
+        <ZoomControl position="topright" />
         <MapInitializer zoom={zoom} />
 
         <Marker position={[53.0, -2.2]}>

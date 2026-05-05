@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useHighlightStore } from "@/lib/map/highlightStore";
 
 type ScheduleTableProps = {
   showTimes?: boolean;
-  [key: string]: unknown; // allow Puck-injected props
+  [key: string]: unknown;
 };
 
 type StaffMember = {
@@ -28,6 +29,13 @@ type AppointmentRow = {
 
 export default function ScheduleTable({ showTimes = true }: ScheduleTableProps) {
   const supabase = createClient();
+
+  const highlightedAppointmentId = useHighlightStore(
+    (s) => s.highlightedAppointmentId
+  );
+  const setHighlightedAppointment = useHighlightStore(
+    (s) => s.setHighlightedAppointment
+  );
 
   const [rows, setRows] = useState<AppointmentRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,43 +118,56 @@ export default function ScheduleTable({ showTimes = true }: ScheduleTableProps) 
         </thead>
 
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.id} className="border-b">
-              <td className="py-2">
-                {row.staff.length > 0
-                  ? row.staff.map((s) => s.name).join(", ")
-                  : "—"}
-              </td>
+          {rows.map((row) => {
+            const isHighlighted = highlightedAppointmentId === row.id;
 
-              <td className="py-2">
-                {row.clients.length > 0
-                  ? row.clients.map((c) => c.name).join(", ")
-                  : "—"}
-              </td>
-
-              {showTimes && (
+            return (
+              <tr
+                key={row.id}
+                className="border-b cursor-pointer"
+                onMouseEnter={() => setHighlightedAppointment(row.id)}
+                onMouseLeave={() => setHighlightedAppointment(null)}
+                style={{
+                  background: isHighlighted ? "rgba(59,130,246,0.08)" : "transparent",
+                  transition: "background 120ms ease",
+                }}
+              >
                 <td className="py-2">
-                  {row.start_time
-                    ? new Date(row.start_time).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
+                  {row.staff.length > 0
+                    ? row.staff.map((s) => s.name).join(", ")
                     : "—"}
                 </td>
-              )}
 
-              {showTimes && (
                 <td className="py-2">
-                  {row.end_time
-                    ? new Date(row.end_time).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
+                  {row.clients.length > 0
+                    ? row.clients.map((c) => c.name).join(", ")
                     : "—"}
                 </td>
-              )}
-            </tr>
-          ))}
+
+                {showTimes && (
+                  <td className="py-2">
+                    {row.start_time
+                      ? new Date(row.start_time).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "—"}
+                  </td>
+                )}
+
+                {showTimes && (
+                  <td className="py-2">
+                    {row.end_time
+                      ? new Date(row.end_time).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "—"}
+                  </td>
+                )}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

@@ -1,22 +1,22 @@
+import Header from "@/components/home/Header";
+
 export default function HomePage() {
   return (
-    <div className="p-10">
-      <h1 className="text-4xl font-bold text-blue-600">GeoRoute</h1>
+    <div className="min-h-screen bg-gray-50">
+      <Header />
 
-      <p className="mt-4 text-lg text-gray-700">
-        Welcome to your scheduling and routing dashboard.
-      </p>
+      <main className="max-w-5xl mx-auto px-6 py-16">
+        <h1 className="text-5xl font-bold text-blue-600">GeoRoute</h1>
 
-      <div className="mt-8 space-y-4">
-        <p className="text-gray-600">
+        <p className="mt-6 text-xl text-gray-700">
+          Smart scheduling and route optimisation for your workforce.
+        </p>
+
+        <p className="mt-4 text-gray-600">
           Use the admin panel to manage staff, appointments, schedules, and
           route visualisation.
         </p>
-
-        <p className="text-gray-600">
-          This is your main landing page. You can customise it however you like.
-        </p>
-      </div>
+      </main>
     </div>
   );
 }
