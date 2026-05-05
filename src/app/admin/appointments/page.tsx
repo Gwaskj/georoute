@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const supabase = createClient();
+const supabase = createSupabaseBrowserClient();
 
 interface Staff {
   id: number;

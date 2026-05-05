@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { updateHeaderAction } from "./actions";
 
-const supabase = createClient();
+const supabase = createSupabaseBrowserClient();
 
 export default function HeaderEditor() {
   const [config, setConfig] = useState<any>(null);
