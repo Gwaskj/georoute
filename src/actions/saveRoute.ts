@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function saveRoute(route: {
   start_lat: number;
@@ -9,7 +9,7 @@ export async function saveRoute(route: {
   end_lon: number;
   route_data: any;
 }) {
-  const supabase = await createClient(); // IMPORTANT: await this
+  const supabase = await createSupabaseServerClient(); // ← FIXED
 
   const {
     data: { user },

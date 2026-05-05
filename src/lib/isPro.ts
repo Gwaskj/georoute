@@ -1,7 +1,8 @@
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export async function isProUser() {
-  const supabase = createClient();
+  const supabase = createSupabaseBrowserClient();
+
   const { data } = await supabase
     .from("profiles")
     .select("is_pro")
