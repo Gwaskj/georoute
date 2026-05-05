@@ -27,7 +27,7 @@ export function AdBlock({ className }: AdBlockProps) {
         className="adsbygoogle block w-full"
         style={{ display: 'block' }}
         data-ad-client="ca-pub-1904838490296389"
-        data-ad-slot="0000000000"
+        data-ad-slot="6104460687"
         data-ad-format="auto"
         data-full-width-responsive="true"
       />
