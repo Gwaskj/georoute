@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Staff = {
   id: string;
@@ -30,8 +30,7 @@ function getAge(dob?: string) {
 }
 
 export default function StaffSelector({ onSelectStaff }: StaffSelectorProps) {
-  const supabase = createClient();
-
+  const supabase = createSupabaseBrowserClient();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);

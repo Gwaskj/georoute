@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useHighlightStore } from "@/lib/map/highlightStore";
 
 type ScheduleTableProps = {
@@ -28,7 +28,7 @@ type AppointmentRow = {
 };
 
 export default function ScheduleTable({ showTimes = true }: ScheduleTableProps) {
-  const supabase = createClient();
+  const supabase = createSupabaseBrowserClient();
 
   const highlightedAppointmentId = useHighlightStore(
     (s) => s.highlightedAppointmentId

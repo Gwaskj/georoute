@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type RouteSummary = {
   total_jobs: number;
@@ -10,7 +10,7 @@ type RouteSummary = {
 };
 
 export default function RouteSummary() {
-  const supabase = createClient();
+  const supabase = createSupabaseBrowserClient();
   const [summary, setSummary] = useState<RouteSummary | null>(null);
   const [loading, setLoading] = useState(true);
 

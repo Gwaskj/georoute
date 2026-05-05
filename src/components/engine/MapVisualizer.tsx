@@ -12,7 +12,7 @@ import "leaflet/dist/leaflet.css";
 import styles from "./MapVisualizer.module.css";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useHighlightStore } from "@/lib/map/highlightStore";
 
 import L from "leaflet";
@@ -62,7 +62,7 @@ export default function MapVisualizer({
   showAppointments?: boolean;
   showStaffRoutes?: boolean;
 }) {
-  const supabase = createClient();
+  const supabase = createSupabaseBrowserClient();
 
   const highlightedAppointmentId = useHighlightStore(
     (s) => s.highlightedAppointmentId

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type GenerateScheduleProps = {
   algorithm: string;
@@ -13,8 +13,7 @@ type ScheduleResult = {
 };
 
 export default function GenerateSchedule({ algorithm }: GenerateScheduleProps) {
-  const supabase = createClient();
-
+  const supabase = createSupabaseBrowserClient();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScheduleResult | null>(null);
   const [error, setError] = useState<string | null>(null);
