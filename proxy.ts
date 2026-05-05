@@ -1,9 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import type { NextRequest } from 'next/server';
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-
+export default async function proxy(req: NextRequest) {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -21,17 +19,15 @@ export async function middleware(req: NextRequest) {
   const { data } = await supabase.auth.getUser();
   const user = data.user;
 
-  const isAppRoute = req.nextUrl.pathname.startsWith('/app');
+  const pathname = req.nextUrl.pathname;
 
-  if (isAppRoute && !user) {
+  // Protect /app/*
+  if (pathname.startsWith('/app') && !user) {
     const loginUrl = new URL('/login', req.url);
-    loginUrl.searchParams.set('redirect', req.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+    loginUrl.searchParams.set('redirect', pathname);
+    return Response.redirect(loginUrl);
   }
 
-  return res;
+  // In Proxy API, this is how you "continue"
+  return req;
 }
-
-export const config = {
-  matcher: ['/app/:path*'],
-};
