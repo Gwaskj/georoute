@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function GenerateSchedule() {
-  const supabase = createClient();
+  const supabase = createSupabaseBrowserClient();
   const [loading, setLoading] = useState(false);
 
   async function generate() {
