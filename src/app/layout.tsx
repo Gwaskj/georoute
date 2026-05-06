@@ -1,56 +1,61 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { ReactNode } from 'react';
-import Script from 'next/script';
-import Link from 'next/link';
+export {}; // ✅ REQUIRED to make this file a module
+
+import type { Metadata } from "next";
+import "./globals.css";
+import "@/styles/theme.css";
+import "@/styles/utilities.css";
+import "@/styles/Button.module.css";
+import "@/styles/Input.module.css";
+import "@/styles/Card.module.css";
+
+import { cookies } from "next/headers";
+import { ReactNode } from "react";
+import Header from "@/components/Header";
+import { createServerClient } from "@supabase/ssr";
 
 export const metadata: Metadata = {
-  title: 'GeoRoute – Smarter Route Planning',
-  description: 'Smarter route planning for teams that don’t slow down.',
+  title: "GeoRoute – Smarter Route Planning",
+  description: "Smarter route planning for teams that don’t slow down.",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const cookieStore = await cookies(); // ✅ your environment requires await
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+      },
+    }
+  );
+
+  const { data: headerData } = await supabase
+    .from("site_header")
+    .select("*")
+    .single();
+
   return (
     <html lang="en" className="h-full">
-      <head>
-        <Script
-          id="adsense-script"
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1904838490296389"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
-      </head>
       <body className="min-h-full bg-slate-950 text-slate-50">
         <div className="flex min-h-screen flex-col">
-          <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-            <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 via-teal-500 to-teal-400 text-slate-950 font-bold">
-                  GR
-                </div>
-                <span className="text-lg font-semibold tracking-tight">GeoRoute</span>
-              </Link>
-              <nav className="flex items-center gap-6 text-sm">
-                <Link href="/" className="hover:text-teal-300 transition-colors">
-                  Home
-                </Link>
-                <Link href="/pricing" className="hover:text-teal-300 transition-colors">
-                  Pricing
-                </Link>
-                <Link href="/login" className="hover:text-teal-300 transition-colors">
-                  Login
-                </Link>
-                <Link
-                  href="/signup"
-                  className="rounded-full bg-gradient-to-r from-green-500 via-teal-500 to-teal-400 px-4 py-1.5 text-sm font-medium text-slate-950 shadow-lg shadow-teal-500/30 hover:brightness-110 transition"
-                >
-                  Get started
-                </Link>
-              </nav>
-            </div>
-          </header>
+
+          <Header
+            title={headerData?.title ?? "GeoRoute"}
+            logoUrl={headerData?.logo_url ?? null}
+            bannerUrl={headerData?.banner_url ?? null}
+            logo_x={headerData?.logo_x ?? 0}
+            logo_y={headerData?.logo_y ?? 0}
+            logo_scale={headerData?.logo_scale ?? 1}
+            banner_offset_x={headerData?.banner_offset_x ?? 0}
+            banner_offset_y={headerData?.banner_offset_y ?? 0}
+          />
+
           <main className="flex-1">{children}</main>
+
           <footer className="border-t border-slate-800 bg-slate-950/80">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 text-xs text-slate-400">
               <span>© {new Date().getFullYear()} GeoRoute. All rights reserved.</span>

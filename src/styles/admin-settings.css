@@ -1,0 +1,41 @@
+/* ============================= */
+/* SETTINGS PAGE */
+/* ============================= */
+
+.admin-settings-container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: var(--space-xl) 0;
+}
+
+.admin-settings-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: var(--space-xl);
+}
+
+.admin-settings-section {
+  background: var(--bg-card);
+  padding: var(--space-xl);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-xl);
+}
+
+.admin-settings-section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+}
+
+.admin-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.admin-settings-actions {
+  margin-top: var(--space-lg);
+  display: flex;
+  justify-content: flex-end;
+}

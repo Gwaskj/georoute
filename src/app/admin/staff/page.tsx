@@ -1,5 +1,6 @@
 "use client";
 
+import "@/styles/admin-staff.css";
 import { useEffect, useState, FormEvent } from "react";
 import { createClient } from "@supabase/supabase-js";
 

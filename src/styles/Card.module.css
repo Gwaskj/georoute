@@ -1,6 +1,28 @@
 .card {
-  background: white;
-  padding: 1.25rem;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  background: var(--bg-card);
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: background var(--transition), box-shadow var(--transition);
+}
+
+/* Hoverable card (optional) */
+.card-hover {
+  cursor: pointer;
+}
+.card-hover:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Muted card (for sections, panels, etc.) */
+.card-muted {
+  background: var(--bg-muted);
+}
+
+/* Card with border (useful in dark mode) */
+.card-bordered {
+  border: 1px solid var(--gray-200);
+}
+[data-theme="dark"] .card-bordered {
+  border: 1px solid var(--gray-700);
 }

@@ -1,0 +1,50 @@
+/* ============================= */
+/* STAFF PAGE */
+/* ============================= */
+
+.admin-staff-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+}
+
+.admin-staff-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.admin-staff-actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+/* STAFF GRID */
+.admin-staff-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-xl);
+}
+
+.admin-staff-card {
+  background: var(--bg-card);
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-staff-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+}
+
+.admin-staff-role {
+  color: var(--text-secondary);
+  margin-bottom: var(--space-md);
+}
+
+.admin-staff-actions-row {
+  display: flex;
+  gap: var(--space-sm);
+}

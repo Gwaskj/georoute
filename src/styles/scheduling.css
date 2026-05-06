@@ -1,0 +1,36 @@
+.schedule-container {
+  padding: var(--space-xl) var(--space-lg);
+}
+
+.schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+}
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-xl);
+}
+
+.schedule-card {
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-md);
+}
+
+.schedule-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+}
+
+.schedule-job {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--bg-muted);
+  margin-bottom: var(--space-sm);
+}

@@ -1,0 +1,73 @@
+/* ============================= */
+/* APPOINTMENTS PAGE */
+/* ============================= */
+
+.admin-appointments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+}
+
+.admin-appointments-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.admin-appointments-actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+/* TABLE */
+.admin-appointments-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.admin-appointments-table th,
+.admin-appointments-table td {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.admin-appointments-table th {
+  background: var(--gray-100);
+  font-weight: 600;
+}
+
+.admin-appointments-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-appointments-row:hover {
+  background: var(--gray-50);
+}
+
+/* STATUS TAGS */
+.status-tag {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}

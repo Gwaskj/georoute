@@ -1,5 +1,6 @@
 "use client";
 
+import "@/styles/header.css";   // ✅ Add this line
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";

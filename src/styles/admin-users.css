@@ -1,0 +1,59 @@
+/* ============================= */
+/* USERS PAGE */
+/* ============================= */
+
+.admin-users-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+}
+
+.admin-users-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.admin-users-actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+/* TABLE */
+.admin-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.admin-users-table th,
+.admin-users-table td {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.admin-users-table th {
+  background: var(--gray-100);
+  font-weight: 600;
+}
+
+.admin-users-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-users-row:hover {
+  background: var(--gray-50);
+}
+
+/* PRO BADGE */
+.pro-badge {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+}

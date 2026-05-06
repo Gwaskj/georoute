@@ -1,0 +1,37 @@
+/* ============================= */
+/* LOGS PAGE */
+/* ============================= */
+
+.admin-logs-header {
+  margin-bottom: var(--space-xl);
+}
+
+.admin-logs-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+/* LOG LIST */
+.admin-logs-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.admin-log-entry {
+  background: var(--bg-card);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-log-meta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.admin-log-message {
+  font-size: 1rem;
+  font-weight: 500;
+}

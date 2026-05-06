@@ -1,0 +1,29 @@
+.login-container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: var(--space-2xl) var(--space-lg);
+}
+
+.login-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: var(--space-lg);
+  text-align: center;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.login-footer {
+  margin-top: var(--space-md);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.login-footer a {
+  color: var(--color-primary);
+  text-decoration: none;
+}

@@ -1,0 +1,188 @@
+/* ========================================= */
+/* HOMEPAGE GLOBAL SPACING & LAYOUT */
+/* ========================================= */
+
+.home-hero {
+  padding: 6rem 1rem;
+}
+
+@media (min-width: 1024px) {
+  .home-hero {
+    padding: 8rem 1rem;
+  }
+}
+
+/* ========================================= */
+/* HERO SECTION */
+/* ========================================= */
+
+.home-hero-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary, #f8fafc);
+}
+
+@media (min-width: 640px) {
+  .home-hero-title {
+    font-size: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-hero-title {
+    font-size: 3.75rem;
+  }
+}
+
+.home-hero-highlight {
+  color: var(--color-primary, #2dd4bf);
+}
+
+.home-hero-subtitle {
+  max-width: 40rem;
+  font-size: 1rem;
+  color: var(--text-secondary, #94a3b8);
+  line-height: 1.6;
+}
+
+@media (min-width: 640px) {
+  .home-hero-subtitle {
+    font-size: 1.125rem;
+  }
+}
+
+/* ========================================= */
+/* BADGE */
+/* ========================================= */
+
+.home-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  color: #99f6e4;
+}
+
+/* ========================================= */
+/* CTA BUTTONS */
+/* ========================================= */
+
+.home-cta-primary {
+  display: inline-block;
+  padding: 0.65rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  background: linear-gradient(to right, #22c55e, #14b8a6, #2dd4bf);
+  color: #0f172a;
+  box-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
+  transition: filter 0.2s ease;
+}
+
+.home-cta-primary:hover {
+  filter: brightness(1.1);
+}
+
+.home-cta-secondary {
+  font-weight: 500;
+  color: #5eead4;
+  transition: color 0.2s ease;
+}
+
+.home-cta-secondary:hover {
+  color: #99f6e4;
+}
+
+/* ========================================= */
+/* MOCKUP CARD */
+/* ========================================= */
+
+.home-mockup {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(45, 212, 191, 0.2);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 0 40px rgba(45, 212, 191, 0.2);
+}
+
+/* ========================================= */
+/* SEO CONTENT SECTION */
+/* ========================================= */
+
+.home-content-section {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 4rem 1rem;
+}
+
+.home-content-section h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #2dd4bf;
+  margin-bottom: 1rem;
+}
+
+.home-content-section p {
+  font-size: 1rem;
+  color: #cbd5e1;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+/* ========================================= */
+/* FEATURES GRID */
+/* ========================================= */
+
+.home-features {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 4rem 1rem;
+}
+
+.home-feature-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #1e293b;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.home-feature-card:hover {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(45, 212, 191, 0.3);
+}
+
+.home-feature-card h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 0.5rem;
+}
+
+.home-feature-card p {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+/* ========================================= */
+/* RESPONSIVE GRID */
+/* ========================================= */
+
+@media (min-width: 640px) {
+  .home-features-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-features-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
