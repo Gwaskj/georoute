@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
-type AdBlockProps = {
+type AdBannerProps = {
   className?: string;
 };
 
@@ -12,7 +12,7 @@ declare global {
   }
 }
 
-export function AdBlock({ className }: AdBlockProps) {
+export default function AdBanner({ className }: AdBannerProps) {
   useEffect(() => {
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -25,7 +25,7 @@ export function AdBlock({ className }: AdBlockProps) {
     <div className={className}>
       <ins
         className="adsbygoogle block w-full"
-        style={{ display: 'block' }}
+        style={{ display: "block" }}
         data-ad-client="ca-pub-1904838490296389"
         data-ad-slot="6104460687"
         data-ad-format="auto"

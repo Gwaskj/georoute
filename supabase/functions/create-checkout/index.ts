@@ -7,7 +7,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 serve(async (req: Request) => {
   try {
-    const { user_id, price_id } = await req.json();
+    const { user_id } = await req.json(); // price_id is no longer needed
+
+    if (!user_id) {
+      return new Response(JSON.stringify({ error: "Missing user_id" }), {
+        status: 400,
+      });
+    }
 
     // @ts-ignore: Deno global
     const supabase = createClient(
@@ -17,6 +23,25 @@ serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // 1. Fetch the CURRENT Stripe Price ID for the PRO plan
+    const { data: pricing, error: pricingError } = await supabase
+      .from("pricing")
+      .select("stripe_price_id")
+      .eq("plan", "pro")
+      .single();
+
+    if (pricingError || !pricing?.stripe_price_id) {
+      return new Response(
+        JSON.stringify({
+          error: "No Stripe price configured for the Pro plan.",
+        }),
+        { status: 400 }
+      );
+    }
+
+    const dynamicPriceId = pricing.stripe_price_id;
+
+    // 2. Load user profile (customer ID + email)
     const { data: profile } = await supabase
       .from("profiles")
       .select("stripe_customer_id, email")
@@ -31,6 +56,7 @@ serve(async (req: Request) => {
 
     let customerId = profile?.stripe_customer_id;
 
+    // 3. Create Stripe customer if missing
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: profile?.email,
@@ -45,10 +71,11 @@ serve(async (req: Request) => {
         .eq("id", user_id);
     }
 
+    // 4. Create checkout session using the dynamic Stripe Price ID
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
-      line_items: [{ price: price_id, quantity: 1 }],
+      line_items: [{ price: dynamicPriceId, quantity: 1 }],
       success_url: `${Deno.env.get("SITE_URL")!}/app?success=true`,
       cancel_url: `${Deno.env.get("SITE_URL")!}/app?canceled=true`,
     });
@@ -60,9 +87,8 @@ serve(async (req: Request) => {
 
   } catch (err) {
     const error = err as Error;
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+    });
   }
 });
