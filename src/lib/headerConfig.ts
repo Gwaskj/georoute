@@ -35,7 +35,7 @@ async function loadHeaderConfigRaw(cookieValues: Record<string, string | undefin
   return {
     title: data?.title || "GeoRoute",
     logo_url: data?.logo_url || "/logo-placeholder.png",
-    banner_url: data?.banner_url || "/images/Header.jpg",
+    banner_url: data?.banner_url || "/Banner-placeholder.jpg",
     logo_x: data?.logo_x ?? 0,
     logo_y: data?.logo_y ?? 0,
     logo_scale: data?.logo_scale ?? 1,

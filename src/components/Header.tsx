@@ -34,7 +34,7 @@ export default function Header(props: HeaderProps) {
         const { data: profileData } = await supabase
           .from("profiles")
           .select("is_pro, subscription_renewal")
-          .eq("id", u.id)
+          .eq("user_id", u.id)
           .single();
 
         setProfile(profileData);
@@ -53,25 +53,38 @@ export default function Header(props: HeaderProps) {
   async function openBillingPortal() {
     if (!user) return;
 
+    // Get the user's access token
+    const { data: session } = await supabase.auth.getSession();
+    const accessToken = session?.session?.access_token;
+    if (!accessToken) {
+      console.error("No access token found");
+      return;
+    }
+
+    // Call the Supabase Edge Function
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-portal-session`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ user_id: user.id }),
       }
     );
 
     const json = await res.json();
-    if (json.url) window.location.href = json.url;
+    if (json.url) {
+      window.location.href = json.url;
+    } else {
+      console.error("Billing portal error:", json);
+    }
   }
 
   const safeTitle = props.title || "GeoRoute";
   const safeLogo = props.logoUrl || "/logo-placeholder.png";
-  const safeBanner = props.bannerUrl || "/default-header.jpg";
+  const safeBanner = props.bannerUrl || "/Banner-placeholder.jpg";
 
   if (!loaded) {
     return (

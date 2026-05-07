@@ -34,7 +34,7 @@ export default function HeaderEditorPage() {
       const { data: profile } = await supabase
         .from("profiles")
         .select("is_admin")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .single();
 
       if (!profile?.is_admin) {
@@ -47,7 +47,7 @@ export default function HeaderEditorPage() {
       const { data: header } = await supabase
         .from("site_header")
         .select("*")
-        .eq("id", 1)
+        .eq("user_id", 1)
         .single();
 
       if (header) {
@@ -110,7 +110,7 @@ export default function HeaderEditorPage() {
         banner_offset_x: form.banner_offset_x,
         banner_offset_y: form.banner_offset_y,
       })
-      .eq("id", 1);
+      .eq("user_id", 1);
 
     setSaving(false);
 
@@ -241,7 +241,7 @@ export default function HeaderEditorPage() {
           <div
             style={{
               height: 120,
-              backgroundImage: `url(${form.banner_url || "/default-header.jpg"})`,
+              backgroundImage: `url(${form.banner_url || "/Banner-placeholder.jpg"})`,
               backgroundSize: "cover",
               backgroundPosition: `${form.banner_offset_x}px ${form.banner_offset_y}px`,
               display: "flex",

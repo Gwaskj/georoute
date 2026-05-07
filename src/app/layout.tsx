@@ -1,4 +1,4 @@
-export {}; // ✅ REQUIRED to make this file a module
+export {}; // required to make this file a module
 
 import type { Metadata } from "next";
 import "./globals.css";
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const cookieStore = await cookies(); // ✅ your environment requires await
+  const cookieStore = await cookies();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,10 +43,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body className="min-h-full bg-slate-950 text-slate-50">
         <div className="flex min-h-screen flex-col">
 
+          {/* GLOBAL HEADER */}
           <Header
             title={headerData?.title ?? "GeoRoute"}
-            logoUrl={headerData?.logo_url ?? null}
-            bannerUrl={headerData?.banner_url ?? null}
+            logoUrl={headerData?.logo_url ?? "/logo-placeholder.png"}
+            bannerUrl={headerData?.banner_url ?? "/Banner-placeholder.jpg"}
             logo_x={headerData?.logo_x ?? 0}
             logo_y={headerData?.logo_y ?? 0}
             logo_scale={headerData?.logo_scale ?? 1}
@@ -54,14 +55,17 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             banner_offset_y={headerData?.banner_offset_y ?? 0}
           />
 
+          {/* MAIN CONTENT */}
           <main className="flex-1">{children}</main>
 
+          {/* FOOTER */}
           <footer className="border-t border-slate-800 bg-slate-950/80">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 text-xs text-slate-400">
               <span>© {new Date().getFullYear()} GeoRoute. All rights reserved.</span>
               <span>Smarter route planning for teams that don’t slow down.</span>
             </div>
           </footer>
+
         </div>
       </body>
     </html>

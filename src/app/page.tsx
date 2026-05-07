@@ -20,7 +20,7 @@ export default function HomePage() {
         const { data: profileData } = await supabase
           .from("profiles")
           .select("is_pro")
-          .eq("id", currentUser.id)
+          .eq("user_id", currentUser.id)
           .single();
 
         setProfile(profileData);
