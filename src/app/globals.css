@@ -2,35 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global reset tweaks */
-html,
-body {
+/* Reset */
+html, body {
   height: 100%;
   margin: 0;
   padding: 0;
 }
 
+/* DO NOT set global text color or background here.
+   Tailwind and your page components must control those.
+*/
+body {
+  font-family: system-ui, sans-serif;
+  background: transparent;
+}
+
+/* Tap highlight removal */
 * {
   -webkit-tap-highlight-color: transparent;
 }
 
-body {
-  background: #f8f9fa;
-  color: #111;
-  font-family: system-ui, sans-serif;
-}
-
-/* Scrollbar styling */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: #3a3a3a;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: #555;
 }

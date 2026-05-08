@@ -1,9 +1,11 @@
 export {}; // required to make this file a module
 
 import type { Metadata } from "next";
-import "./globals.css";
-import "@/styles/theme.css";
-import "@/styles/utilities.css";
+
+// GLOBAL STYLES
+import "./globals.css";          // Tailwind + resets
+import "@/styles/theme.css";         // Your CSS variables (safe now)
+import "@/styles/utilities.css";     // Your utility classes
 import "@/styles/Button.module.css";
 import "@/styles/Input.module.css";
 import "@/styles/Card.module.css";
@@ -40,7 +42,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full bg-slate-950 text-slate-50">
+      {/* IMPORTANT: no global text or background overrides */}
+      <body className="min-h-full">
         <div className="flex min-h-screen flex-col">
 
           {/* GLOBAL HEADER */}
@@ -56,7 +59,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           />
 
           {/* MAIN CONTENT */}
-          <main className="flex-1">{children}</main>
+          <main className="flex-1">
+            {children}
+          </main>
 
           {/* FOOTER */}
           <footer className="border-t border-slate-800 bg-slate-950/80">

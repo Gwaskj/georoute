@@ -1,6 +1,5 @@
 "use client";
 
-import "@/styles/header.css";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -53,15 +52,10 @@ export default function Header(props: HeaderProps) {
   async function openBillingPortal() {
     if (!user) return;
 
-    // Get the user's access token
     const { data: session } = await supabase.auth.getSession();
     const accessToken = session?.session?.access_token;
-    if (!accessToken) {
-      console.error("No access token found");
-      return;
-    }
+    if (!accessToken) return;
 
-    // Call the Supabase Edge Function
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-portal-session`,
       {
@@ -75,137 +69,89 @@ export default function Header(props: HeaderProps) {
     );
 
     const json = await res.json();
-    if (json.url) {
-      window.location.href = json.url;
-    } else {
-      console.error("Billing portal error:", json);
-    }
+    if (json.url) window.location.href = json.url;
   }
 
   const safeTitle = props.title || "GeoRoute";
   const safeLogo = props.logoUrl || "/logo-placeholder.png";
-  const safeBanner = props.bannerUrl || "/Banner-placeholder.jpg";
 
   if (!loaded) {
     return (
-      <header
-        style={{
-          height: "90px",
-          background: "#e5e7eb",
-          display: "flex",
-          alignItems: "center",
-          padding: "0 20px",
-        }}
-      />
+      <header className="h-20 w-full bg-slate-800/40 backdrop-blur-sm" />
     );
   }
 
   return (
-    <header
-      style={{
-        position: "relative",
-        backgroundImage: `url(${safeBanner})`,
-        backgroundSize: "cover",
-        backgroundPosition: `${props.banner_offset_x}px ${props.banner_offset_y}px`,
-        height: "120px",
-        display: "flex",
-        alignItems: "center",
-        paddingLeft: 20,
-        paddingRight: 20,
-      }}
-    >
-      <div
-        style={{
-          position: "relative",
-          transform: `translate(${props.logo_x}px, ${props.logo_y}px) scale(${props.logo_scale})`,
-          transformOrigin: "top left",
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
-        <Image
-          src={safeLogo}
-          alt="Logo"
-          width={70}
-          height={70}
-          style={{ objectFit: "contain" }}
-        />
-        <span style={{ fontSize: 24, fontWeight: 600 }}>{safeTitle}</span>
-      </div>
+    <header className="sticky top-0 z-50 w-full bg-slate-900/40 backdrop-blur-xl border-b border-slate-800">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
 
-      <nav style={{ marginLeft: "auto", display: "flex", gap: 16 }}>
-        <Link href="/">Home</Link>
-        <Link href="/scheduler">Scheduler</Link>
-        {!user && <Link href="/login">Login</Link>}
-      </nav>
-
-      {user && (
+        {/* LOGO + TITLE */}
         <div
+          className="flex items-center gap-3"
           style={{
-            marginLeft: 20,
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
+            transform: `translate(${props.logo_x}px, ${props.logo_y}px) scale(${props.logo_scale})`,
+            transformOrigin: "top left",
           }}
         >
-          <span
-            style={{
-              padding: "4px 10px",
-              borderRadius: 20,
-              fontSize: 12,
-              fontWeight: 600,
-              background: profile?.is_pro ? "#22c55e" : "#fbbf24",
-              color: "#000",
-            }}
-          >
-            {profile?.is_pro ? "Pro" : "Free"}
-          </span>
-
-          {profile?.is_pro && profile.subscription_renewal && (
-            <span
-              style={{
-                fontSize: 12,
-                color: "#fff",
-                opacity: 0.8,
-              }}
-            >
-              Renews:{" "}
-              {new Date(profile.subscription_renewal).toLocaleDateString()}
-            </span>
-          )}
-
-          {profile?.is_pro && (
-            <button
-              onClick={openBillingPortal}
-              style={{
-                padding: "6px 14px",
-                borderRadius: 20,
-                background: "#14b8a6",
-                color: "#000",
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              Manage Billing
-            </button>
-          )}
-
-          <button
-            onClick={handleLogout}
-            style={{
-              padding: "6px 14px",
-              borderRadius: 20,
-              background: "#ef4444",
-              color: "#fff",
-              fontSize: 12,
-              fontWeight: 600,
-            }}
-          >
-            Logout
-          </button>
+          <Image
+            src={safeLogo}
+            alt="Logo"
+            width={50}
+            height={50}
+            className="object-contain"
+          />
+          <span className="text-xl font-semibold text-white">{safeTitle}</span>
         </div>
-      )}
+
+        {/* NAV */}
+        <nav className="flex items-center gap-6 text-slate-200">
+          <Link href="/" className="hover:text-white">Home</Link>
+          <Link href="/scheduler" className="hover:text-white">Scheduler</Link>
+          {!user && <Link href="/login" className="hover:text-white">Login</Link>}
+        </nav>
+
+        {/* USER AREA */}
+        {user && (
+          <div className="flex items-center gap-3">
+
+            {/* PLAN BADGE */}
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                profile?.is_pro
+                  ? "bg-emerald-400 text-black"
+                  : "bg-amber-400 text-black"
+              }`}
+            >
+              {profile?.is_pro ? "Pro" : "Free"}
+            </span>
+
+            {/* RENEWAL DATE */}
+            {profile?.is_pro && profile.subscription_renewal && (
+              <span className="text-xs text-slate-300">
+                Renews: {new Date(profile.subscription_renewal).toLocaleDateString()}
+              </span>
+            )}
+
+            {/* BILLING */}
+            {profile?.is_pro && (
+              <button
+                onClick={openBillingPortal}
+                className="rounded-full bg-teal-500 px-4 py-1 text-xs font-semibold text-black hover:bg-teal-400"
+              >
+                Billing
+              </button>
+            )}
+
+            {/* LOGOUT */}
+            <button
+              onClick={handleLogout}
+              className="rounded-full bg-red-500 px-4 py-1 text-xs font-semibold text-white hover:bg-red-400"
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </div>
     </header>
   );
 }
