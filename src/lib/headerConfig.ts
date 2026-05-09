@@ -19,7 +19,6 @@ async function loadHeaderConfigRaw(cookieValues: Record<string, string | undefin
     .from("site_header")
     .select(
       `
-      title,
       logo_url,
       banner_url,
       logo_x,
@@ -33,7 +32,6 @@ async function loadHeaderConfigRaw(cookieValues: Record<string, string | undefin
     .single();
 
   return {
-    title: data?.title || "GeoRoute",
     logo_url: data?.logo_url || "/logo-placeholder.png",
     banner_url: data?.banner_url || "/Banner-placeholder.jpg",
     logo_x: data?.logo_x ?? 0,

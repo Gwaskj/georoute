@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/supabase/supabaseClient";
 
 interface HeaderProps {
-  title: string | null;
   logoUrl: string | null;
   bannerUrl: string | null;
   logo_x: number;
@@ -72,12 +71,12 @@ export default function Header(props: HeaderProps) {
     if (json.url) window.location.href = json.url;
   }
 
-  const safeTitle = props.title || "GeoRoute";
   const safeLogo = props.logoUrl || "/logo-placeholder.png";
+  const safeBanner = props.bannerUrl || "/Banner-placeholder.jpg";
 
   if (!loaded) {
     return (
-      <header className="h-20 w-full bg-slate-800/40 backdrop-blur-sm" />
+      <header className="h-20 w-full bg-slate-800/40" />
     );
   }
 
@@ -85,18 +84,17 @@ export default function Header(props: HeaderProps) {
     <header
       className="w-full border-b border-slate-800 relative"
       style={{
-        backgroundImage: `url('/Banner-placeholder.jpg')`,
+        backgroundImage: `url(${safeBanner})`,
         backgroundSize: "cover",
         backgroundPosition: `${props.banner_offset_x}px ${props.banner_offset_y}px`,
-        backgroundRepeat: "no-repeat",
-        backgroundColor: "red" // DEBUG: remove after confirming banner loads
+        backgroundRepeat: "no-repeat"
       }}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 bg-slate-900/40 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
 
-        {/* LOGO + TITLE */}
+        {/* LOGO ONLY */}
         <div
-          className="flex items-center gap-3"
+          className="flex items-center"
           style={{
             transform: `translate(${props.logo_x}px, ${props.logo_y}px) scale(${props.logo_scale})`,
             transformOrigin: "top left",
@@ -109,7 +107,6 @@ export default function Header(props: HeaderProps) {
             height={150}
             className="object-contain"
           />
-          <span className="text-xl font-semibold text-white">{safeTitle}</span>
         </div>
 
         {/* NAV */}

@@ -1,14 +1,13 @@
 import Header from "./Header";
 
 export default async function HeaderLoader() {
-  // Fetch header config directly from Supabase REST API
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/site_header?id=eq.1&select=*`,
     {
       headers: {
         apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       },
-      cache: "no-store", // ensures header updates instantly
+      cache: "no-store",
     }
   );
 
@@ -17,7 +16,6 @@ export default async function HeaderLoader() {
 
   return (
     <Header
-      title={row.title || null}
       logoUrl={row.logo_url || null}
       bannerUrl={row.banner_url || null}
       logo_x={row.logo_x ?? 0}

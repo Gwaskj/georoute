@@ -10,7 +10,6 @@ export default function HeaderEditorPage() {
   const [isAdmin, setIsAdmin] = useState(false);
 
   const [form, setForm] = useState({
-    title: "",
     logo_url: "",
     banner_url: "",
     logo_x: 0,
@@ -20,7 +19,6 @@ export default function HeaderEditorPage() {
     banner_offset_y: 0,
   });
 
-  // Load user + admin status + header config
   useEffect(() => {
     async function load() {
       const { data: userData } = await supabase.auth.getUser();
@@ -47,12 +45,11 @@ export default function HeaderEditorPage() {
       const { data: header } = await supabase
         .from("site_header")
         .select("*")
-        .eq("user_id", 1)
+        .eq("id", 1)
         .single();
 
       if (header) {
         setForm({
-          title: header.title || "",
           logo_url: header.logo_url || "",
           banner_url: header.banner_url || "",
           logo_x: header.logo_x ?? 0,
@@ -69,7 +66,6 @@ export default function HeaderEditorPage() {
     load();
   }, []);
 
-  // Upload helper
   async function uploadImage(e: any, type: "logo" | "banner") {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -101,7 +97,6 @@ export default function HeaderEditorPage() {
     const { error } = await supabase
       .from("site_header")
       .update({
-        title: form.title,
         logo_url: form.logo_url,
         banner_url: form.banner_url,
         logo_x: form.logo_x,
@@ -110,7 +105,7 @@ export default function HeaderEditorPage() {
         banner_offset_x: form.banner_offset_x,
         banner_offset_y: form.banner_offset_y,
       })
-      .eq("user_id", 1);
+      .eq("id", 1);
 
     setSaving(false);
 
@@ -135,31 +130,19 @@ export default function HeaderEditorPage() {
       <h1 className="text-3xl font-semibold mb-8">Header Editor</h1>
 
       <div className="grid md:grid-cols-2 gap-10">
-        {/* LEFT SIDE — FORM */}
-        <div className="space-y-6">
-          {/* Title */}
-          <div>
-            <label className="block text-sm mb-1">Title</label>
-            <input
-              className="w-full bg-slate-800 border border-slate-700 px-3 py-2 rounded"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
-          </div>
 
-          {/* Logo Upload */}
+        <div className="space-y-6">
+
           <div>
             <label className="block text-sm mb-1">Logo Image</label>
             <input type="file" onChange={(e) => uploadImage(e, "logo")} />
           </div>
 
-          {/* Banner Upload */}
           <div>
             <label className="block text-sm mb-1">Banner Image</label>
             <input type="file" onChange={(e) => uploadImage(e, "banner")} />
           </div>
 
-          {/* Logo X */}
           <div>
             <label className="block text-sm mb-1">Logo X Offset</label>
             <input
@@ -172,7 +155,6 @@ export default function HeaderEditorPage() {
             />
           </div>
 
-          {/* Logo Y */}
           <div>
             <label className="block text-sm mb-1">Logo Y Offset</label>
             <input
@@ -185,7 +167,6 @@ export default function HeaderEditorPage() {
             />
           </div>
 
-          {/* Logo Scale */}
           <div>
             <label className="block text-sm mb-1">Logo Scale</label>
             <input
@@ -199,7 +180,6 @@ export default function HeaderEditorPage() {
             />
           </div>
 
-          {/* Banner Offsets */}
           <div>
             <label className="block text-sm mb-1">Banner Offset X</label>
             <input
@@ -224,7 +204,6 @@ export default function HeaderEditorPage() {
             />
           </div>
 
-          {/* Save Button */}
           <button
             onClick={saveChanges}
             disabled={saving}
@@ -234,7 +213,6 @@ export default function HeaderEditorPage() {
           </button>
         </div>
 
-        {/* RIGHT SIDE — LIVE PREVIEW */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Live Preview</h2>
 
@@ -255,7 +233,6 @@ export default function HeaderEditorPage() {
                 transformOrigin: "top left",
                 display: "flex",
                 alignItems: "center",
-                gap: 12,
               }}
             >
               <Image
@@ -264,12 +241,10 @@ export default function HeaderEditorPage() {
                 width={70}
                 height={70}
               />
-              <span style={{ fontSize: 24, fontWeight: 600 }}>
-                {form.title || "GeoRoute"}
-              </span>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
