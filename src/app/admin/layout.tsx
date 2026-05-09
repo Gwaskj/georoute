@@ -1,4 +1,4 @@
-import "@/styles/admin-dashboard.css";
+import "../../styles/admin-dashboard.css";
 import { ReactNode } from "react";
 
 interface AdminLayoutProps {

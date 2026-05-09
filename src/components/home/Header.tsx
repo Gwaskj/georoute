@@ -1,50 +1,166 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { supabase } from "@/supabase/supabaseClient";
 
-export default function Header() {
-  const supabase = createSupabaseBrowserClient();
+interface HeaderProps {
+  title: string | null;
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  logo_x: number;
+  logo_y: number;
+  logo_scale: number;
+  banner_offset_x: number;
+  banner_offset_y: number;
+}
 
-  const [header, setHeader] = useState<{
-    title: string;
-    logo_url: string;
-  }>({
-    title: "GeoRoute",
-    logo_url: "/logo-placeholder.png",
-  });
+export default function Header(props: HeaderProps) {
+  const [loaded, setLoaded] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
-    async function loadHeader() {
-      const { data } = await supabase
-        .from("site_header")
-        .select("*")
-        .single();
+    const t = setTimeout(() => setLoaded(true), 150);
 
-      if (data) {
-        setHeader({
-          title: data.title || "GeoRoute",
-          logo_url: data.logo_url || "/logo-placeholder.png",
-        });
+    async function loadUser() {
+      const { data: userData } = await supabase.auth.getUser();
+      const u = userData?.user || null;
+      setUser(u);
+
+      if (u) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("is_pro, subscription_renewal")
+          .eq("user_id", u.id)
+          .single();
+
+        setProfile(profileData);
       }
     }
 
-    loadHeader();
-  }, [supabase]);
+    loadUser();
+    return () => clearTimeout(t);
+  }, []);
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  }
+
+  async function openBillingPortal() {
+    if (!user) return;
+
+    const { data: session } = await supabase.auth.getSession();
+    const accessToken = session?.session?.access_token;
+    if (!accessToken) return;
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-portal-session`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ user_id: user.id }),
+      }
+    );
+
+    const json = await res.json();
+    if (json.url) window.location.href = json.url;
+  }
+
+  const safeTitle = props.title || "GeoRoute";
+  const safeLogo = props.logoUrl || "/logo-placeholder.png";
+  const safeBanner = props.bannerUrl || "/Banner-placeholder.jpg";
+
+  if (!loaded) {
+    return (
+      <header className="h-20 w-full bg-slate-800/40 backdrop-blur-sm" />
+    );
+  }
 
   return (
-    <header className="w-full bg-white shadow-sm">
-      <div className="max-w-6xl mx-auto flex items-center gap-4 px-6 py-4">
-        <Image
-          src={header.logo_url}
-          alt="Logo"
-          width={50}
-          height={50}
-          className="object-contain"
-        />
+    <header
+      className="w-full border-b border-slate-800 relative overflow-hidden"
+      style={{
+        backgroundImage: `url('${safeBanner}')`,
+        backgroundSize: "cover",
+        backgroundPosition: `${props.banner_offset_x}px ${props.banner_offset_y}px`,
+        backgroundRepeat: "no-repeat",
+        minHeight: "160px"
+      }}
+    >
+      {/* BLUR OVERLAY (only behind content, not covering banner) */}
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xl pointer-events-none" />
 
-        <h1 className="text-2xl font-bold text-gray-900">{header.title}</h1>
+      {/* CONTENT */}
+      <div className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-4 py-6">
+
+        {/* LOGO + TITLE */}
+        <div
+          className="flex items-center gap-3"
+          style={{
+            transform: `translate(${props.logo_x}px, ${props.logo_y}px) scale(${props.logo_scale})`,
+            transformOrigin: "top left",
+          }}
+        >
+          <Image
+            src={safeLogo}
+            alt="Logo"
+            width={150}
+            height={150}
+            className="object-contain"
+          />
+          <span className="text-xl font-semibold text-white">{safeTitle}</span>
+        </div>
+
+        {/* NAV */}
+        <nav className="flex items-center gap-6 text-slate-200">
+          <Link href="/" className="hover:text-white">Home</Link>
+          <Link href="/scheduler" className="hover:text-white">Scheduler</Link>
+          {!user && <Link href="/login" className="hover:text-white">Login</Link>}
+        </nav>
+
+        {/* USER AREA */}
+        {user && (
+          <div className="flex items-center gap-3">
+
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                profile?.is_pro
+                  ? "bg-emerald-400 text-black"
+                  : "bg-amber-400 text-black"
+              }`}
+            >
+              {profile?.is_pro ? "Pro" : "Free"}
+            </span>
+
+            {profile?.is_pro && profile.subscription_renewal && (
+              <span className="text-xs text-slate-300">
+                Renews: {new Date(profile.subscription_renewal).toLocaleDateString()}
+              </span>
+            )}
+
+            {profile?.is_pro && (
+              <button
+                onClick={openBillingPortal}
+                className="rounded-full bg-teal-500 px-4 py-1 text-xs font-semibold text-black hover:bg-teal-400"
+              >
+                Billing
+              </button>
+            )}
+
+            <button
+              onClick={handleLogout}
+              className="rounded-full bg-red-500 px-4 py-1 text-xs font-semibold text-white hover:bg-red-400"
+            >
+              Logout
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

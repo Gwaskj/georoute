@@ -4,15 +4,15 @@ import type { Metadata } from "next";
 
 // GLOBAL STYLES
 import "./globals.css";          // Tailwind + resets
-import "@/styles/theme.css";         // Your CSS variables (safe now)
-import "@/styles/utilities.css";     // Your utility classes
+import "@/styles/theme.css";     // Your CSS variables
+import "@/styles/utilities.css"; // Utility classes
 import "@/styles/Button.module.css";
 import "@/styles/Input.module.css";
 import "@/styles/Card.module.css";
 
 import { cookies } from "next/headers";
 import { ReactNode } from "react";
-import Header from "@/components/Header";
+import Header from "@/components/home/Header"; // <-- FIXED IMPORT
 import { createServerClient } from "@supabase/ssr";
 
 export const metadata: Metadata = {
@@ -42,7 +42,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 
   return (
     <html lang="en" className="h-full">
-      {/* IMPORTANT: no global text or background overrides */}
       <body className="min-h-full">
         <div className="flex min-h-screen flex-col">
 

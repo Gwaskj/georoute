@@ -82,8 +82,17 @@ export default function Header(props: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-slate-900/40 backdrop-blur-xl border-b border-slate-800">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+    <header
+      className="w-full border-b border-slate-800 relative"
+      style={{
+        backgroundImage: `url('/Banner-placeholder.jpg')`,
+        backgroundSize: "cover",
+        backgroundPosition: `${props.banner_offset_x}px ${props.banner_offset_y}px`,
+        backgroundRepeat: "no-repeat",
+        backgroundColor: "red" // DEBUG: remove after confirming banner loads
+      }}
+    >
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 bg-slate-900/40 backdrop-blur-xl">
 
         {/* LOGO + TITLE */}
         <div
@@ -96,8 +105,8 @@ export default function Header(props: HeaderProps) {
           <Image
             src={safeLogo}
             alt="Logo"
-            width={50}
-            height={50}
+            width={150}
+            height={150}
             className="object-contain"
           />
           <span className="text-xl font-semibold text-white">{safeTitle}</span>
@@ -114,7 +123,6 @@ export default function Header(props: HeaderProps) {
         {user && (
           <div className="flex items-center gap-3">
 
-            {/* PLAN BADGE */}
             <span
               className={`px-3 py-1 rounded-full text-xs font-semibold ${
                 profile?.is_pro
@@ -125,14 +133,12 @@ export default function Header(props: HeaderProps) {
               {profile?.is_pro ? "Pro" : "Free"}
             </span>
 
-            {/* RENEWAL DATE */}
             {profile?.is_pro && profile.subscription_renewal && (
               <span className="text-xs text-slate-300">
                 Renews: {new Date(profile.subscription_renewal).toLocaleDateString()}
               </span>
             )}
 
-            {/* BILLING */}
             {profile?.is_pro && (
               <button
                 onClick={openBillingPortal}
@@ -142,7 +148,6 @@ export default function Header(props: HeaderProps) {
               </button>
             )}
 
-            {/* LOGOUT */}
             <button
               onClick={handleLogout}
               className="rounded-full bg-red-500 px-4 py-1 text-xs font-semibold text-white hover:bg-red-400"

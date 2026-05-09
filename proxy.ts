@@ -1,17 +1,31 @@
-import { createServerClient } from '@supabase/ssr';
-import type { NextRequest } from 'next/server';
+import { createServerClient } from "@supabase/ssr";
 
-export default async function proxy(req: NextRequest) {
+export const proxy = async (request: Request) => {
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+
+  // Only protect /app/*
+  if (!pathname.startsWith("/app")) {
+    return undefined;
+  }
+
+  // Manual cookie parsing (Proxy API requirement)
+  const cookieHeader = request.headers.get("cookie") || "";
+  const getCookie = (name: string) => {
+    const match = cookieHeader
+      .split(";")
+      .map((c) => c.trim())
+      .find((c) => c.startsWith(name + "="));
+
+    return match ? match.split("=")[1] : undefined;
+  };
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return req.cookies.get(name)?.value;
-        },
-        set() {},
-        remove() {},
+        get: getCookie,
       },
     }
   );
@@ -19,15 +33,11 @@ export default async function proxy(req: NextRequest) {
   const { data } = await supabase.auth.getUser();
   const user = data.user;
 
-  const pathname = req.nextUrl.pathname;
-
-  // Protect /app/*
-  if (pathname.startsWith('/app') && !user) {
-    const loginUrl = new URL('/login', req.url);
-    loginUrl.searchParams.set('redirect', pathname);
+  if (!user) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
     return Response.redirect(loginUrl);
   }
 
-  // In Proxy API, this is how you "continue"
-  return req;
-}
+  return undefined; // allow request
+};
