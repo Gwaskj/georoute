@@ -1,0 +1,61 @@
+import { create } from "zustand";
+
+export interface Skill {
+  id: string;
+  name: string;
+}
+
+interface SkillsState {
+  skills: Skill[];
+  setSkills: (skills: Skill[]) => void;
+  addSkill: (name: string) => Skill;
+}
+
+const STORAGE_KEY = "georoute_skills";
+
+function loadInitialSkills(): Skill[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Skill[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistSkills(skills: Skill[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(skills));
+  } catch {
+    // ignore
+  }
+}
+
+export const useSkillsStore = create<SkillsState>((set, get) => ({
+  skills: [],
+  setSkills: (skills) => {
+    persistSkills(skills);
+    set({ skills });
+  },
+  addSkill: (name) => {
+    const existing = get().skills.find(
+      (s) => s.name.toLowerCase() === name.toLowerCase()
+    );
+    if (existing) return existing;
+    const skill: Skill = { id: crypto.randomUUID(), name };
+    const skills = [...get().skills, skill];
+    persistSkills(skills);
+    set({ skills });
+    return skill;
+  },
+}));
+
+if (typeof window !== "undefined") {
+  const initial = loadInitialSkills();
+  if (initial.length) {
+    useSkillsStore.getState().setSkills(initial);
+  }
+}

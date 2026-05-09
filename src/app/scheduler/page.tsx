@@ -1,32 +1,29 @@
-import { getUser } from '@/lib/auth';
-import { getSubscriptionStatus } from '@/lib/subscription';
+import SchedulePage from "@/components/schedule/SchedulePage";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export default async function SchedulerPage() {
-  const user = await getUser();
-  const status = await getSubscriptionStatus(user?.id ?? null);
+export default async function Page() {
+  const supabase = await createSupabaseServerClient();
 
-  const isFree = status === 'free';
+  // Get user (may be null)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // Here you’d query today’s routes and enforce the 10 routes/day limit in server actions.
-  // Show a banner if they hit the limit.
+  let isPro = false;
 
-  return (
-    <div className="bg-slate-950">
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-slate-50">Scheduler</h1>
-          {isFree && (
-            <span className="rounded-full border border-teal-500/40 bg-slate-900 px-3 py-1 text-xs text-teal-300">
-              Free tier · 10 routes/day
-            </span>
-          )}
-        </div>
-        {/* Your existing drag-and-drop scheduler goes here */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-4 text-sm text-slate-300">
-          {/* Replace this with your real scheduler UI */}
-          Scheduler UI placeholder – wire your existing component here.
-        </div>
-      </div>
-    </div>
-  );
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_pro")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    isPro = profile?.is_pro === true;
+  }
+
+  // Free = not logged in OR logged in but not Pro
+  const isFree = !isPro;
+
+  return <SchedulePage isFree={isFree} />;
 }
+

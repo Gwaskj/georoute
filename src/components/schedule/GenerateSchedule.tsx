@@ -1,30 +1,52 @@
 "use client";
 
 import { useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+
+type FreeRoute = {
+  id: string;
+  staff_id: string | null;
+  color: string;
+  points: [number, number][];
+};
 
 export default function GenerateSchedule() {
-  const supabase = createSupabaseBrowserClient();
   const [loading, setLoading] = useState(false);
+
+  function loadFreeAppointments() {
+    const raw = sessionStorage.getItem("free_scheduler_data");
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed.appointments || [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveFreeRoutes(routes: FreeRoute[]) {
+    const raw = sessionStorage.getItem("free_scheduler_data");
+    const base = raw ? JSON.parse(raw) : {};
+
+    const updated = {
+      ...base,
+      routes,
+    };
+
+    sessionStorage.setItem("free_scheduler_data", JSON.stringify(updated));
+  }
 
   async function generate() {
     setLoading(true);
 
-    await supabase.from("routes").delete().neq("id", "");
-
-    const { data: appointments } = await supabase
-      .from("appointments")
-      .select("*")
-      .order("start_time", { ascending: true });
-
-    if (!appointments) {
+    const appointments = loadFreeAppointments();
+    if (!appointments || appointments.length === 0) {
       setLoading(false);
       return;
     }
 
     const staffRoutes: Record<
       string,
-      { id: string; staff_id: string; color: string; points: [number, number][] }
+      { id: string; staff_id: string | null; color: string; points: [number, number][] }
     > = {};
 
     for (const a of appointments) {
@@ -40,16 +62,10 @@ export default function GenerateSchedule() {
       }
 
       staffRoutes[a.staff_id].points.push([a.lat, a.lng]);
-
-      await supabase.from("routes").upsert({
-        id: staffRoutes[a.staff_id].id,
-        staff_id: a.staff_id,
-        color: staffRoutes[a.staff_id].color,
-        points: staffRoutes[a.staff_id].points,
-      });
-
-      await new Promise((r) => setTimeout(r, 150));
     }
+
+    const finalRoutes = Object.values(staffRoutes);
+    saveFreeRoutes(finalRoutes);
 
     setLoading(false);
   }
@@ -58,9 +74,10 @@ export default function GenerateSchedule() {
     <button
       onClick={generate}
       disabled={loading}
-      className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+      className="rounded bg-sky-600 px-4 py-2 text-xs font-medium text-white hover:bg-sky-500 disabled:opacity-50"
     >
-      {loading ? "Generating…" : "Generate Schedule"}
+      {loading ? "Generating…" : "Generate Local Routes"}
     </button>
   );
 }
+

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import type { ComponentProps } from "react";
 
-const Map = dynamic(() => import("./MapVisualizer"), {
+const Map = dynamic(() => import("./MapVisualizerInner"), {
   ssr: false,
 });
 

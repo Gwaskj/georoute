@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
     "moduleResolution": "bundler",
+    "baseUrl": "src",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["*"]
     },
     "strict": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "target": "ES2022",
     "module": "ESNext",
     "allowJs": false,
@@ -16,6 +17,10 @@
     "skipLibCheck": true,
     "incremental": true,
     "esModuleInterop": true,
+    "types": [
+      "./src/types/css",
+      "./src/types/leaflet"
+    ],
     "plugins": [
       {
         "name": "next"
@@ -28,7 +33,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "next.config.js"
+    "next.config.js",
+    "src/types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules",
