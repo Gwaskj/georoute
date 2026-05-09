@@ -1,0 +1,48 @@
+/* -------------------------------------------------------
+   Admin Users Page
+------------------------------------------------------- */
+
+.users-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.users-header h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.users-table th,
+.users-table td {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.users-table th {
+  background: var(--surface-hover);
+  font-weight: 600;
+}
+
+.users-table tr:hover td {
+  background: var(--surface-hover);
+}
+
+.user-role-badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
