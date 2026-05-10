@@ -5,7 +5,6 @@ import ScheduleTable from "@/components/engine/ScheduleTable";
 import GenerateSchedulePro from "@/components/engine/GenerateSchedule";
 
 import AddAppointment from "@/components/engine/appointments/AddAppointment";
-import CallPurposeManager from "@/components/engine/appointments/CallPurposeManager";
 import CustomWindowsManager from "@/components/engine/windows/CustomWindowsManager";
 
 type ScheduleSidebarProps = {
@@ -47,7 +46,6 @@ export default function ScheduleSidebar({ isFree }: ScheduleSidebarProps) {
 
       {/* CALL PURPOSES */}
       <div className="rounded-md border border-slate-800 bg-slate-950 p-3">
-        <CallPurposeManager isFree={isFree} />
       </div>
 
       {/* CUSTOM WINDOWS */}

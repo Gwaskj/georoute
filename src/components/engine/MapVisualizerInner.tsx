@@ -19,6 +19,8 @@ import L from "leaflet";
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
+// ⭐ THIS MUST BE HERE — OUTSIDE THE COMPONENT
+const supabase = createSupabaseBrowserClient();
 const DefaultIcon = L.icon({
   iconUrl,
   shadowUrl: iconShadow,
@@ -56,7 +58,7 @@ function StableMapWrapper({ children }: { children: React.ReactNode }) {
     if (ref.current && !ready) {
       setReady(true);
     }
-  }, [ref.current]);
+  }, [ref.current, ready]);
 
   return (
     <div ref={ref} className={styles.wrapper}>
@@ -80,23 +82,56 @@ type AppointmentMarker = {
   color: string;
 };
 
+function StaffFocus({
+  selectedStaffId,
+  routes,
+}: {
+  selectedStaffId?: string | null;
+  routes: Route[];
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!selectedStaffId) return;
+
+    const staffRoutes = routes.filter(
+      (r) => r.staff_id === selectedStaffId && r.points.length > 0
+    );
+    if (staffRoutes.length === 0) return;
+
+    const latlngs = staffRoutes.flatMap((r) =>
+      r.points.map((p) => L.latLng(p[0], p[1]))
+    );
+    if (latlngs.length === 0) return;
+
+    const bounds = L.latLngBounds(latlngs);
+    map.fitBounds(bounds, { padding: [40, 40] });
+  }, [selectedStaffId, routes, map]);
+
+  return null;
+}
+
 export default function MapVisualizerInner({
   isFree,
   zoom = 12,
   showRoutes = true,
   showAppointments = true,
   showStaffRoutes = true,
+  selectedStaffId,
 }: {
   isFree: boolean;
   zoom?: number;
   showRoutes?: boolean;
   showAppointments?: boolean;
   showStaffRoutes?: boolean;
+  selectedStaffId?: string | null;
 }) {
-  const supabase = createSupabaseBrowserClient();
-
-  const highlightedAppointmentId = useHighlightStore((s) => s.highlightedAppointmentId);
-  const setHighlightedAppointment = useHighlightStore((s) => s.setHighlightedAppointment);
+  const highlightedAppointmentId = useHighlightStore(
+    (s) => s.highlightedAppointmentId
+  );
+  const setHighlightedAppointment = useHighlightStore(
+    (s) => s.setHighlightedAppointment
+  );
 
   const highlightedRouteId = useHighlightStore((s) => s.highlightedRouteId);
   const setHighlightedRoute = useHighlightStore((s) => s.setHighlightedRoute);
@@ -158,22 +193,43 @@ export default function MapVisualizerInner({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isFree, supabase]);
+  }, [isFree]);
 
   return (
     <StableMapWrapper>
       <MapContainer key={mapKey} className={styles.map}>
         <ZoomControl position="topright" />
         <MapInitializer zoom={zoom} />
+        <StaffFocus selectedStaffId={selectedStaffId} routes={routes} />
 
         <Marker position={[53.0, -2.2]}>
           <Popup>GeoRoute HQ</Popup>
         </Marker>
 
+        {/* ROUTES */}
         {!isFree &&
           showRoutes &&
           routes.map((route) => {
             const isHighlighted = highlightedRouteId === route.id;
+            const isSelectedStaffRoute =
+              selectedStaffId && route.staff_id === selectedStaffId;
+
+            let weight = 4;
+            let opacity = showStaffRoutes ? 0.9 : 0.5;
+
+            if (selectedStaffId) {
+              if (isSelectedStaffRoute) {
+                opacity = 1;
+                weight = 6;
+              } else {
+                opacity = 0.12;
+              }
+            }
+
+            if (isHighlighted) {
+              opacity = 1;
+              weight = 7;
+            }
 
             return (
               <Polyline
@@ -184,13 +240,14 @@ export default function MapVisualizerInner({
                 }}
                 pathOptions={{
                   color: route.color,
-                  weight: isHighlighted ? 7 : 4,
-                  opacity: isHighlighted ? 1 : showStaffRoutes ? 0.9 : 0.5,
+                  weight,
+                  opacity,
                 }}
               />
             );
           })}
 
+        {/* APPOINTMENTS */}
         {!isFree &&
           showAppointments &&
           appointments.map((a) => {
@@ -214,7 +271,10 @@ export default function MapVisualizerInner({
                       border:2px solid white;
                       box-shadow:0 0 6px rgba(0,0,0,0.5);
                     "></div>`,
-                    iconSize: [isHighlighted ? 20 : 14, isHighlighted ? 20 : 14],
+                    iconSize: [
+                      isHighlighted ? 20 : 14,
+                      isHighlighted ? 20 : 14,
+                    ],
                   }),
                 } as any)}
               >

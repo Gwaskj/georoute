@@ -12,7 +12,7 @@ interface RoutePageProps {
 
 export default function RouteDetailsPage({ params }: RoutePageProps) {
   const { id } = params;
-  const { isFree } = useUserTier();
+  const isFree = useUserTier();
 
   return (
     <div className="space-y-6">

@@ -7,6 +7,7 @@ import { useOfficePostcodeStore } from "@/store/officePostcodeStore";
 
 interface AddStaffProps {
   isFree: boolean;
+  triggerOnly?: boolean;
 }
 
 interface StaffFormState {
@@ -16,7 +17,7 @@ interface StaffFormState {
   officePostcode: string;
   dateOfBirth: string;
   gender: Gender | "";
-  skillIds: string[];
+  skills: string[];
 }
 
 const emptyForm: StaffFormState = {
@@ -25,7 +26,7 @@ const emptyForm: StaffFormState = {
   officePostcode: "",
   dateOfBirth: "",
   gender: "",
-  skillIds: [],
+  skills: [],
 };
 
 function calculateAge(dob: string): number | null {
@@ -39,7 +40,7 @@ function calculateAge(dob: string): number | null {
   return age;
 }
 
-export default function AddStaff({ isFree }: AddStaffProps) {
+export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
   const {
     staff,
     addStaff,
@@ -47,17 +48,17 @@ export default function AddStaff({ isFree }: AddStaffProps) {
     duplicateStaff,
     deleteStaff,
     archiveStaff,
+    selectedStaffIds,
   } = useStaffStore();
 
   const { skills, addSkill } = useSkillsStore();
-  const { officePostcode, setOfficePostcode } = useOfficePostcodeStore();
-
-  const isPro = !isFree;
+  const { officePostcode: globalOfficePostcode, setOfficePostcode } =
+    useOfficePostcodeStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState<StaffFormState>({
     ...emptyForm,
-    officePostcode,
+    officePostcode: globalOfficePostcode, // ⭐ NEW: default to global
   });
   const [isEditing, setIsEditing] = useState(false);
 
@@ -68,7 +69,7 @@ export default function AddStaff({ isFree }: AddStaffProps) {
 
   const openAddModal = () => {
     setIsEditing(false);
-    setForm({ ...emptyForm, officePostcode });
+    setForm({ ...emptyForm, officePostcode: globalOfficePostcode }); // ⭐ NEW
     setIsModalOpen(true);
   };
 
@@ -78,10 +79,10 @@ export default function AddStaff({ isFree }: AddStaffProps) {
       id: s.id,
       name: s.name,
       homePostcode: s.homePostcode,
-      officePostcode: s.officePostcode,
+      officePostcode: s.officePostcode || "", // ⭐ NEW: allow blank to inherit
       dateOfBirth: s.dateOfBirth,
       gender: s.gender,
-      skillIds: s.skillIds,
+      skills: s.skills,
     });
     setIsModalOpen(true);
   };
@@ -89,42 +90,45 @@ export default function AddStaff({ isFree }: AddStaffProps) {
   const handleSubmit = () => {
     if (!form.name.trim()) return;
 
-    // office postcode persistence
-    setOfficePostcode(form.officePostcode);
+    // ⭐ NEW: Save global office postcode if user typed into the field
+    setOfficePostcode(form.officePostcode.trim());
+
+    const finalOfficePostcode =
+      form.officePostcode.trim() || globalOfficePostcode || ""; // ⭐ NEW inheritance
 
     if (isEditing && form.id) {
       updateStaff(form.id, {
         name: form.name.trim(),
         homePostcode: form.homePostcode.trim(),
-        officePostcode: form.officePostcode.trim(),
+        officePostcode: finalOfficePostcode,
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
-        skillIds: form.skillIds,
+        skills: form.skills,
       });
     } else {
       if (!canAddMore) return;
       addStaff({
         name: form.name.trim(),
         homePostcode: form.homePostcode.trim(),
-        officePostcode: form.officePostcode.trim(),
+        officePostcode: finalOfficePostcode,
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
-        skillIds: form.skillIds,
+        skills: form.skills,
       });
     }
 
     setIsModalOpen(false);
-    setForm({ ...emptyForm, officePostcode: form.officePostcode });
+    setForm({ ...emptyForm, officePostcode: globalOfficePostcode }); // ⭐ NEW
   };
 
   const handleToggleSkill = (skillId: string) => {
     setForm((prev) => {
-      const exists = prev.skillIds.includes(skillId);
+      const exists = prev.skills.includes(skillId);
       return {
         ...prev,
-        skillIds: exists
-          ? prev.skillIds.filter((id) => id !== skillId)
-          : [...prev.skillIds, skillId],
+        skills: exists
+          ? prev.skills.filter((id) => id !== skillId)
+          : [...prev.skills, skillId],
       };
     });
   };
@@ -135,30 +139,68 @@ export default function AddStaff({ isFree }: AddStaffProps) {
     const skill = addSkill(trimmed);
     setForm((prev) => ({
       ...prev,
-      skillIds: prev.skillIds.includes(skill.id)
-        ? prev.skillIds
-        : [...prev.skillIds, skill.id],
+      skills: prev.skills.includes(skill.id)
+        ? prev.skills
+        : [...prev.skills, skill.id],
     }));
   };
 
   const activeStaff = staff.filter((s: Staff) => !s.archived);
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold">Staff</h2>
+  // -------------------------
+  // TRIGGER-ONLY MODE
+  // -------------------------
+  if (triggerOnly) {
+    return (
+      <>
         <button
           type="button"
           onClick={openAddModal}
           disabled={!canAddMore}
-          className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-400"
+          className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white disabled:bg-gray-500"
         >
-          {canAddMore ? "Add staff" : "Max staff reached (Free: 2)"}
+          {canAddMore ? "Add staff" : "Max staff reached"}
+        </button>
+
+        {isModalOpen && (
+          <StaffModalUI
+            isEditing={isEditing}
+            form={form}
+            setForm={setForm}
+            skills={skills}
+            handleToggleSkill={handleToggleSkill}
+            handleAddSkillFromInput={handleAddSkillFromInput}
+            onClose={() => setIsModalOpen(false)}
+            onSubmit={handleSubmit}
+            globalOfficePostcode={globalOfficePostcode} // ⭐ NEW
+          />
+        )}
+      </>
+    );
+  }
+
+  // -------------------------
+  // FULL STAFF LIST MODE
+  // -------------------------
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-semibold text-slate-200">
+          Staff <span className="text-slate-500">(Selected: {selectedStaffIds.length})</span>
+        </h2>
+
+        <button
+          type="button"
+          onClick={openAddModal}
+          disabled={!canAddMore}
+          className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white disabled:bg-gray-500"
+        >
+          {canAddMore ? "Add staff" : "Max staff reached"}
         </button>
       </div>
 
       {activeStaff.length === 0 && (
-        <p className="text-sm text-gray-500">No staff added yet.</p>
+        <p className="text-sm text-slate-400">No staff added yet.</p>
       )}
 
       <ul className="space-y-2">
@@ -167,17 +209,17 @@ export default function AddStaff({ isFree }: AddStaffProps) {
           return (
             <li
               key={s.id}
-              className="flex items-center justify-between rounded border border-gray-200 px-3 py-2 text-sm"
+              className="flex items-center justify-between rounded border border-slate-700 bg-slate-900 px-3 py-2 text-sm"
             >
-              <span className="font-medium">{s.name}</span>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
+              <span className="font-medium text-slate-100">{s.name}</span>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
                 {age !== null && <span>{age} yrs</span>}
                 {s.gender && <span>{s.gender}</span>}
 
                 <button
                   type="button"
                   onClick={() => openEditModal(s)}
-                  className="rounded border border-gray-300 px-2 py-0.5 text-xs hover:bg-gray-50"
+                  className="rounded border border-slate-600 px-2 py-0.5 hover:bg-slate-800"
                 >
                   Edit
                 </button>
@@ -185,7 +227,7 @@ export default function AddStaff({ isFree }: AddStaffProps) {
                 <button
                   type="button"
                   onClick={() => duplicateStaff(s.id)}
-                  className="rounded border border-gray-300 px-2 py-0.5 text-xs hover:bg-gray-50"
+                  className="rounded border border-slate-600 px-2 py-0.5 hover:bg-slate-800"
                 >
                   Duplicate
                 </button>
@@ -193,7 +235,7 @@ export default function AddStaff({ isFree }: AddStaffProps) {
                 <button
                   type="button"
                   onClick={() => deleteStaff(s.id)}
-                  className="rounded border border-red-300 px-2 py-0.5 text-xs text-red-600 hover:bg-red-50"
+                  className="rounded border border-red-600 px-2 py-0.5 text-red-400 hover:bg-red-950"
                 >
                   Delete
                 </button>
@@ -202,7 +244,7 @@ export default function AddStaff({ isFree }: AddStaffProps) {
                   <button
                     type="button"
                     onClick={() => archiveStaff(s.id)}
-                    className="rounded border border-yellow-300 px-2 py-0.5 text-xs text-yellow-700 hover:bg-yellow-50"
+                    className="rounded border border-yellow-600 px-2 py-0.5 text-yellow-400 hover:bg-yellow-950"
                   >
                     Archive
                   </button>
@@ -213,155 +255,235 @@ export default function AddStaff({ isFree }: AddStaffProps) {
         })}
       </ul>
 
-      {/* MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded bg-white p-4 shadow-lg">
-            <h3 className="mb-3 text-base font-semibold">
-              {isEditing ? "Edit staff" : "Add staff"}
-            </h3>
-
-            <div className="space-y-3 text-sm">
-              {/* NAME */}
-              <div>
-                <label className="mb-1 block font-medium">Name</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, name: e.target.value }))
-                  }
-                  className="w-full rounded border border-gray-300 px-2 py-1"
-                />
-              </div>
-
-              {/* HOME POSTCODE */}
-              <div>
-                <label className="mb-1 block font-medium">Home postcode</label>
-                <input
-                  type="text"
-                  value={form.homePostcode}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, homePostcode: e.target.value }))
-                  }
-                  className="w-full rounded border border-gray-300 px-2 py-1"
-                />
-              </div>
-
-              {/* OFFICE POSTCODE */}
-              <div>
-                <label className="mb-1 block font-medium">Office postcode</label>
-                <input
-                  type="text"
-                  value={form.officePostcode}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, officePostcode: e.target.value }))
-                  }
-                  className="w-full rounded border border-gray-300 px-2 py-1"
-                />
-              </div>
-
-              {/* DOB */}
-              <div>
-                <label className="mb-1 block font-medium">Date of birth</label>
-                <input
-                  type="date"
-                  value={form.dateOfBirth}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, dateOfBirth: e.target.value }))
-                  }
-                  className="w-full rounded border border-gray-300 px-2 py-1"
-                />
-              </div>
-
-              {/* GENDER */}
-              <div>
-                <label className="mb-1 block font-medium">Gender</label>
-                <select
-                  value={form.gender}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      gender: e.target.value as Gender | "",
-                    }))
-                  }
-                  className="w-full rounded border border-gray-300 px-2 py-1"
-                >
-                  <option value="">Select gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              {/* SKILLS */}
-              <div>
-                <label className="mb-1 block font-medium">Skills</label>
-
-                <div className="mb-2 flex flex-wrap gap-2">
-                  {skills.map((skill: Skill) => {
-                    const active = form.skillIds.includes(skill.id);
-                    return (
-                      <button
-                        key={skill.id}
-                        type="button"
-                        onClick={() => handleToggleSkill(skill.id)}
-                        className={`rounded border px-2 py-0.5 text-xs ${
-                          active
-                            ? "border-blue-500 bg-blue-50 text-blue-700"
-                            : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                        }`}
-                      >
-                        {skill.name}
-                      </button>
-                    );
-                  })}
-
-                  {skills.length === 0 && (
-                    <span className="text-xs text-gray-400">
-                      No skills yet. Add one below.
-                    </span>
-                  )}
-                </div>
-
-                <input
-                  type="text"
-                  placeholder="Type a skill and press Enter"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      const target = e.target as HTMLInputElement;
-                      handleAddSkillFromInput(target.value);
-                      target.value = "";
-                    }
-                  }}
-                  className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
-                />
-              </div>
-            </div>
-
-            {/* ACTIONS */}
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="rounded border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSubmit}
-                className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-              >
-                {isEditing ? "Save" : "Add"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <StaffModalUI
+          isEditing={isEditing}
+          form={form}
+          setForm={setForm}
+          skills={skills}
+          handleToggleSkill={handleToggleSkill}
+          handleAddSkillFromInput={handleAddSkillFromInput}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleSubmit}
+          globalOfficePostcode={globalOfficePostcode} // ⭐ NEW
+        />
       )}
     </div>
   );
 }
 
+// ------------------------------------------------------
+// ⭐ Extracted modal UI with global postcode hint support
+// ------------------------------------------------------
+function StaffModalUI({
+  isEditing,
+  form,
+  setForm,
+  skills,
+  handleToggleSkill,
+  handleAddSkillFromInput,
+  onClose,
+  onSubmit,
+  globalOfficePostcode,
+}: any) {
+  const effectiveOfficePostcode =
+    form.officePostcode.trim() || globalOfficePostcode || "";
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-container max-w-md">
+        <div className="modal-header flex justify-between items-center p-4 border-b border-slate-700">
+          <h3 className="text-base font-semibold text-slate-100">
+            {isEditing ? "Edit staff" : "Add staff"}
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white text-xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="modal-body p-4 space-y-4 text-sm overflow-y-auto max-h-[70vh]">
+          <StaffForm
+            form={form}
+            setForm={setForm}
+            skills={skills}
+            handleToggleSkill={handleToggleSkill}
+            handleAddSkillFromInput={handleAddSkillFromInput}
+          />
+
+          {/* ⭐ NEW: Global office postcode inheritance hint */}
+          {globalOfficePostcode && !form.officePostcode.trim() && (
+            <p className="text-xs text-blue-300">
+              This staff member will use the global office postcode:{" "}
+              <strong>{globalOfficePostcode}</strong>
+            </p>
+          )}
+
+          {/* ⭐ NEW: Effective postcode preview */}
+          <div>
+            <label className="mb-1 block font-medium text-slate-200">
+              Effective office postcode
+            </label>
+            <input
+              type="text"
+              disabled
+              value={effectiveOfficePostcode}
+              className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1 text-slate-300"
+            />
+          </div>
+        </div>
+
+        <div className="modal-footer flex justify-end gap-2 p-4 border-t border-slate-700">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded border border-slate-600 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-800"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={onSubmit}
+            className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            {isEditing ? "Save" : "Add"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ------------------------------------------------------
+// StaffForm (unchanged except for inheritance support above)
+// ------------------------------------------------------
+function StaffForm({
+  form,
+  setForm,
+  skills,
+  handleToggleSkill,
+  handleAddSkillFromInput,
+}: {
+  form: StaffFormState;
+  setForm: any;
+  skills: Skill[];
+  handleToggleSkill: (id: string) => void;
+  handleAddSkillFromInput: (value: string) => void;
+}) {
+  return (
+    <>
+      <div>
+        <label className="mb-1 block font-medium text-slate-200">Name</label>
+        <input
+          type="text"
+          value={form.name}
+          onChange={(e) => setForm((f: any) => ({ ...f, name: e.target.value }))}
+          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block font-medium text-slate-200">Home postcode</label>
+        <input
+          type="text"
+          value={form.homePostcode}
+          onChange={(e) =>
+            setForm((f: any) => ({ ...f, homePostcode: e.target.value }))
+          }
+          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block font-medium text-slate-200">Office postcode</label>
+        <input
+          type="text"
+          value={form.officePostcode}
+          onChange={(e) =>
+            setForm((f: any) => ({ ...f, officePostcode: e.target.value }))
+          }
+          placeholder="Leave blank to use global office postcode"
+          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block font-medium text-slate-200">Date of birth</label>
+        <input
+          type="date"
+          value={form.dateOfBirth}
+          onChange={(e) =>
+            setForm((f: any) => ({ ...f, dateOfBirth: e.target.value }))
+          }
+          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
+        />
+      </div>
+
+      <div>
+        <label className="mb-1 block font-medium text-slate-200">Gender</label>
+        <select
+          value={form.gender}
+          onChange={(e) =>
+            setForm((f: any) => ({
+              ...f,
+              gender: e.target.value as Gender | "",
+            }))
+          }
+          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
+        >
+          <option value="">Select gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="mb-1 block font-medium text-slate-200">Skills</label>
+
+        <div className="mb-2 flex flex-wrap gap-2">
+          {skills.map((skill: Skill) => {
+            const active = form.skills.includes(skill.id);
+            return (
+              <button
+                key={skill.id}
+                type="button"
+                onClick={() => handleToggleSkill(skill.id)}
+                className={`rounded border px-2 py-0.5 text-xs ${
+                  active
+                    ? "border-blue-500 bg-blue-900 text-blue-300"
+                    : "border-slate-600 text-slate-300 hover:bg-slate-800"
+                }`}
+              >
+                {skill.name}
+              </button>
+            );
+          })}
+
+          {skills.length === 0 && (
+            <span className="text-xs text-slate-500">
+              No skills yet. Add one below.
+            </span>
+          )}
+        </div>
+
+        <input
+          type="text"
+          placeholder="Type a skill and press Enter"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              const target = e.target as HTMLInputElement;
+              handleAddSkillFromInput(target.value);
+              target.value = "";
+            }
+          }}
+          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-100"
+        />
+      </div>
+    </>
+  );
+}

@@ -1,42 +1,44 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import StaffFilter from "./StaffFilter";
-import StaffList from "./StaffList";
-import AddStaff from "./AddStaff";
 import { useStaffStore } from "@/store/staffStore";
+import AddStaff from "./AddStaff";
+import StaffList from "./StaffList";
 
 interface StaffSelectorProps {
   isFree: boolean;
 }
 
 export default function StaffSelector({ isFree }: StaffSelectorProps) {
-  const [filteredIds, setFilteredIds] = useState<string[]>([]);
   const { staff, selectedStaffIds } = useStaffStore();
 
-  const handleFilteredIdsChange = useCallback((ids: string[]) => {
-    setFilteredIds(ids);
-  }, []);
+  const visibleIds = staff.filter((s) => !s.archived).map((s) => s.id);
 
-  const effectiveIds =
-    filteredIds.length > 0
-      ? filteredIds
-      : staff.filter((s) => !s.archived).map((s) => s.id);
+  // ⭐ AddStaff already manages its own modal internally.
+  // We simply pass its openEditModal callback down to StaffList.
+  const handleEdit = (id: string) => {
+    // AddStaff exposes a global modal trigger via a custom event
+    // We dispatch it here so AddStaff opens in edit mode.
+    document.dispatchEvent(
+      new CustomEvent("georoute-edit-staff", { detail: { id } })
+    );
+  };
 
   return (
-    <div className="space-y-4 rounded border border-gray-200 p-4">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-base font-semibold">Staff selection</h2>
-        <span className="text-xs text-gray-500">
-          Selected: {selectedStaffIds.length}
-        </span>
+    <div className="space-y-4 rounded border border-slate-700 bg-slate-900 p-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-semibold text-slate-200">
+          Staff{" "}
+          <span className="text-slate-500">
+            (Selected: {selectedStaffIds.length})
+          </span>
+        </h2>
+
+        {/* AddStaff button (triggerOnly mode) */}
+        <AddStaff isFree={isFree} triggerOnly />
       </div>
 
-      <AddStaff isFree={isFree} />
-
-      <StaffFilter onFilteredIdsChange={handleFilteredIdsChange} />
-
-      <StaffList visibleIds={effectiveIds} />
+      {/* Staff list now receives onEdit */}
+      <StaffList visibleIds={visibleIds} onEdit={handleEdit} />
     </div>
   );
 }

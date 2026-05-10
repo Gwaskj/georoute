@@ -40,16 +40,14 @@ function hashColor(id: string): string {
   return `hsl(${hue}, 70%, 55%)`;
 }
 
-export default function StaffSelector({ isFree, onSelectStaff }: StaffSelectorProps) {
-  const supabase = createSupabaseBrowserClient();
+// ⭐ FIX: Create Supabase client ONCE at module level
+const supabase = createSupabaseBrowserClient();
 
+export default function StaffSelector({ isFree, onSelectStaff }: StaffSelectorProps) {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // -----------------------------
-  // FREE MODE: sessionStorage load
-  // -----------------------------
   function loadFreeStaff() {
     const raw = sessionStorage.getItem("free_scheduler_data");
     if (!raw) return [];
@@ -62,9 +60,6 @@ export default function StaffSelector({ isFree, onSelectStaff }: StaffSelectorPr
     }
   }
 
-  // -----------------------------
-  // FREE MODE: sessionStorage save
-  // -----------------------------
   function saveFreeStaff(updated: Staff[]) {
     const raw = sessionStorage.getItem("free_scheduler_data");
     const base = raw ? JSON.parse(raw) : {};
@@ -77,9 +72,6 @@ export default function StaffSelector({ isFree, onSelectStaff }: StaffSelectorPr
     sessionStorage.setItem("free_scheduler_data", JSON.stringify(updatedData));
   }
 
-  // -----------------------------
-  // LOAD STAFF (Free or Pro)
-  // -----------------------------
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -91,7 +83,6 @@ export default function StaffSelector({ isFree, onSelectStaff }: StaffSelectorPr
         return;
       }
 
-      // PRO MODE — load from Supabase
       const { data, error } = await supabase
         .from("staff")
         .select("*")
@@ -108,11 +99,8 @@ export default function StaffSelector({ isFree, onSelectStaff }: StaffSelectorPr
     }
 
     load();
-  }, [isFree, supabase]);
+  }, [isFree]);
 
-  // -----------------------------
-  // SELECT STAFF
-  // -----------------------------
   function toggleStaff(id: string) {
     setSelectedIds((prev) => {
       const exists = prev.includes(id);
@@ -127,9 +115,6 @@ export default function StaffSelector({ isFree, onSelectStaff }: StaffSelectorPr
     });
   }
 
-  // -----------------------------
-  // FREE MODE LIMIT: Max 2 staff
-  // -----------------------------
   const freeLimitReached = isFree && staff.length >= 2;
 
   return (
@@ -148,7 +133,6 @@ export default function StaffSelector({ isFree, onSelectStaff }: StaffSelectorPr
         )}
       </div>
 
-      {/* FREE LIMIT WARNING */}
       {isFree && freeLimitReached && (
         <p className="text-[11px] text-amber-300">
           Free limit reached — max 2 staff.

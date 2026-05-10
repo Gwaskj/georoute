@@ -1,3 +1,5 @@
+// src/lib/scheduler/types.ts
+
 import { Staff } from "@/store/staffStore";
 import { Appointment } from "@/store/appointmentStore";
 import { CallPurpose } from "@/store/callPurposeStore";
@@ -9,8 +11,8 @@ export interface ScheduledVisit {
   staffId: string;
   clientName: string;
   staffName: string;
-  start: string; // ISO datetime
-  end: string;   // ISO datetime
+  start: string;
+  end: string;
   postcode: string;
 }
 
@@ -20,8 +22,8 @@ export interface SchedulerContext {
   purposes: CallPurpose[];
   windows: CustomWindow[];
   officePostcode: string | null;
-  dayStart: string; // "08:00"
-  dayEnd: string;   // "20:00"
+  dayStart: string;
+  dayEnd: string;
 }
 
 export interface SchedulerResult {

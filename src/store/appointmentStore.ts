@@ -1,3 +1,5 @@
+// src/store/appointmentStore.ts
+
 import { create } from "zustand";
 
 export interface Appointment {
@@ -8,16 +10,21 @@ export interface Appointment {
   address: string;
   postcode: string;
 
-  strictStartTime?: string | null; // "HH:mm"
+  strictStartTime?: string | null;
   durationMinutes: number;
 
-  requiredStaff: number; // 1–5
+  requiredStaff: number;
 
   purposeId?: string | null;
-  visitsRequired: number; // 1–10
-  minGapMinutes: number; // default 120
+  visitsRequired: number;
+  minGapMinutes: number;
 
   notes: string;
+
+  staffGender: string | null;
+  requiredSkills: string[];
+
+  requiredWindows: string[];   // ⭐ NEW FIELD
 
   archived: boolean;
 }
@@ -50,53 +57,75 @@ function persistAppointments(appointments: Appointment[]) {
   if (typeof window === "undefined") return;
   try {
     window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(appointments));
-  } catch {
-    // ignore
-  }
+  } catch {}
 }
 
 export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   appointments: [],
+
   setAppointments: (appointments) => {
     persistAppointments(appointments);
     set({ appointments });
   },
+
   addAppointment: (data) => {
     const appointment: Appointment = {
       id: crypto.randomUUID(),
       archived: false,
+
+      // defaults
+      staffGender: data.staffGender ?? null,
+      requiredSkills: data.requiredSkills ?? [],
+      requiredWindows: data.requiredWindows ?? [],   // ⭐ NEW DEFAULT
+
       ...data,
     };
+
     const appointments = [...get().appointments, appointment];
     persistAppointments(appointments);
     set({ appointments });
     return appointment;
   },
+
   updateAppointment: (id, updates) => {
     const appointments = get().appointments.map((a) =>
-      a.id === id ? { ...a, ...updates } : a
+      a.id === id
+        ? {
+            ...a,
+            ...updates,
+            requiredSkills: updates.requiredSkills ?? a.requiredSkills,
+            requiredWindows: updates.requiredWindows ?? a.requiredWindows, // ⭐ NEW
+          }
+        : a
     );
     persistAppointments(appointments);
     set({ appointments });
   },
+
   deleteAppointment: (id) => {
     const appointments = get().appointments.filter((a) => a.id !== id);
     persistAppointments(appointments);
     set({ appointments });
   },
+
   duplicateAppointment: (id) => {
     const original = get().appointments.find((a) => a.id === id);
     if (!original) return;
+
     const copy: Appointment = {
       ...original,
       id: crypto.randomUUID(),
       name: `${original.name} (copy)`,
       archived: false,
+      requiredSkills: [...original.requiredSkills],
+      requiredWindows: [...original.requiredWindows], // ⭐ NEW
     };
+
     const appointments = [...get().appointments, copy];
     persistAppointments(appointments);
     set({ appointments });
   },
+
   archiveAppointment: (id) => {
     const appointments = get().appointments.map((a) =>
       a.id === id ? { ...a, archived: true } : a
@@ -112,4 +141,3 @@ if (typeof window !== "undefined") {
     useAppointmentStore.getState().setAppointments(initial);
   }
 }
-

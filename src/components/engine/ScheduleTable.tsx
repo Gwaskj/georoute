@@ -51,18 +51,16 @@ function hasConflict(a: AppointmentRow, b: AppointmentRow): boolean {
   return b.staff.some((s) => aStaffIds.has(s.id));
 }
 
-export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTableProps) {
-  const supabase = createSupabaseBrowserClient();
+// ⭐ FIX: Create Supabase client ONCE
+const supabase = createSupabaseBrowserClient();
 
+export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTableProps) {
   const highlightedAppointmentId = useHighlightStore((s) => s.highlightedAppointmentId);
   const setHighlightedAppointment = useHighlightStore((s) => s.setHighlightedAppointment);
 
   const [rows, setRows] = useState<AppointmentRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // -----------------------------
-  // FREE MODE: Load from sessionStorage
-  // -----------------------------
   function loadFreeAppointments(): AppointmentRow[] {
     const raw = sessionStorage.getItem("free_scheduler_data");
     if (!raw) return [];
@@ -75,9 +73,6 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
     }
   }
 
-  // -----------------------------
-  // LOAD APPOINTMENTS (Free or Pro)
-  // -----------------------------
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -89,7 +84,6 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
         return;
       }
 
-      // PRO MODE — load from Supabase
       const { data, error } = await supabase
         .from("appointments")
         .select(
@@ -124,7 +118,6 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
 
     load();
 
-    // PRO MODE realtime updates
     if (!isFree) {
       const channel = supabase
         .channel("schedule-table-engine")
@@ -139,11 +132,8 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
         supabase.removeChannel(channel);
       };
     }
-  }, [isFree, supabase]);
+  }, [isFree]);
 
-  // -----------------------------
-  // CONFLICT DETECTION
-  // -----------------------------
   const conflictIds = useMemo(() => {
     const ids = new Set<string>();
     for (let i = 0; i < rows.length; i++) {
@@ -157,9 +147,6 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
     return ids;
   }, [rows]);
 
-  // -----------------------------
-  // LOADING STATE
-  // -----------------------------
   if (loading) {
     return (
       <div className="w-full rounded border border-slate-800 bg-slate-950 p-4">
@@ -168,9 +155,6 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
     );
   }
 
-  // -----------------------------
-  // TABLE RENDER
-  // -----------------------------
   return (
     <div className="w-full rounded border border-slate-800 bg-slate-950 p-4">
       <div className="mb-3 flex items-center justify-between">
@@ -228,7 +212,6 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
                   transition: "background-color 120ms ease",
                 }}
               >
-                {/* STAFF */}
                 <td className="py-2 align-top">
                   {row.staff.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
@@ -250,7 +233,6 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
                   )}
                 </td>
 
-                {/* CLIENTS */}
                 <td className="py-2 align-top">
                   {row.clients.length > 0 ? (
                     row.clients.map((c) => c.name).join(", ")
@@ -259,7 +241,6 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
                   )}
                 </td>
 
-                {/* START TIME */}
                 {showTimes && (
                   <td className="py-2 align-top text-slate-200">
                     {row.start_time
@@ -271,7 +252,6 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
                   </td>
                 )}
 
-                {/* END TIME + CONFLICT BADGE */}
                 {showTimes && (
                   <td className="py-2 align-top">
                     <div className="flex items-center gap-2">
@@ -300,4 +280,3 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
     </div>
   );
 }
-

@@ -1,3 +1,5 @@
+// src/store/staffStore.ts
+
 import { create } from "zustand";
 
 export type Gender = "Male" | "Female" | "Other";
@@ -7,9 +9,10 @@ export interface Staff {
   name: string;
   homePostcode: string;
   officePostcode: string;
-  dateOfBirth: string; // ISO string
+  dateOfBirth: string;
   gender: Gender | "";
-  skillIds: string[];
+  skills: string[];
+  colour: string;          // ⭐ NEW
   archived: boolean;
 }
 
@@ -17,7 +20,7 @@ interface StaffState {
   staff: Staff[];
   selectedStaffIds: string[];
   setStaff: (staff: Staff[]) => void;
-  addStaff: (staff: Omit<Staff, "id" | "archived">) => Staff;
+  addStaff: (staff: Omit<Staff, "id" | "archived" | "colour">) => Staff;
   updateStaff: (id: string, updates: Partial<Staff>) => void;
   deleteStaff: (id: string) => void;
   duplicateStaff: (id: string) => void;
@@ -26,6 +29,18 @@ interface StaffState {
 }
 
 const STORAGE_KEY = "georoute_staff";
+
+// Simple deterministic colour generator
+function generateColour(): string {
+  const colours = [
+    "#e6194b", "#3cb44b", "#ffe119", "#4363d8",
+    "#f58231", "#911eb4", "#46f0f0", "#f032e6",
+    "#bcf60c", "#fabebe", "#008080", "#e6beff",
+    "#9a6324", "#fffac8", "#800000", "#aaffc3",
+    "#808000", "#ffd8b1", "#000075", "#808080"
+  ];
+  return colours[Math.floor(Math.random() * colours.length)];
+}
 
 function loadInitialStaff(): Staff[] {
   if (typeof window === "undefined") return [];
@@ -43,22 +58,24 @@ function persistStaff(staff: Staff[]) {
   if (typeof window === "undefined") return;
   try {
     window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(staff));
-  } catch {
-    // ignore
-  }
+  } catch {}
 }
 
 export const useStaffStore = create<StaffState>((set, get) => ({
   staff: [],
   selectedStaffIds: [],
+
   setStaff: (staff) => {
     persistStaff(staff);
     set({ staff });
   },
+
   addStaff: (data) => {
     const newStaff: Staff = {
       id: crypto.randomUUID(),
       archived: false,
+      skills: data.skills ?? [],
+      colour: generateColour(),     // ⭐ NEW
       ...data,
     };
     const staff = [...get().staff, newStaff];
@@ -66,18 +83,31 @@ export const useStaffStore = create<StaffState>((set, get) => ({
     set({ staff });
     return newStaff;
   },
+
   updateStaff: (id, updates) => {
     const staff = get().staff.map((s) =>
-      s.id === id ? { ...s, ...updates } : s
+      s.id === id
+        ? {
+            ...s,
+            ...updates,
+            skills: updates.skills ?? s.skills,
+            colour: updates.colour ?? s.colour,   // ⭐ PRESERVE COLOUR
+          }
+        : s
     );
     persistStaff(staff);
     set({ staff });
   },
+
   deleteStaff: (id) => {
     const staff = get().staff.filter((s) => s.id !== id);
     persistStaff(staff);
-    set({ staff, selectedStaffIds: get().selectedStaffIds.filter((x) => x !== id) });
+    set({
+      staff,
+      selectedStaffIds: get().selectedStaffIds.filter((x) => x !== id),
+    });
   },
+
   duplicateStaff: (id) => {
     const original = get().staff.find((s) => s.id === id);
     if (!original) return;
@@ -86,11 +116,14 @@ export const useStaffStore = create<StaffState>((set, get) => ({
       id: crypto.randomUUID(),
       name: `${original.name} (copy)`,
       archived: false,
+      skills: [...original.skills],
+      colour: generateColour(),     // ⭐ NEW COLOUR FOR COPY
     };
     const staff = [...get().staff, copy];
     persistStaff(staff);
     set({ staff });
   },
+
   archiveStaff: (id) => {
     const staff = get().staff.map((s) =>
       s.id === id ? { ...s, archived: true } : s
@@ -98,10 +131,10 @@ export const useStaffStore = create<StaffState>((set, get) => ({
     persistStaff(staff);
     set({ staff });
   },
+
   setSelectedStaffIds: (ids) => set({ selectedStaffIds: ids }),
 }));
 
-// hydrate from sessionStorage on first import (browser only)
 if (typeof window !== "undefined") {
   const initial = loadInitialStaff();
   if (initial.length) {

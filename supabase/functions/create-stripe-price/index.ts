@@ -1,3 +1,4 @@
+// @ts-nocheck
 // supabase/functions/create-stripe-price/index.ts
 import Stripe from "stripe";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";

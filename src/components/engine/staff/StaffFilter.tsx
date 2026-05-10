@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSkillsStore, Skill } from "@/store/skillsStore";
 import { useStaffStore, Staff } from "@/store/staffStore";
 
@@ -24,11 +24,11 @@ export default function StaffFilter({ onFilteredIdsChange }: StaffFilterProps) {
       if (!dob) return null;
       const birth = new Date(dob);
       if (Number.isNaN(birth.getTime())) return null;
+
       let age = now.getFullYear() - birth.getFullYear();
       const m = now.getMonth() - birth.getMonth();
-      if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
-        age--;
-      }
+      if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+
       return age;
     };
 
@@ -36,7 +36,7 @@ export default function StaffFilter({ onFilteredIdsChange }: StaffFilterProps) {
       .filter((s: Staff) => !s.archived)
       .filter((s: Staff) => {
         if (selectedSkillIds.length > 0) {
-          const hasAll = selectedSkillIds.every((id) => s.skillIds.includes(id));
+          const hasAll = selectedSkillIds.every((id) => s.skills.includes(id));
           if (!hasAll) return false;
         }
 
@@ -54,7 +54,8 @@ export default function StaffFilter({ onFilteredIdsChange }: StaffFilterProps) {
       .map((s: Staff) => s.id);
   }, [staff, selectedSkillIds, gender, minAge, maxAge]);
 
-  useMemo(() => {
+  // ⭐ FIXED: useEffect instead of useMemo for side-effect
+  useEffect(() => {
     onFilteredIdsChange(filteredIds);
   }, [filteredIds, onFilteredIdsChange]);
 
@@ -65,25 +66,11 @@ export default function StaffFilter({ onFilteredIdsChange }: StaffFilterProps) {
   };
 
   return (
-    <div className="space-y-3 rounded border border-gray-200 p-3 text-sm">
-      <div className="flex items-center justify-between">
-        <span className="font-medium">Filter staff</span>
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedSkillIds([]);
-            setGender("");
-            setMinAge("");
-            setMaxAge("");
-          }}
-          className="text-xs text-blue-600 hover:underline"
-        >
-          Clear
-        </button>
-      </div>
+    <div className="space-y-4 rounded border border-slate-700 bg-slate-900 p-4 text-sm">
+      <h3 className="text-sm font-semibold text-slate-200">Filter staff</h3>
 
       <div>
-        <div className="mb-1 text-xs font-medium text-gray-700">Skills</div>
+        <div className="mb-1 text-xs font-medium text-slate-300">Skills</div>
         <div className="flex flex-wrap gap-2">
           {skills.map((skill: Skill) => {
             const active = selectedSkillIds.includes(skill.id);
@@ -94,16 +81,17 @@ export default function StaffFilter({ onFilteredIdsChange }: StaffFilterProps) {
                 onClick={() => toggleSkill(skill.id)}
                 className={`rounded border px-2 py-0.5 text-xs ${
                   active
-                    ? "border-blue-500 bg-blue-50 text-blue-700"
-                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    ? "border-blue-500 bg-blue-900 text-blue-300"
+                    : "border-slate-600 text-slate-300 hover:bg-slate-800"
                 }`}
               >
                 {skill.name}
               </button>
             );
           })}
+
           {skills.length === 0 && (
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-slate-500">
               No skills yet. Add some in the staff form.
             </span>
           )}
@@ -111,11 +99,11 @@ export default function StaffFilter({ onFilteredIdsChange }: StaffFilterProps) {
       </div>
 
       <div>
-        <div className="mb-1 text-xs font-medium text-gray-700">Gender</div>
+        <div className="mb-1 text-xs font-medium text-slate-300">Gender</div>
         <select
           value={gender}
           onChange={(e) => setGender(e.target.value)}
-          className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-100"
         >
           <option value="">Any</option>
           <option value="Male">Male</option>
@@ -126,24 +114,38 @@ export default function StaffFilter({ onFilteredIdsChange }: StaffFilterProps) {
 
       <div className="flex gap-2">
         <div className="flex-1">
-          <div className="mb-1 text-xs font-medium text-gray-700">Min age</div>
+          <div className="mb-1 text-xs font-medium text-slate-300">Min age</div>
           <input
             type="number"
             value={minAge}
             onChange={(e) => setMinAge(e.target.value)}
-            className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-100"
           />
         </div>
+
         <div className="flex-1">
-          <div className="mb-1 text-xs font-medium text-gray-700">Max age</div>
+          <div className="mb-1 text-xs font-medium text-slate-300">Max age</div>
           <input
             type="number"
             value={maxAge}
             onChange={(e) => setMaxAge(e.target.value)}
-            className="w-full rounded border border-gray-300 px-2 py-1 text-sm"
+            className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-100"
           />
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          setSelectedSkillIds([]);
+          setGender("");
+          setMinAge("");
+          setMaxAge("");
+        }}
+        className="text-xs text-blue-400 hover:underline"
+      >
+        Clear filters
+      </button>
     </div>
   );
 }

@@ -13,7 +13,7 @@ import RouteSummary from "@/components/engine/RouteSummary";
 import MapVisualizer from "@/components/engine/MapVisualizer.client";
 
 export default function SchedulePage() {
-  const { isFree } = useUserTier();
+  const isFree = useUserTier(); // ✅ FIXED — no destructuring
 
   return (
     <div className="flex flex-col gap-8 p-6">
@@ -22,7 +22,7 @@ export default function SchedulePage() {
 
       <AddAppointment isFree={isFree} />
 
-     <CustomWindowsManager isFree={isFree} />
+      <CustomWindowsManager isFree={isFree} />
 
       <StaffSelector isFree={isFree} />
 

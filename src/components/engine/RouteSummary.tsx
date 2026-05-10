@@ -9,8 +9,10 @@ type RouteSummaryData = {
   vehicles: number;
 };
 
+// ⭐ FIX: Create Supabase client ONCE at module level
+const supabase = createSupabaseBrowserClient();
+
 export default function RouteSummary({ isFree }: { isFree: boolean }) {
-  const supabase = createSupabaseBrowserClient();
   const [summary, setSummary] = useState<RouteSummaryData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -18,18 +20,12 @@ export default function RouteSummary({ isFree }: { isFree: boolean }) {
     async function load() {
       setLoading(true);
 
-      // -----------------------------
-      // FREE MODE: No Supabase summary
-      // -----------------------------
       if (isFree) {
         setSummary(null);
         setLoading(false);
         return;
       }
 
-      // -----------------------------
-      // PRO MODE: Load from Supabase
-      // -----------------------------
       const { data, error } = await supabase
         .from("route_summary")
         .select("*")
@@ -47,7 +43,6 @@ export default function RouteSummary({ isFree }: { isFree: boolean }) {
 
     load();
 
-    // PRO MODE realtime updates
     if (!isFree) {
       const channel = supabase
         .channel("route-summary-updates")
@@ -62,7 +57,7 @@ export default function RouteSummary({ isFree }: { isFree: boolean }) {
         supabase.removeChannel(channel);
       };
     }
-  }, [isFree, supabase]);
+  }, [isFree]);
 
   return (
     <div className="w-full rounded border border-slate-800 bg-slate-950 p-4">

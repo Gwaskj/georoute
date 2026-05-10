@@ -1,3 +1,4 @@
+// @ts-nocheck
 // @ts-ignore: Remote module import is valid in Deno
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 // @ts-ignore: Remote module import is valid in Deno
