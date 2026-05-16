@@ -1,28 +1,38 @@
 "use client";
 
+import { useUserTier } from "@/lib/hooks/useUserTier";
+
 import StaffSelector from "@/components/engine/StaffSelector";
+import AddStaff from "@/components/engine/staff/AddStaff";
+import AddAppointment from "@/components/engine/appointments/AddAppointment";
+import CustomWindowsManager from "@/components/engine/windows/CustomWindowsManager";
+
 import GenerateSchedule from "@/components/engine/GenerateSchedule";
 import ScheduleTable from "@/components/engine/ScheduleTable";
 import RouteSummary from "@/components/engine/RouteSummary";
 import MapVisualizer from "@/components/engine/MapVisualizer.client";
 
 export default function SchedulePage() {
+  const isFree = useUserTier(); // ✅ FIXED — no destructuring
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Schedule Generator</h1>
+    <div className="flex flex-col gap-8 p-6">
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="space-y-4">
-          <StaffSelector />
-          <GenerateSchedule algorithm="default" />   {/* FIXED */}
-        </div>
+      <AddStaff isFree={isFree} />
 
-        <div className="md:col-span-2 space-y-4">
-          <ScheduleTable />
-          <RouteSummary />
-          <MapVisualizer />
-        </div>
-      </div>
+      <AddAppointment isFree={isFree} />
+
+      <CustomWindowsManager isFree={isFree} />
+
+      <StaffSelector isFree={isFree} />
+
+      <GenerateSchedule algorithm="default" isFree={isFree} />
+
+      <ScheduleTable isFree={isFree} />
+
+      <RouteSummary isFree={isFree} />
+
+      <MapVisualizer isFree={isFree} />
     </div>
   );
 }

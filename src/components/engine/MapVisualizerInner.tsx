@@ -11,7 +11,7 @@ import {
 import "leaflet/dist/leaflet.css";
 import styles from "./MapVisualizer.module.css";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useHighlightStore } from "@/lib/map/highlightStore";
 
@@ -19,6 +19,8 @@ import L from "leaflet";
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
+// ⭐ THIS MUST BE HERE — OUTSIDE THE COMPONENT
+const supabase = createSupabaseBrowserClient();
 const DefaultIcon = L.icon({
   iconUrl,
   shadowUrl: iconShadow,
@@ -27,13 +29,42 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 function MapInitializer({ zoom }: { zoom: number }) {
   const map = useMap();
-  map.setView([53.0, -2.2], zoom);
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "© OpenStreetMap contributors",
-  }).addTo(map);
+  useEffect(() => {
+    if ((map as any)._initialized) return;
+    (map as any)._initialized = true;
+
+    map.setView([53.0, -2.2], zoom);
+    map.zoomControl.remove();
+
+    if (!(map as any)._tileLayer) {
+      const tileLayer = L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        { attribution: "© OpenStreetMap contributors" }
+      );
+      tileLayer.addTo(map);
+      (map as any)._tileLayer = tileLayer;
+    }
+  }, [map, zoom]);
 
   return null;
+}
+
+function StableMapWrapper({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (ref.current && !ready) {
+      setReady(true);
+    }
+  }, [ref.current, ready]);
+
+  return (
+    <div ref={ref} className={styles.wrapper}>
+      {ready && children}
+    </div>
+  );
 }
 
 type Route = {
@@ -51,19 +82,50 @@ type AppointmentMarker = {
   color: string;
 };
 
-export default function MapVisualizer({
+function StaffFocus({
+  selectedStaffId,
+  routes,
+}: {
+  selectedStaffId?: string | null;
+  routes: Route[];
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!selectedStaffId) return;
+
+    const staffRoutes = routes.filter(
+      (r) => r.staff_id === selectedStaffId && r.points.length > 0
+    );
+    if (staffRoutes.length === 0) return;
+
+    const latlngs = staffRoutes.flatMap((r) =>
+      r.points.map((p) => L.latLng(p[0], p[1]))
+    );
+    if (latlngs.length === 0) return;
+
+    const bounds = L.latLngBounds(latlngs);
+    map.fitBounds(bounds, { padding: [40, 40] });
+  }, [selectedStaffId, routes, map]);
+
+  return null;
+}
+
+export default function MapVisualizerInner({
+  isFree,
   zoom = 12,
   showRoutes = true,
   showAppointments = true,
   showStaffRoutes = true,
+  selectedStaffId,
 }: {
+  isFree: boolean;
   zoom?: number;
   showRoutes?: boolean;
   showAppointments?: boolean;
   showStaffRoutes?: boolean;
+  selectedStaffId?: string | null;
 }) {
-  const supabase = createSupabaseBrowserClient();
-
   const highlightedAppointmentId = useHighlightStore(
     (s) => s.highlightedAppointmentId
   );
@@ -71,44 +133,44 @@ export default function MapVisualizer({
     (s) => s.setHighlightedAppointment
   );
 
-  const highlightedRouteId = useHighlightStore(
-    (s) => s.highlightedRouteId
-  );
-  const setHighlightedRoute = useHighlightStore(
-    (s) => s.setHighlightedRoute
-  );
+  const highlightedRouteId = useHighlightStore((s) => s.highlightedRouteId);
+  const setHighlightedRoute = useHighlightStore((s) => s.setHighlightedRoute);
 
   const [routes, setRoutes] = useState<Route[]>([]);
   const [appointments, setAppointments] = useState<AppointmentMarker[]>([]);
 
+  const [mapKey] = useState(() => crypto.randomUUID());
+
   useEffect(() => {
+    if (isFree) {
+      setRoutes([]);
+      setAppointments([]);
+      return;
+    }
+
     async function loadRoutes() {
       const { data } = await supabase.from("routes").select("*");
-
-      const parsed =
+      setRoutes(
         data?.map((r: any) => ({
           id: r.id,
           staff_id: r.staff_id ?? null,
           color: r.color ?? "#0070f3",
           points: r.points ?? [],
-        })) ?? [];
-
-      setRoutes(parsed);
+        })) ?? []
+      );
     }
 
     async function loadAppointments() {
       const { data } = await supabase.from("appointments").select("*");
-
-      const parsed =
+      setAppointments(
         data?.map((a: any) => ({
           id: a.id,
           lat: a.lat ?? 53.0,
           lng: a.lng ?? -2.2,
           label: a.label ?? "Appointment",
           color: a.color ?? "#d00000",
-        })) ?? [];
-
-      setAppointments(parsed);
+        })) ?? []
+      );
     }
 
     loadRoutes();
@@ -131,21 +193,43 @@ export default function MapVisualizer({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase]);
+  }, [isFree]);
 
   return (
-    <div className={styles.wrapper}>
-      <MapContainer className={styles.map}>
+    <StableMapWrapper>
+      <MapContainer key={mapKey} className={styles.map}>
         <ZoomControl position="topright" />
         <MapInitializer zoom={zoom} />
+        <StaffFocus selectedStaffId={selectedStaffId} routes={routes} />
 
         <Marker position={[53.0, -2.2]}>
           <Popup>GeoRoute HQ</Popup>
         </Marker>
 
-        {showRoutes &&
+        {/* ROUTES */}
+        {!isFree &&
+          showRoutes &&
           routes.map((route) => {
             const isHighlighted = highlightedRouteId === route.id;
+            const isSelectedStaffRoute =
+              selectedStaffId && route.staff_id === selectedStaffId;
+
+            let weight = 4;
+            let opacity = showStaffRoutes ? 0.9 : 0.5;
+
+            if (selectedStaffId) {
+              if (isSelectedStaffRoute) {
+                opacity = 1;
+                weight = 6;
+              } else {
+                opacity = 0.12;
+              }
+            }
+
+            if (isHighlighted) {
+              opacity = 1;
+              weight = 7;
+            }
 
             return (
               <Polyline
@@ -156,14 +240,16 @@ export default function MapVisualizer({
                 }}
                 pathOptions={{
                   color: route.color,
-                  weight: isHighlighted ? 7 : 4,
-                  opacity: isHighlighted ? 1 : showStaffRoutes ? 0.9 : 0.5,
+                  weight,
+                  opacity,
                 }}
               />
             );
           })}
 
-        {showAppointments &&
+        {/* APPOINTMENTS */}
+        {!isFree &&
+          showAppointments &&
           appointments.map((a) => {
             const isHighlighted = highlightedAppointmentId === a.id;
 
@@ -185,7 +271,10 @@ export default function MapVisualizer({
                       border:2px solid white;
                       box-shadow:0 0 6px rgba(0,0,0,0.5);
                     "></div>`,
-                    iconSize: [isHighlighted ? 20 : 14, isHighlighted ? 20 : 14],
+                    iconSize: [
+                      isHighlighted ? 20 : 14,
+                      isHighlighted ? 20 : 14,
+                    ],
                   }),
                 } as any)}
               >
@@ -194,6 +283,6 @@ export default function MapVisualizer({
             );
           })}
       </MapContainer>
-    </div>
+    </StableMapWrapper>
   );
 }

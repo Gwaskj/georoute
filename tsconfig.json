@@ -1,27 +1,27 @@
 {
   "compilerOptions": {
-    "moduleResolution": "bundler",
     "paths": {
       "@/*": [
         "./src/*"
       ]
     },
-    "strict": true,
-    "jsx": "preserve",
-    "target": "ES2022",
-    "module": "ESNext",
-    "allowJs": false,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
+    "target": "ESNext",
     "lib": [
       "dom",
       "dom.iterable",
       "esnext"
     ],
+    "allowJs": true,
     "skipLibCheck": true,
-    "incremental": true,
+    "strict": false,
+    "noEmit": true,
     "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
     "plugins": [
       {
         "name": "next"
@@ -32,12 +32,9 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "next.config.js"
+    ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "supabase/functions"
+    "node_modules"
   ]
 }

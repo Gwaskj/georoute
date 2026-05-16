@@ -1,12 +1,23 @@
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+"use server";
+
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function isProUser() {
-  const supabase = createSupabaseBrowserClient();
+  const supabase = await createSupabaseServerClient(); // ✅ FIXED — await it
 
-  const { data } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return false;
+
+  const { data, error } = await supabase
     .from("profiles")
-    .select("is_pro")
+    .select("tier")
+    .eq("id", user.id)
     .single();
 
-  return data?.is_pro === true;
+  if (error) return false;
+
+  return data?.tier === "pro";
 }
