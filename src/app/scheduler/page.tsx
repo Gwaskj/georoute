@@ -1,29 +1,26 @@
-import SchedulePage from "@/components/schedule/SchedulePage";
+export const dynamic = "force-dynamic";
+
+import { getUser } from "@/lib/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import SchedulePage from "@/components/schedule/SchedulePage";
 
-export default async function Page() {
-  const supabase = await createSupabaseServerClient();
+export default async function SchedulerPage() {
+  const user = await getUser();
+  console.log("SERVER USER:", user);
 
-  // Get user (may be null)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  let isPro = false;
+  let isFree = true;
 
   if (user) {
-    const { data: profile } = await supabase
+    const supabase = createSupabaseServerClient();
+
+    const { data } = await supabase
       .from("profiles")
       .select("is_pro")
-      .eq("id", user.id)
-      .maybeSingle();
+      .eq("user_id", user.id)
+      .single();
 
-    isPro = profile?.is_pro === true;
+    isFree = !data?.is_pro;
   }
-
-  // Free = not logged in OR logged in but not Pro
-  const isFree = !isPro;
 
   return <SchedulePage isFree={isFree} />;
 }
-

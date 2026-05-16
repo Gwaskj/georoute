@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/supabase/supabaseClient";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import AdBanner from "@/components/AdBanner";
 
 export default function PricingPage() {
+  const supabase = createSupabaseBrowserClient();
+
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [plans, setPlans] = useState<any[]>([]);
@@ -21,7 +23,7 @@ export default function PricingPage() {
         const { data: profileData } = await supabase
           .from("profiles")
           .select("is_pro, is_admin")
-          .eq("id", currentUser.id)
+          .eq("user_id", currentUser.id)
           .single();
 
         setProfile(profileData);
@@ -37,7 +39,7 @@ export default function PricingPage() {
     }
 
     load();
-  }, []);
+  }, [supabase]);
 
   if (loading) return null;
 

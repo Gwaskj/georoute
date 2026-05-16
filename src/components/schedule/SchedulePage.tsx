@@ -85,7 +85,7 @@ export default function SchedulePage({ isFree }: SchedulePageProps) {
 
 //
 // ────────────────────────────────────────────────────────────────
-//   SETUP VIEW (unchanged)
+//   SETUP VIEW
 // ────────────────────────────────────────────────────────────────
 //
 
@@ -119,7 +119,7 @@ function SetupView({ isFree }: { isFree: boolean }) {
 
 //
 // ────────────────────────────────────────────────────────────────
-//   RESULTS VIEW (NEW LAYOUT)
+//   RESULTS VIEW
 // ────────────────────────────────────────────────────────────────
 //
 
@@ -135,8 +135,8 @@ function ResultsView({ isFree }: { isFree: boolean }) {
 
   // BUILD SCHEDULER CONTEXT
   const ctx: SchedulerContext = {
-    staff: staff.filter((s) => !s.archived),
-    appointments: appointments.filter((a) => !a.archived),
+    staff,
+    appointments,
     purposes,
     windows,
     officePostcode,
@@ -161,10 +161,10 @@ function ResultsView({ isFree }: { isFree: boolean }) {
       <div className="flex flex-col">
         {/* MAP */}
         <div className="flex-1 min-h-[320px] rounded border border-slate-800 bg-slate-950 overflow-hidden">
-        <MapVisualizer
-  isFree={isFree}
-  selectedStaffId={selectedStaffId}
-/>
+          <MapVisualizer
+            isFree={isFree}
+            selectedStaffId={selectedStaffId}
+          />
         </div>
 
         {/* SUMMARY BAR */}
@@ -178,7 +178,7 @@ function ResultsView({ isFree }: { isFree: boolean }) {
 
       {/* RIGHT SIDE — STAFF RESULTS LIST */}
       <StaffResultsList
-        staff={staff.filter((s) => !s.archived)}
+        staff={staff}
         visits={visits}
         dayStart="06:00"
         dayEnd="22:00"

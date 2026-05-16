@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useStaffStore, Staff, Gender } from "@/store/staffStore";
 import { useSkillsStore, Skill } from "@/store/skillsStore";
 import { useOfficePostcodeStore } from "@/store/officePostcodeStore";
+import { isValidUKPostcode, normalisePostcode } from "@/lib/validatePostcode";
 
 interface AddStaffProps {
   isFree: boolean;
@@ -45,9 +46,7 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
     staff,
     addStaff,
     updateStaff,
-    duplicateStaff,
     deleteStaff,
-    archiveStaff,
     selectedStaffIds,
   } = useStaffStore();
 
@@ -58,18 +57,63 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState<StaffFormState>({
     ...emptyForm,
-    officePostcode: globalOfficePostcode, // ⭐ NEW: default to global
+    officePostcode: globalOfficePostcode,
   });
   const [isEditing, setIsEditing] = useState(false);
 
+  const [errors, setErrors] = useState<{ home?: string; office?: string }>({});
+
+  // ⭐⭐⭐ FIX: Add event listener for edit mode
+  useEffect(() => {
+    const handler = (e: any) => {
+      const { id } = e.detail;
+      const s = staff.find((x) => x.id === id);
+      if (!s) return;
+
+      setIsEditing(true);
+      setForm({
+        id: s.id,
+        name: s.name,
+        homePostcode: s.homePostcode,
+        officePostcode: s.officePostcode,
+        dateOfBirth: s.dateOfBirth,
+        gender: s.gender,
+        skills: [...s.skills],
+      });
+      setErrors({});
+      setIsModalOpen(true);
+    };
+
+    document.addEventListener("georoute-edit-staff", handler);
+    return () => document.removeEventListener("georoute-edit-staff", handler);
+  }, [staff]);
+
   const canAddMore = useMemo(() => {
     if (!isFree) return true;
-    return staff.filter((s: Staff) => !s.archived).length < 2;
+    return staff.length < 2;
   }, [isFree, staff]);
+
+  const validate = () => {
+    const newErrors: any = {};
+
+    if (!isValidUKPostcode(form.homePostcode)) {
+      newErrors.home = "Invalid UK postcode";
+    }
+
+    if (form.officePostcode.trim()) {
+      if (!isValidUKPostcode(form.officePostcode)) {
+        newErrors.office = "Invalid UK postcode";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const openAddModal = () => {
     setIsEditing(false);
-    setForm({ ...emptyForm, officePostcode: globalOfficePostcode }); // ⭐ NEW
+    setForm({ ...emptyForm, officePostcode: globalOfficePostcode });
+    setErrors({});
     setIsModalOpen(true);
   };
 
@@ -79,28 +123,31 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
       id: s.id,
       name: s.name,
       homePostcode: s.homePostcode,
-      officePostcode: s.officePostcode || "", // ⭐ NEW: allow blank to inherit
+      officePostcode: s.officePostcode,
       dateOfBirth: s.dateOfBirth,
       gender: s.gender,
-      skills: s.skills,
+      skills: [...s.skills],
     });
+    setErrors({});
     setIsModalOpen(true);
   };
 
   const handleSubmit = () => {
     if (!form.name.trim()) return;
+    if (!validate()) return;
 
-    // ⭐ NEW: Save global office postcode if user typed into the field
-    setOfficePostcode(form.officePostcode.trim());
+    const normalisedHome = normalisePostcode(form.homePostcode);
+    const normalisedOffice = form.officePostcode.trim()
+      ? normalisePostcode(form.officePostcode)
+      : globalOfficePostcode;
 
-    const finalOfficePostcode =
-      form.officePostcode.trim() || globalOfficePostcode || ""; // ⭐ NEW inheritance
+    setOfficePostcode(normalisedOffice);
 
     if (isEditing && form.id) {
       updateStaff(form.id, {
         name: form.name.trim(),
-        homePostcode: form.homePostcode.trim(),
-        officePostcode: finalOfficePostcode,
+        homePostcode: normalisedHome,
+        officePostcode: normalisedOffice,
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
         skills: form.skills,
@@ -109,8 +156,8 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
       if (!canAddMore) return;
       addStaff({
         name: form.name.trim(),
-        homePostcode: form.homePostcode.trim(),
-        officePostcode: finalOfficePostcode,
+        homePostcode: normalisedHome,
+        officePostcode: normalisedOffice,
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
         skills: form.skills,
@@ -118,7 +165,6 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
     }
 
     setIsModalOpen(false);
-    setForm({ ...emptyForm, officePostcode: globalOfficePostcode }); // ⭐ NEW
   };
 
   const handleToggleSkill = (skillId: string) => {
@@ -145,11 +191,8 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
     }));
   };
 
-  const activeStaff = staff.filter((s: Staff) => !s.archived);
+  const activeStaff = staff;
 
-  // -------------------------
-  // TRIGGER-ONLY MODE
-  // -------------------------
   if (triggerOnly) {
     return (
       <>
@@ -172,16 +215,13 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
             handleAddSkillFromInput={handleAddSkillFromInput}
             onClose={() => setIsModalOpen(false)}
             onSubmit={handleSubmit}
-            globalOfficePostcode={globalOfficePostcode} // ⭐ NEW
+            errors={errors}
           />
         )}
       </>
     );
   }
 
-  // -------------------------
-  // FULL STAFF LIST MODE
-  // -------------------------
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -226,29 +266,11 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
 
                 <button
                   type="button"
-                  onClick={() => duplicateStaff(s.id)}
-                  className="rounded border border-slate-600 px-2 py-0.5 hover:bg-slate-800"
-                >
-                  Duplicate
-                </button>
-
-                <button
-                  type="button"
                   onClick={() => deleteStaff(s.id)}
                   className="rounded border border-red-600 px-2 py-0.5 text-red-400 hover:bg-red-950"
                 >
                   Delete
                 </button>
-
-                {!isFree && (
-                  <button
-                    type="button"
-                    onClick={() => archiveStaff(s.id)}
-                    className="rounded border border-yellow-600 px-2 py-0.5 text-yellow-400 hover:bg-yellow-950"
-                  >
-                    Archive
-                  </button>
-                )}
               </div>
             </li>
           );
@@ -265,16 +287,13 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
           handleAddSkillFromInput={handleAddSkillFromInput}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleSubmit}
-          globalOfficePostcode={globalOfficePostcode} // ⭐ NEW
+          errors={errors}
         />
       )}
     </div>
   );
 }
 
-// ------------------------------------------------------
-// ⭐ Extracted modal UI with global postcode hint support
-// ------------------------------------------------------
 function StaffModalUI({
   isEditing,
   form,
@@ -284,11 +303,8 @@ function StaffModalUI({
   handleAddSkillFromInput,
   onClose,
   onSubmit,
-  globalOfficePostcode,
+  errors,
 }: any) {
-  const effectiveOfficePostcode =
-    form.officePostcode.trim() || globalOfficePostcode || "";
-
   return (
     <div className="modal-overlay">
       <div className="modal-container max-w-md">
@@ -311,28 +327,8 @@ function StaffModalUI({
             skills={skills}
             handleToggleSkill={handleToggleSkill}
             handleAddSkillFromInput={handleAddSkillFromInput}
+            errors={errors}
           />
-
-          {/* ⭐ NEW: Global office postcode inheritance hint */}
-          {globalOfficePostcode && !form.officePostcode.trim() && (
-            <p className="text-xs text-blue-300">
-              This staff member will use the global office postcode:{" "}
-              <strong>{globalOfficePostcode}</strong>
-            </p>
-          )}
-
-          {/* ⭐ NEW: Effective postcode preview */}
-          <div>
-            <label className="mb-1 block font-medium text-slate-200">
-              Effective office postcode
-            </label>
-            <input
-              type="text"
-              disabled
-              value={effectiveOfficePostcode}
-              className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1 text-slate-300"
-            />
-          </div>
         </div>
 
         <div className="modal-footer flex justify-end gap-2 p-4 border-t border-slate-700">
@@ -357,22 +353,14 @@ function StaffModalUI({
   );
 }
 
-// ------------------------------------------------------
-// StaffForm (unchanged except for inheritance support above)
-// ------------------------------------------------------
 function StaffForm({
   form,
   setForm,
   skills,
   handleToggleSkill,
   handleAddSkillFromInput,
-}: {
-  form: StaffFormState;
-  setForm: any;
-  skills: Skill[];
-  handleToggleSkill: (id: string) => void;
-  handleAddSkillFromInput: (value: string) => void;
-}) {
+  errors,
+}: any) {
   return (
     <>
       <div>
@@ -395,6 +383,9 @@ function StaffForm({
           }
           className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
         />
+        {errors.home && (
+          <p className="text-xs text-red-400 mt-1">{errors.home}</p>
+        )}
       </div>
 
       <div>
@@ -408,6 +399,9 @@ function StaffForm({
           placeholder="Leave blank to use global office postcode"
           className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
         />
+        {errors.office && (
+          <p className="text-xs text-red-400 mt-1">{errors.office}</p>
+        )}
       </div>
 
       <div>
@@ -462,12 +456,6 @@ function StaffForm({
               </button>
             );
           })}
-
-          {skills.length === 0 && (
-            <span className="text-xs text-slate-500">
-              No skills yet. Add one below.
-            </span>
-          )}
         </div>
 
         <input

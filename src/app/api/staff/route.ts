@@ -3,8 +3,7 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 export async function GET() {
-  // IMPORTANT: cookies() returns a Promise in your environment
-  const cookieStore = await cookies();
+  const cookieStore = cookies(); // ← NOT async
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -13,12 +12,6 @@ export async function GET() {
       cookies: {
         get(name: string) {
           return cookieStore.get(name)?.value;
-        },
-        set() {
-          // Route Handlers cannot modify cookies
-        },
-        remove() {
-          // Route Handlers cannot modify cookies
         },
       },
     }

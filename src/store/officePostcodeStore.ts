@@ -1,4 +1,7 @@
+// src/store/officePostcodeStore.ts
+
 import { create } from "zustand";
+import { normalisePostcode } from "@/lib/validatePostcode";
 
 interface OfficePostcodeState {
   officePostcode: string;
@@ -21,16 +24,16 @@ function persistOfficePostcode(postcode: string) {
   if (typeof window === "undefined") return;
   try {
     window.sessionStorage.setItem(STORAGE_KEY, postcode);
-  } catch {
-    // ignore
-  }
+  } catch {}
 }
 
 export const useOfficePostcodeStore = create<OfficePostcodeState>((set) => ({
   officePostcode: "",
-  setOfficePostcode: (officePostcode) => {
-    persistOfficePostcode(officePostcode);
-    set({ officePostcode });
+
+  setOfficePostcode: (postcode) => {
+    const normalised = postcode ? normalisePostcode(postcode) : "";
+    persistOfficePostcode(normalised);
+    set({ officePostcode: normalised });
   },
 }));
 

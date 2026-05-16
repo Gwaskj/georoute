@@ -1,6 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { unstable_cache } from "next/cache";
 
 async function loadHeaderConfigRaw(cookieValues: Record<string, string | undefined>) {
   const supabase = createServerClient(
@@ -50,12 +49,6 @@ export async function getHeaderConfig() {
     cookieValues[c.name] = c.value;
   });
 
-  const cached = unstable_cache(
-    (cookieValues: Record<string, string | undefined>) =>
-      loadHeaderConfigRaw(cookieValues),
-    ["site_header_config"],
-    { tags: ["site_header"] }
-  );
-
-  return cached(cookieValues);
+  // ❗ NO CACHING — this must run fresh on every request
+  return loadHeaderConfigRaw(cookieValues);
 }

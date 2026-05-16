@@ -11,13 +11,11 @@ interface StaffSelectorProps {
 export default function StaffSelector({ isFree }: StaffSelectorProps) {
   const { staff, selectedStaffIds } = useStaffStore();
 
-  const visibleIds = staff.filter((s) => !s.archived).map((s) => s.id);
+  // No archived filtering anymore
+  const visibleIds = staff.map((s) => s.id);
 
-  // ⭐ AddStaff already manages its own modal internally.
-  // We simply pass its openEditModal callback down to StaffList.
+  // Correct event name for AddStaff edit modal
   const handleEdit = (id: string) => {
-    // AddStaff exposes a global modal trigger via a custom event
-    // We dispatch it here so AddStaff opens in edit mode.
     document.dispatchEvent(
       new CustomEvent("georoute-edit-staff", { detail: { id } })
     );

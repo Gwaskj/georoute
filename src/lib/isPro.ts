@@ -3,7 +3,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function isProUser() {
-  const supabase = await createSupabaseServerClient(); // ✅ FIXED — await it
+  const supabase = await createSupabaseServerClient();
 
   const {
     data: { user },
@@ -13,11 +13,11 @@ export async function isProUser() {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("tier")
-    .eq("id", user.id)
+    .select("is_pro")
+    .eq("user_id", user.id)
     .single();
 
   if (error) return false;
 
-  return data?.tier === "pro";
+  return data?.is_pro === true;
 }

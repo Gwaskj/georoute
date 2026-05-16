@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/supabase/supabaseClient";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function ResetPasswordPage() {
+  const supabase = createSupabaseBrowserClient();
+
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);

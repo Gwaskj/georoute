@@ -33,15 +33,17 @@ export default function StaffFilter({ onFilteredIdsChange }: StaffFilterProps) {
     };
 
     return staff
-      .filter((s: Staff) => !s.archived)
       .filter((s: Staff) => {
+        // Skill filter
         if (selectedSkillIds.length > 0) {
           const hasAll = selectedSkillIds.every((id) => s.skills.includes(id));
           if (!hasAll) return false;
         }
 
+        // Gender filter
         if (gender && s.gender !== gender) return false;
 
+        // Age filter
         const age = calcAge(s.dateOfBirth);
         const min = minAge ? parseInt(minAge, 10) : undefined;
         const max = maxAge ? parseInt(maxAge, 10) : undefined;
@@ -54,7 +56,6 @@ export default function StaffFilter({ onFilteredIdsChange }: StaffFilterProps) {
       .map((s: Staff) => s.id);
   }, [staff, selectedSkillIds, gender, minAge, maxAge]);
 
-  // ⭐ FIXED: useEffect instead of useMemo for side-effect
   useEffect(() => {
     onFilteredIdsChange(filteredIds);
   }, [filteredIds, onFilteredIdsChange]);

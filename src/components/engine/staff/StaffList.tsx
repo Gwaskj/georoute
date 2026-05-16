@@ -4,7 +4,7 @@ import { useStaffStore } from "@/store/staffStore";
 
 interface StaffListProps {
   visibleIds: string[];
-  onEdit: (id: string) => void;   // ⭐ NEW
+  onEdit: (id: string) => void;
 }
 
 export default function StaffList({ visibleIds, onEdit }: StaffListProps) {
@@ -13,13 +13,10 @@ export default function StaffList({ visibleIds, onEdit }: StaffListProps) {
     selectedStaffIds,
     setSelectedStaffIds,
     deleteStaff,
-    duplicateStaff,
-    archiveStaff,
   } = useStaffStore();
 
-  const visibleStaff = staff.filter(
-    (s) => !s.archived && visibleIds.includes(s.id)
-  );
+  // No archived filtering anymore
+  const visibleStaff = staff.filter((s) => visibleIds.includes(s.id));
 
   const toggleSelected = (id: string) => {
     setSelectedStaffIds(
@@ -55,18 +52,10 @@ export default function StaffList({ visibleIds, onEdit }: StaffListProps) {
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <button
                 type="button"
-                onClick={() => onEdit(s.id)}   // ⭐ FIXED
+                onClick={() => onEdit(s.id)}
                 className="rounded border border-blue-600 px-2 py-0.5 text-blue-400 hover:bg-blue-950"
               >
                 Edit
-              </button>
-
-              <button
-                type="button"
-                onClick={() => duplicateStaff(s.id)}
-                className="rounded border border-slate-600 px-2 py-0.5 hover:bg-slate-800"
-              >
-                Duplicate
               </button>
 
               <button
@@ -75,14 +64,6 @@ export default function StaffList({ visibleIds, onEdit }: StaffListProps) {
                 className="rounded border border-red-600 px-2 py-0.5 text-red-400 hover:bg-red-950"
               >
                 Delete
-              </button>
-
-              <button
-                type="button"
-                onClick={() => archiveStaff(s.id)}
-                className="rounded border border-yellow-600 px-2 py-0.5 text-yellow-400 hover:bg-yellow-950"
-              >
-                Archive
               </button>
             </div>
           </li>

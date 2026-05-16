@@ -26,7 +26,10 @@ export default function LoginPage() {
       return;
     }
 
-    window.location.href = "/";
+    // Give Supabase time to write the cookie
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 200);
   }
 
   return (

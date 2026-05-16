@@ -3,23 +3,28 @@
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-// Singleton Supabase client
 const supabase = createSupabaseBrowserClient();
 
-export function useUserTier(userId?: string) {
-  const [isFree, setIsFree] = useState<boolean>(true); // default free
+export function useUserTier() {
+  const [isFree, setIsFree] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!userId) {
-      setIsFree(true);
-      return;
-    }
-
     async function load() {
+      // 1) Load session user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setIsFree(true);
+        return;
+      }
+
+      // 2) Load profile row using correct PK + correct column
       const { data, error } = await supabase
         .from("profiles")
-        .select("tier")
-        .eq("id", userId)
+        .select("is_pro")
+        .eq("user_id", user.id)   // <-- correct key
         .single();
 
       if (error) {
@@ -28,11 +33,12 @@ export function useUserTier(userId?: string) {
         return;
       }
 
-      setIsFree(data?.tier !== "pro");
+      // 3) Convert boolean to free/pro
+      setIsFree(!data?.is_pro);
     }
 
     load();
-  }, [userId]);
+  }, []);
 
   return isFree;
 }

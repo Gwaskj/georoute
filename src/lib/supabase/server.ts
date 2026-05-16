@@ -1,30 +1,17 @@
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
+// /src/lib/supabase/server.ts
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 
-export async function createSupabaseServerClient() {
-  const cookieStore = await cookies();
+export function createSupabaseServerClient() {
+  const cookieStore = cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
+        get(name) {
           return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: any) {
-          try {
-            cookieStore.set(name, value, options);
-          } catch (e) {
-            // Next.js may throw during SSR — safe to ignore
-          }
-        },
-        remove(name: string, options: any) {
-          try {
-            cookieStore.set(name, '', { ...options, maxAge: 0 });
-          } catch (e) {
-            // Safe to ignore
-          }
         },
       },
     }

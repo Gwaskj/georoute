@@ -109,13 +109,15 @@ export default function CustomWindowsManager({ isFree }: CustomWindowsManagerPro
             </div>
 
             <div className="flex items-center gap-2">
+              {/* ⭐ FIXED: Light blue Edit button to match Staff Selector */}
               <button
                 type="button"
                 onClick={() => openEditModal(w)}
-                className="rounded border border-slate-700 px-2 py-0.5 hover:bg-slate-800"
+                className="rounded border border-blue-600 px-2 py-0.5 text-blue-400 hover:bg-blue-950"
               >
                 Edit
               </button>
+
               <button
                 type="button"
                 onClick={() => deleteWindow(w.id)}

@@ -1,6 +1,7 @@
 // src/store/staffStore.ts
 
 import { create } from "zustand";
+import { normalisePostcode } from "@/lib/validatePostcode";
 
 export type Gender = "Male" | "Female" | "Other";
 
@@ -12,32 +13,28 @@ export interface Staff {
   dateOfBirth: string;
   gender: Gender | "";
   skills: string[];
-  colour: string;          // ⭐ NEW
-  archived: boolean;
+  colour: string;
 }
 
 interface StaffState {
   staff: Staff[];
   selectedStaffIds: string[];
   setStaff: (staff: Staff[]) => void;
-  addStaff: (staff: Omit<Staff, "id" | "archived" | "colour">) => Staff;
+  addStaff: (staff: Omit<Staff, "id" | "colour">) => Staff;
   updateStaff: (id: string, updates: Partial<Staff>) => void;
   deleteStaff: (id: string) => void;
-  duplicateStaff: (id: string) => void;
-  archiveStaff: (id: string) => void;
   setSelectedStaffIds: (ids: string[]) => void;
 }
 
 const STORAGE_KEY = "georoute_staff";
 
-// Simple deterministic colour generator
 function generateColour(): string {
   const colours = [
     "#e6194b", "#3cb44b", "#ffe119", "#4363d8",
     "#f58231", "#911eb4", "#46f0f0", "#f032e6",
     "#bcf60c", "#fabebe", "#008080", "#e6beff",
     "#9a6324", "#fffac8", "#800000", "#aaffc3",
-    "#808000", "#ffd8b1", "#000075", "#808080"
+    "#808000", "#ffd8b1", "#000075", "#808080",
   ];
   return colours[Math.floor(Math.random() * colours.length)];
 }
@@ -73,11 +70,12 @@ export const useStaffStore = create<StaffState>((set, get) => ({
   addStaff: (data) => {
     const newStaff: Staff = {
       id: crypto.randomUUID(),
-      archived: false,
-      skills: data.skills ?? [],
-      colour: generateColour(),     // ⭐ NEW
+      colour: generateColour(),
       ...data,
+      homePostcode: normalisePostcode(data.homePostcode),
+      officePostcode: normalisePostcode(data.officePostcode),
     };
+
     const staff = [...get().staff, newStaff];
     persistStaff(staff);
     set({ staff });
@@ -85,16 +83,25 @@ export const useStaffStore = create<StaffState>((set, get) => ({
   },
 
   updateStaff: (id, updates) => {
-    const staff = get().staff.map((s) =>
-      s.id === id
-        ? {
-            ...s,
-            ...updates,
-            skills: updates.skills ?? s.skills,
-            colour: updates.colour ?? s.colour,   // ⭐ PRESERVE COLOUR
-          }
-        : s
-    );
+    const staff = get().staff.map((s) => {
+      if (s.id !== id) return s;
+
+      const next: Staff = {
+        ...s,
+        ...updates,
+      };
+
+      if (updates.homePostcode !== undefined) {
+        next.homePostcode = normalisePostcode(updates.homePostcode);
+      }
+
+      if (updates.officePostcode !== undefined) {
+        next.officePostcode = normalisePostcode(updates.officePostcode);
+      }
+
+      return next;
+    });
+
     persistStaff(staff);
     set({ staff });
   },
@@ -106,30 +113,6 @@ export const useStaffStore = create<StaffState>((set, get) => ({
       staff,
       selectedStaffIds: get().selectedStaffIds.filter((x) => x !== id),
     });
-  },
-
-  duplicateStaff: (id) => {
-    const original = get().staff.find((s) => s.id === id);
-    if (!original) return;
-    const copy: Staff = {
-      ...original,
-      id: crypto.randomUUID(),
-      name: `${original.name} (copy)`,
-      archived: false,
-      skills: [...original.skills],
-      colour: generateColour(),     // ⭐ NEW COLOUR FOR COPY
-    };
-    const staff = [...get().staff, copy];
-    persistStaff(staff);
-    set({ staff });
-  },
-
-  archiveStaff: (id) => {
-    const staff = get().staff.map((s) =>
-      s.id === id ? { ...s, archived: true } : s
-    );
-    persistStaff(staff);
-    set({ staff });
   },
 
   setSelectedStaffIds: (ids) => set({ selectedStaffIds: ids }),

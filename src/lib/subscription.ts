@@ -8,13 +8,12 @@ export async function getSubscriptionStatus(userId: string | null): Promise<Subs
   const supabase = await createSupabaseServerClient();
 
   const { data, error } = await supabase
-    .from('subscriptions')
-    .select('status')
+    .from('profiles')
+    .select('is_pro')
     .eq('user_id', userId)
-    .eq('active', true)
-    .maybeSingle();
+    .single();
 
   if (error || !data) return 'free';
 
-  return data.status === 'pro' ? 'pro' : 'free';
+  return data.is_pro ? 'pro' : 'free';
 }

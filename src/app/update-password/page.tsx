@@ -1,16 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/supabase/supabaseClient";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function UpdatePasswordPage() {
+  const supabase = createSupabaseBrowserClient();
+
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
 
-  // Supabase requires a valid session from the reset link
   useEffect(() => {
     async function checkSession() {
       const { data } = await supabase.auth.getSession();
@@ -21,7 +22,7 @@ export default function UpdatePasswordPage() {
       }
     }
     checkSession();
-  }, []);
+  }, [supabase]);
 
   async function handleUpdate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -34,9 +35,7 @@ export default function UpdatePasswordPage() {
 
     setLoading(true);
 
-    const { error } = await supabase.auth.updateUser({
-      password,
-    });
+    const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
       setMessage(error.message);
