@@ -2,17 +2,23 @@
   "compilerOptions": {
     "moduleResolution": "bundler",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
     "strict": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "target": "ES2022",
     "module": "ESNext",
     "allowJs": false,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "skipLibCheck": true,
     "incremental": true,
     "esModuleInterop": true,
