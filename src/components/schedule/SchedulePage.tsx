@@ -1,6 +1,7 @@
+// C:\Users\matth\georoute\src\components\engine\SchedulePage.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // SETUP COMPONENTS
 import StaffSelectorSetup from "@/components/engine/staff/StaffSelector";
@@ -13,21 +14,20 @@ import StaffResultsList from "@/components/engine/results/StaffResultsList";
 import StaffSummaryBar from "@/components/engine/results/StaffSummaryBar";
 import MapVisualizer from "@/components/engine/MapVisualizer.client";
 
-// STORES + ENGINE
+// STORES
 import { useStaffStore } from "@/store/staffStore";
-import { useAppointmentStore } from "@/store/appointmentStore";
-import { useCallPurposeStore } from "@/store/callPurposeStore";
-import { useCustomWindowStore } from "@/store/customWindowStore";
-import { useOfficePostcodeStore } from "@/store/officePostcodeStore";
 
-import { runScheduler } from "@/lib/scheduler/engine";
-import { SchedulerContext } from "@/lib/scheduler/types";
+// PERSISTENCE
+import { loadFreeSchedulerData } from "@/lib/freeSession";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type SchedulePageProps = {
   isFree: boolean;
 };
 
 type Tab = "setup" | "results";
+
+const supabase = createSupabaseBrowserClient();
 
 export default function SchedulePage({ isFree }: SchedulePageProps) {
   const [activeTab, setActiveTab] = useState<Tab>("setup");
@@ -125,28 +125,30 @@ function SetupView({ isFree }: { isFree: boolean }) {
 
 function ResultsView({ isFree }: { isFree: boolean }) {
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
-
-  // LOAD DATA FROM STORES
+  const [visits, setVisits] = useState<any[]>([]);
+  const [routes, setRoutes] = useState<any[]>([]);
   const { staff } = useStaffStore();
-  const { appointments } = useAppointmentStore();
-  const { purposes } = useCallPurposeStore();
-  const { windows } = useCustomWindowStore();
-  const { officePostcode } = useOfficePostcodeStore();
 
-  // BUILD SCHEDULER CONTEXT
-  const ctx: SchedulerContext = {
-    staff,
-    appointments,
-    purposes,
-    windows,
-    officePostcode,
-    dayStart: "06:00",
-    dayEnd: "22:00",
-  };
+  useEffect(() => {
+    async function load() {
+      if (isFree) {
+        const data = await loadFreeSchedulerData();
+        setVisits(data?.visits ?? []);
+        setRoutes(data?.routes ?? []);
+        return;
+      }
 
-  // RUN SCHEDULER
-  const result = runScheduler(ctx);
-  const visits = result.visits;
+      const [visitsRes, routesRes] = await Promise.all([
+        supabase.from("visits").select("*"),
+        supabase.from("routes").select("*"),
+      ]);
+
+      setVisits(visitsRes.data ?? []);
+      setRoutes(routesRes.data ?? []);
+    }
+
+    load();
+  }, [isFree]);
 
   const selectedStaff =
     selectedStaffId ? staff.find((s) => s.id === selectedStaffId) || null : null;
@@ -164,6 +166,7 @@ function ResultsView({ isFree }: { isFree: boolean }) {
           <MapVisualizer
             isFree={isFree}
             selectedStaffId={selectedStaffId}
+            routes={routes}
           />
         </div>
 

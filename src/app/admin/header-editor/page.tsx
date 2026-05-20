@@ -1,13 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/supabase/supabaseClient";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 import Image from "next/image";
 
+const supabase = createSupabaseBrowserClient();
+
 export default function HeaderEditorPage() {
+  const isAdmin = useIsAdmin();
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   const [form, setForm] = useState({
     logo_url: "",
@@ -19,29 +23,18 @@ export default function HeaderEditorPage() {
     banner_offset_y: 0,
   });
 
+  // Admin gating
+  if (isAdmin === null) return null;
+
+  if (!isAdmin)
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+        <p>You do not have permission to edit the header.</p>
+      </div>
+    );
+
   useEffect(() => {
     async function load() {
-      const { data: userData } = await supabase.auth.getUser();
-      const user = userData?.user;
-
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!profile?.is_admin) {
-        setLoading(false);
-        return;
-      }
-
-      setIsAdmin(true);
-
       const { data: header } = await supabase
         .from("site_header")
         .select("*")
@@ -118,21 +111,12 @@ export default function HeaderEditorPage() {
 
   if (loading) return null;
 
-  if (!isAdmin)
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-        <p>You do not have permission to edit the header.</p>
-      </div>
-    );
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
       <h1 className="text-3xl font-semibold mb-8">Header Editor</h1>
 
       <div className="grid md:grid-cols-2 gap-10">
-
         <div className="space-y-6">
-
           <div>
             <label className="block text-sm mb-1">Logo Image</label>
             <input type="file" onChange={(e) => uploadImage(e, "logo")} />
@@ -240,11 +224,11 @@ export default function HeaderEditorPage() {
                 alt="Logo"
                 width={70}
                 height={70}
+                style={{ height: "auto" }}
               />
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

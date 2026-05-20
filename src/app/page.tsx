@@ -25,7 +25,7 @@ export default function HomePage() {
 
         <div className="mt-10 flex justify-center gap-4">
           <a
-            href="/signup"
+            href="/scheduler"
             className="rounded-xl bg-teal-500 px-10 py-4 font-semibold text-black shadow-xl shadow-teal-500/30 hover:bg-teal-400 hover:shadow-teal-400/40 transition-all"
           >
             Get Started Free

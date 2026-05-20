@@ -1,8 +1,8 @@
 "use client";
 
-import "@/styles/admin-appointments.css";
 import { useEffect, useState, FormEvent } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -22,6 +22,7 @@ interface Appointment {
 }
 
 export default function AppointmentsPage() {
+  const isAdmin = useIsAdmin();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
@@ -32,6 +33,14 @@ export default function AppointmentsPage() {
   const [endTime, setEndTime] = useState("");
 
   const [saving, setSaving] = useState(false);
+
+  if (isAdmin === null) return null;
+  if (!isAdmin)
+    return (
+      <div className="p-10 text-center text-red-500">
+        You do not have permission to view this page.
+      </div>
+    );
 
   useEffect(() => {
     async function load() {

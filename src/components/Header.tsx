@@ -1,194 +1,246 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/supabase/supabaseClient";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 
-interface HeaderProps {
-  logoUrl: string | null;
-  bannerUrl: string | null;
-  logo_x: number;
-  logo_y: number;
-  logo_scale: number;
-  banner_offset_x: number;
-  banner_offset_y: number;
-}
+const supabase = createSupabaseBrowserClient();
 
-export default function Header(props: HeaderProps) {
-  const [loaded, setLoaded] = useState(false);
+export default function Header() {
+  const isAdmin = useIsAdmin();
+
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setLoaded(true), 150);
-
-    async function loadUser() {
-      const { data: userData } = await supabase.auth.getUser();
-      const u = userData?.user || null;
+    async function load() {
+      const { data: auth } = await supabase.auth.getUser();
+      const u = auth?.user || null;
       setUser(u);
 
       if (u) {
-        const { data: profileData } = await supabase
+        const { data: p } = await supabase
           .from("profiles")
-          .select("is_pro, subscription_renewal")
+          .select("*")
           .eq("user_id", u.id)
           .single();
 
-        setProfile(profileData);
+        setProfile(p || null);
       }
     }
 
-    loadUser();
-    return () => clearTimeout(t);
+    load();
   }, []);
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  async function handleLogout() {
+  async function logout() {
     await supabase.auth.signOut();
-    window.location.href = "/";
+    window.location.href = "/login";
   }
 
-  async function openBillingPortal() {
-    if (!user) return;
-
-    const { data: session } = await supabase.auth.getSession();
-    const accessToken = session?.session?.access_token;
-    if (!accessToken) return;
-
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-portal-session`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ user_id: user.id }),
-      }
-    );
-
-    const json = await res.json();
-    if (json.url) window.location.href = json.url;
-  }
-
-  const safeLogo = props.logoUrl || "/logo-placeholder.png";
-  const safeBanner = props.bannerUrl || "/Banner-placeholder.jpg";
-
-  if (!loaded) {
-    return <header className="h-20 w-full bg-slate-800/40" />;
-  }
+  const isPro = profile?.plan === "pro";
 
   return (
-    <header
-      className="w-full relative shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
-      style={{
-        backgroundImage: `url(${safeBanner})`,
-        backgroundSize: "cover",
-        backgroundPosition: `${props.banner_offset_x}px ${props.banner_offset_y}px`,
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+    <header className="w-full bg-slate-950 text-slate-100 border-b border-slate-800">
+      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        {/* LEFT SIDE */}
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={34}
+              height={34}
+              className="rounded"
+              style={{ height: "auto" }}
+            />
+            <span className="font-semibold text-lg tracking-tight">
+              GeoRoute
+            </span>
+          </Link>
 
-        <div
-          className="flex items-center"
-          style={{
-            transform: `translate(${props.logo_x}px, ${props.logo_y}px) scale(${props.logo_scale * 0.9})`,
-            transformOrigin: "top left",
-          }}
-        >
-          <Image
-            src={safeLogo}
-            alt="Logo"
-            width={130}
-            height={130}
-            className="object-contain"
-          />
+          {/* DESKTOP NAV */}
+          <nav className="hidden md:flex items-center gap-6 text-sm">
+            <Link href="/scheduler" className="hover:text-teal-400">
+              Scheduler
+            </Link>
+
+            {user && (
+              <Link href="/account" className="hover:text-teal-400">
+                Account
+              </Link>
+            )}
+
+            {isPro && (
+              <Link href="/account/billing" className="hover:text-teal-400">
+                Billing
+              </Link>
+            )}
+
+            {/* ADMIN DROPDOWN — TRUE HOVER VERSION */}
+            {isAdmin && (
+              <div
+                className="relative"
+                onMouseEnter={() => setAdminOpen(true)}
+                onMouseLeave={() => setAdminOpen(false)}
+              >
+                <button className="hover:text-teal-400">Admin</button>
+
+                {adminOpen && (
+                  <div
+                    className="
+                      absolute left-0 top-full w-48 z-50
+                      bg-slate-900 border border-slate-700 rounded shadow-lg py-2
+                    "
+                  >
+                    <Link
+                      href="/admin/users"
+                      className="block px-4 py-2 hover:bg-slate-800"
+                    >
+                      Users
+                    </Link>
+                    <Link
+                      href="/admin/staff"
+                      className="block px-4 py-2 hover:bg-slate-800"
+                    >
+                      Staff
+                    </Link>
+                    <Link
+                      href="/admin/appointments"
+                      className="block px-4 py-2 hover:bg-slate-800"
+                    >
+                      Appointments
+                    </Link>
+                    <Link
+                      href="/admin/pricing"
+                      className="block px-4 py-2 hover:bg-slate-800"
+                    >
+                      Pricing
+                    </Link>
+                    <Link
+                      href="/admin/header-editor"
+                      className="block px-4 py-2 hover:bg-slate-800"
+                    >
+                      Header Editor
+                    </Link>
+                    <Link
+                      href="/admin/logs"
+                      className="block px-4 py-2 hover:bg-slate-800"
+                    >
+                      Logs
+                    </Link>
+                    <Link
+                      href="/admin/settings"
+                      className="block px-4 py-2 hover:bg-slate-800"
+                    >
+                      Settings
+                    </Link>
+                    <Link
+                      href="/admin/editor"
+                      className="block px-4 py-2 hover:bg-slate-800"
+                    >
+                      Editor
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+          </nav>
         </div>
 
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="text-white text-3xl px-3 py-1 rounded-md hover:bg-white/10 transition"
-          >
-            ☰
-          </button>
+        {/* RIGHT SIDE */}
+        <div className="hidden md:flex items-center gap-4">
+          {!user && (
+            <Link
+              href="/login"
+              className="px-4 py-2 bg-teal-500 text-slate-900 rounded font-medium hover:brightness-110"
+            >
+              Login
+            </Link>
+          )}
 
-          {menuOpen && (
-            <div className="absolute right-0 top-12 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-lg shadow-xl p-3 flex flex-col w-44 z-50">
-
-              <Link
-                href="/"
-                onClick={() => setMenuOpen(false)}
-                className="text-white py-2 px-3 rounded hover:bg-slate-700 transition"
-              >
-                Home
-              </Link>
-
-              <Link
-                href="/scheduler"
-                onClick={() => setMenuOpen(false)}
-                className="text-white py-2 px-3 rounded hover:bg-slate-700 transition"
-              >
-                Scheduler
-              </Link>
-
-              {profile?.is_pro && (
-                <button
-                  onClick={() => {
-                    setMenuOpen(false);
-                    openBillingPortal();
-                  }}
-                  className="text-black bg-emerald-400 py-2 px-3 rounded hover:bg-emerald-300 transition text-left"
-                >
-                  Billing
-                </button>
-              )}
-
-              {profile?.is_pro && (
-                <span className="text-xs text-slate-300 px-3 py-1">
-                  Renews: {new Date(profile.subscription_renewal).toLocaleDateString()}
-                </span>
-              )}
-
-              {user && (
-                <button
-                  onClick={() => {
-                    setMenuOpen(false);
-                    handleLogout();
-                  }}
-                  className="text-white bg-red-500 py-2 px-3 rounded hover:bg-red-400 transition text-left"
-                >
-                  Logout
-                </button>
-              )}
-
-              {!user && (
-                <Link
-                  href="/login"
-                  onClick={() => setMenuOpen(false)}
-                  className="text-white py-2 px-3 rounded hover:bg-slate-700 transition"
-                >
-                  Login
-                </Link>
-              )}
-            </div>
+          {user && (
+            <button
+              onClick={logout}
+              className="px-4 py-2 bg-slate-800 rounded hover:bg-slate-700"
+            >
+              Logout
+            </button>
           )}
         </div>
+
+        {/* MOBILE MENU BUTTON */}
+        <button
+          className="md:hidden text-slate-300"
+          onClick={() => setMobileOpen((v) => !v)}
+        >
+          {mobileOpen ? "✕" : "☰"}
+        </button>
       </div>
+
+      {/* MOBILE MENU */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-slate-800 bg-slate-900 px-4 py-4 space-y-4 text-sm">
+          <Link href="/scheduler" className="block">
+            Scheduler
+          </Link>
+
+          {user && <Link href="/account">Account</Link>}
+          {isPro && <Link href="/account/billing">Billing</Link>}
+
+          {isAdmin && (
+            <div className="pt-2 border-t border-slate-700">
+              <p className="text-xs uppercase text-slate-500 mb-2">Admin</p>
+
+              <Link href="/admin/users" className="block">
+                Users
+              </Link>
+              <Link href="/admin/staff" className="block">
+                Staff
+              </Link>
+              <Link href="/admin/appointments" className="block">
+                Appointments
+              </Link>
+              <Link href="/admin/pricing" className="block">
+                Pricing
+              </Link>
+              <Link href="/admin/header-editor" className="block">
+                Header Editor
+              </Link>
+              <Link href="/admin/logs" className="block">
+                Logs
+              </Link>
+              <Link href="/admin/settings" className="block">
+                Settings
+              </Link>
+              <Link href="/admin/editor" className="block">
+                Editor
+              </Link>
+            </div>
+          )}
+
+          {!user && (
+            <Link
+              href="/login"
+              className="block px-4 py-2 bg-teal-500 text-slate-900 rounded font-medium text-center"
+            >
+              Login
+            </Link>
+          )}
+
+          {user && (
+            <button
+              onClick={logout}
+              className="w-full px-4 py-2 bg-slate-800 rounded hover:bg-slate-700"
+            >
+              Logout
+            </button>
+          )}
+        </div>
+      )}
     </header>
   );
 }

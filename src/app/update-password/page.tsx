@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-export default function UpdatePasswordPage() {
-  const supabase = createSupabaseBrowserClient();
+const supabase = createSupabaseBrowserClient();
 
+export default function UpdatePasswordPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [message, setMessage] = useState("");
@@ -22,7 +22,7 @@ export default function UpdatePasswordPage() {
       }
     }
     checkSession();
-  }, [supabase]);
+  }, []); // FIXED
 
   async function handleUpdate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

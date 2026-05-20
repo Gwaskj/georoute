@@ -4,9 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-export default function SignupPage() {
-  const supabase = createSupabaseBrowserClient();
+const supabase = createSupabaseBrowserClient();
 
+export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -97,7 +97,7 @@ export default function SignupPage() {
         </form>
 
         <p className="mt-6 text-xs text-slate-400 text-center">
-          Already have an account?{" "}
+          Already have an account{" "}
           <Link href="/login" className="text-teal-300 hover:text-teal-200">
             Log in
           </Link>

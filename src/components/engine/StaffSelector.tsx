@@ -1,7 +1,12 @@
+// C:\Users\matth\georoute\src\components\scheduler\StaffSelector.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  loadFreeSchedulerData,
+  saveFreeSchedulerData,
+} from "@/lib/freeSession";
 
 type Staff = {
   id: string;
@@ -40,36 +45,24 @@ function hashColor(id: string): string {
   return `hsl(${hue}, 70%, 55%)`;
 }
 
-// ⭐ FIX: Create Supabase client ONCE at module level
 const supabase = createSupabaseBrowserClient();
 
-export default function StaffSelector({ isFree, onSelectStaff }: StaffSelectorProps) {
+export default function StaffSelector({
+  isFree,
+  onSelectStaff,
+}: StaffSelectorProps) {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  function loadFreeStaff() {
-    const raw = sessionStorage.getItem("free_scheduler_data");
-    if (!raw) return [];
-
-    try {
-      const parsed = JSON.parse(raw);
-      return parsed.staff || [];
-    } catch {
-      return [];
-    }
+  async function loadFreeStaff() {
+    const data = await loadFreeSchedulerData();
+    return (data?.staff as Staff[]) ?? [];
   }
 
-  function saveFreeStaff(updated: Staff[]) {
-    const raw = sessionStorage.getItem("free_scheduler_data");
-    const base = raw ? JSON.parse(raw) : {};
-
-    const updatedData = {
-      ...base,
-      staff: updated,
-    };
-
-    sessionStorage.setItem("free_scheduler_data", JSON.stringify(updatedData));
+  async function saveFreeStaff(updated: Staff[]) {
+    const data = (await loadFreeSchedulerData()) ?? {};
+    await saveFreeSchedulerData({ ...data, staff: updated });
   }
 
   useEffect(() => {
@@ -77,7 +70,7 @@ export default function StaffSelector({ isFree, onSelectStaff }: StaffSelectorPr
       setLoading(true);
 
       if (isFree) {
-        const localStaff = loadFreeStaff();
+        const localStaff = await loadFreeStaff();
         setStaff(localStaff);
         setLoading(false);
         return;

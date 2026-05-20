@@ -5,9 +5,9 @@ import Link from "next/link";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import AdBanner from "@/components/AdBanner";
 
-export default function PricingPage() {
-  const supabase = createSupabaseBrowserClient();
+const supabase = createSupabaseBrowserClient();
 
+export default function PricingPage() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [plans, setPlans] = useState<any[]>([]);
@@ -39,7 +39,7 @@ export default function PricingPage() {
     }
 
     load();
-  }, [supabase]);
+  }, []); // FIXED
 
   if (loading) return null;
 
@@ -93,14 +93,12 @@ export default function PricingPage() {
           ))}
         </div>
 
-        {/* Ads only for free users */}
         {!user || (user && profile && !profile.is_pro) ? (
           <div className="mt-10">
             <AdBanner />
           </div>
         ) : null}
 
-        {/* Admin link */}
         {profile?.is_admin && (
           <div className="mt-10 text-center">
             <Link

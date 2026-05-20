@@ -1,6 +1,8 @@
+// C:\Users\matth\georoute\src\components\engine\GenerateSchedule.tsx
 "use client";
 
 import { useState } from "react";
+import { loadFreeSchedulerData, saveFreeSchedulerData } from "@/lib/freeSession";
 
 type FreeRoute = {
   id: string;
@@ -12,33 +14,20 @@ type FreeRoute = {
 export default function GenerateSchedule() {
   const [loading, setLoading] = useState(false);
 
-  function loadFreeAppointments() {
-    const raw = sessionStorage.getItem("free_scheduler_data");
-    if (!raw) return [];
-    try {
-      const parsed = JSON.parse(raw);
-      return parsed.appointments || [];
-    } catch {
-      return [];
-    }
+  async function loadFreeAppointments() {
+    const data = await loadFreeSchedulerData();
+    return data?.appointments ?? [];
   }
 
-  function saveFreeRoutes(routes: FreeRoute[]) {
-    const raw = sessionStorage.getItem("free_scheduler_data");
-    const base = raw ? JSON.parse(raw) : {};
-
-    const updated = {
-      ...base,
-      routes,
-    };
-
-    sessionStorage.setItem("free_scheduler_data", JSON.stringify(updated));
+  async function saveFreeRoutes(routes: FreeRoute[]) {
+    const data = (await loadFreeSchedulerData()) ?? {};
+    await saveFreeSchedulerData({ ...data, routes });
   }
 
   async function generate() {
     setLoading(true);
 
-    const appointments = loadFreeAppointments();
+    const appointments = await loadFreeAppointments();
     if (!appointments || appointments.length === 0) {
       setLoading(false);
       return;
@@ -65,7 +54,7 @@ export default function GenerateSchedule() {
     }
 
     const finalRoutes = Object.values(staffRoutes);
-    saveFreeRoutes(finalRoutes);
+    await saveFreeRoutes(finalRoutes);
 
     setLoading(false);
   }
@@ -80,4 +69,3 @@ export default function GenerateSchedule() {
     </button>
   );
 }
-

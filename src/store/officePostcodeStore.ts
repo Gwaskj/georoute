@@ -1,30 +1,19 @@
 // src/store/officePostcodeStore.ts
-
 import { create } from "zustand";
 import { normalisePostcode } from "@/lib/validatePostcode";
+import {
+  loadFreeSchedulerData,
+  saveFreeSchedulerData,
+} from "@/lib/freeSession";
 
 interface OfficePostcodeState {
   officePostcode: string;
   setOfficePostcode: (postcode: string) => void;
 }
 
-const STORAGE_KEY = "georoute_office_postcode";
-
-function loadInitialOfficePostcode(): string {
-  if (typeof window === "undefined") return "";
-  try {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
-    return raw || "";
-  } catch {
-    return "";
-  }
-}
-
-function persistOfficePostcode(postcode: string) {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(STORAGE_KEY, postcode);
-  } catch {}
+async function persistFree(officePostcode: string) {
+  const data = (await loadFreeSchedulerData()) ?? {};
+  await saveFreeSchedulerData({ ...data, officePostcode });
 }
 
 export const useOfficePostcodeStore = create<OfficePostcodeState>((set) => ({
@@ -32,14 +21,16 @@ export const useOfficePostcodeStore = create<OfficePostcodeState>((set) => ({
 
   setOfficePostcode: (postcode) => {
     const normalised = postcode ? normalisePostcode(postcode) : "";
-    persistOfficePostcode(normalised);
+    persistFree(normalised);
     set({ officePostcode: normalised });
   },
 }));
 
+// INITIAL LOAD
 if (typeof window !== "undefined") {
-  const initial = loadInitialOfficePostcode();
-  if (initial) {
-    useOfficePostcodeStore.getState().setOfficePostcode(initial);
-  }
+  loadFreeSchedulerData().then((data) => {
+    if (data?.officePostcode) {
+      useOfficePostcodeStore.getState().setOfficePostcode(data.officePostcode);
+    }
+  });
 }

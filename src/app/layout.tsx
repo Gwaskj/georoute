@@ -1,5 +1,3 @@
-export {}; // required to make this file a module
-
 import type { Metadata } from "next";
 
 // GLOBAL STYLES

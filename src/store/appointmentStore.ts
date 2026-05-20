@@ -1,6 +1,9 @@
 // src/store/appointmentStore.ts
-
 import { create } from "zustand";
+import {
+  loadFreeSchedulerData,
+  saveFreeSchedulerData,
+} from "@/lib/freeSession";
 
 export interface Appointment {
   id: string;
@@ -24,7 +27,7 @@ export interface Appointment {
   staffGender: string | null;
   requiredSkills: string[];
 
-  requiredWindows: string[];   // ⭐ NEW FIELD
+  requiredWindows: string[];
 
   archived: boolean;
 }
@@ -39,32 +42,16 @@ interface AppointmentState {
   archiveAppointment: (id: string) => void;
 }
 
-const STORAGE_KEY = "georoute_appointments";
-
-function loadInitialAppointments(): Appointment[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as Appointment[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function persistAppointments(appointments: Appointment[]) {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(appointments));
-  } catch {}
+async function persistFree(appointments: Appointment[]) {
+  const data = (await loadFreeSchedulerData()) ?? {};
+  await saveFreeSchedulerData({ ...data, appointments });
 }
 
 export const useAppointmentStore = create<AppointmentState>((set, get) => ({
   appointments: [],
 
   setAppointments: (appointments) => {
-    persistAppointments(appointments);
+    persistFree(appointments);
     set({ appointments });
   },
 
@@ -73,16 +60,15 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       id: crypto.randomUUID(),
       archived: false,
 
-      // defaults
       staffGender: data.staffGender ?? null,
       requiredSkills: data.requiredSkills ?? [],
-      requiredWindows: data.requiredWindows ?? [],   // ⭐ NEW DEFAULT
+      requiredWindows: data.requiredWindows ?? [],
 
       ...data,
     };
 
     const appointments = [...get().appointments, appointment];
-    persistAppointments(appointments);
+    persistFree(appointments);
     set({ appointments });
     return appointment;
   },
@@ -94,17 +80,18 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
             ...a,
             ...updates,
             requiredSkills: updates.requiredSkills ?? a.requiredSkills,
-            requiredWindows: updates.requiredWindows ?? a.requiredWindows, // ⭐ NEW
+            requiredWindows: updates.requiredWindows ?? a.requiredWindows,
           }
         : a
     );
-    persistAppointments(appointments);
+
+    persistFree(appointments);
     set({ appointments });
   },
 
   deleteAppointment: (id) => {
     const appointments = get().appointments.filter((a) => a.id !== id);
-    persistAppointments(appointments);
+    persistFree(appointments);
     set({ appointments });
   },
 
@@ -118,11 +105,11 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       name: `${original.name} (copy)`,
       archived: false,
       requiredSkills: [...original.requiredSkills],
-      requiredWindows: [...original.requiredWindows], // ⭐ NEW
+      requiredWindows: [...original.requiredWindows],
     };
 
     const appointments = [...get().appointments, copy];
-    persistAppointments(appointments);
+    persistFree(appointments);
     set({ appointments });
   },
 
@@ -130,14 +117,17 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     const appointments = get().appointments.map((a) =>
       a.id === id ? { ...a, archived: true } : a
     );
-    persistAppointments(appointments);
+
+    persistFree(appointments);
     set({ appointments });
   },
 }));
 
+// INITIAL LOAD
 if (typeof window !== "undefined") {
-  const initial = loadInitialAppointments();
-  if (initial.length) {
-    useAppointmentStore.getState().setAppointments(initial);
-  }
+  loadFreeSchedulerData().then((data) => {
+    if (data?.appointments?.length) {
+      useAppointmentStore.getState().setAppointments(data.appointments);
+    }
+  });
 }

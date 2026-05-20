@@ -74,41 +74,47 @@ export default function Header(props: HeaderProps) {
   const safeLogo = props.logoUrl || "/logo-placeholder.png";
   const safeBanner = props.bannerUrl || "/Banner-placeholder.jpg";
 
+  // Banner height fixed at 100px
+  const headerHeight = 100;
+
+  // Logo base size slightly smaller than banner
+  const logoBaseSize = 80;
+
   if (!loaded) {
-    return (
-      <header className="h-20 w-full bg-slate-800/40" />
-    );
+    return <header className="h-20 w-full bg-slate-800/40" />;
   }
 
   return (
     <header
       className="w-full border-b border-slate-800 relative overflow-hidden"
       style={{
+        height: `${headerHeight}px`,
         backgroundImage: `url(${safeBanner})`,
         backgroundSize: "cover",
         backgroundPosition: `${props.banner_offset_x}px ${props.banner_offset_y}px`,
         backgroundRepeat: "no-repeat",
-        minHeight: "160px"
       }}
     >
-      {/* REMOVED BLUR OVERLAY */}
+      <div className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-4 h-full">
 
-      <div className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-4 py-6">
-
-        {/* LOGO ONLY */}
+        {/* LOGO */}
         <div
           className="flex items-center"
           style={{
             transform: `translate(${props.logo_x}px, ${props.logo_y}px) scale(${props.logo_scale})`,
             transformOrigin: "top left",
+            height: "100%", // prevents scaling from increasing header height
+            display: "flex",
+            alignItems: "center",
           }}
         >
           <Image
             src={safeLogo}
             alt="Logo"
-            width={150}
-            height={150}
+            width={logoBaseSize}
+            height={logoBaseSize}
             className="object-contain"
+            style={{ height: "auto", width: "auto" }}
           />
         </div>
 

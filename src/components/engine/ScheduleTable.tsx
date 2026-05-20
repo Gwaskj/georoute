@@ -1,8 +1,10 @@
+// C:\Users\matth\georoute\src\components\schedule\ScheduleTable.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useHighlightStore } from "@/lib/map/highlightStore";
+import { loadFreeSchedulerData } from "@/lib/freeSession";
 
 type ScheduleTableProps = {
   isFree: boolean;
@@ -51,7 +53,6 @@ function hasConflict(a: AppointmentRow, b: AppointmentRow): boolean {
   return b.staff.some((s) => aStaffIds.has(s.id));
 }
 
-// ⭐ FIX: Create Supabase client ONCE
 const supabase = createSupabaseBrowserClient();
 
 export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTableProps) {
@@ -61,16 +62,9 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
   const [rows, setRows] = useState<AppointmentRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  function loadFreeAppointments(): AppointmentRow[] {
-    const raw = sessionStorage.getItem("free_scheduler_data");
-    if (!raw) return [];
-
-    try {
-      const parsed = JSON.parse(raw);
-      return parsed.appointments || [];
-    } catch {
-      return [];
-    }
+  async function loadFreeAppointments(): Promise<AppointmentRow[]> {
+    const data = await loadFreeSchedulerData();
+    return (data?.appointments as AppointmentRow[]) ?? [];
   }
 
   useEffect(() => {
@@ -78,7 +72,7 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
       setLoading(true);
 
       if (isFree) {
-        const local = loadFreeAppointments();
+        const local = await loadFreeAppointments();
         setRows(local);
         setLoading(false);
         return;

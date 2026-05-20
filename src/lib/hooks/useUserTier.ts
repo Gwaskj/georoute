@@ -10,7 +10,6 @@ export function useUserTier() {
 
   useEffect(() => {
     async function load() {
-      // 1) Load session user
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -20,11 +19,10 @@ export function useUserTier() {
         return;
       }
 
-      // 2) Load profile row using correct PK + correct column
       const { data, error } = await supabase
         .from("profiles")
         .select("is_pro")
-        .eq("user_id", user.id)   // <-- correct key
+        .eq("user_id", user.id)
         .single();
 
       if (error) {
@@ -33,12 +31,11 @@ export function useUserTier() {
         return;
       }
 
-      // 3) Convert boolean to free/pro
       setIsFree(!data?.is_pro);
     }
 
     load();
-  }, []);
+  }, []); // FIXED
 
   return isFree;
 }

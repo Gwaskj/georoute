@@ -12,9 +12,9 @@
     "@supabase/supabase-js": "^2.105.1",
     "clsx": "2.1.0",
     "leaflet": "1.9.4",
-    "next": "^14.2.35",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
+    "next": "^15.5.18",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "react-leaflet": "^4.2.1",
     "react-leaflet-repository": "https://github.com/PaulLeCam/react-leaflet/archive/refs/tags/v4.2.1.tar.gz",
     "zustand": "^5.0.12"

@@ -1,3 +1,4 @@
+// C:\Users\matth\georoute\src\app\scheduler\page.tsx
 export const dynamic = "force-dynamic";
 
 import { getUser } from "@/lib/auth";
@@ -6,7 +7,6 @@ import SchedulePage from "@/components/schedule/SchedulePage";
 
 export default async function SchedulerPage() {
   const user = await getUser();
-  console.log("SERVER USER:", user);
 
   let isFree = true;
 

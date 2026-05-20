@@ -1,3 +1,4 @@
+// C:\Users\matth\georoute\src\components\engine\GenerateSchedule.tsx
 "use client";
 
 import { useState } from "react";
@@ -8,17 +9,18 @@ import { useCustomWindowStore } from "@/store/customWindowStore";
 import { useOfficePostcodeStore } from "@/store/officePostcodeStore";
 
 import { runScheduler } from "@/lib/scheduler/engine";
+import { saveSchedulerResult } from "@/lib/scheduler/persist";
 import { SchedulerContext, ScheduledVisit } from "@/lib/scheduler/types";
 
-interface GenerateScheduleProProps {
+interface GenerateScheduleProps {
   algorithm: "default";
   isFree: boolean;
 }
 
-export default function GenerateSchedulePro({
+export default function GenerateSchedule({
   algorithm,
   isFree,
-}: GenerateScheduleProProps) {
+}: GenerateScheduleProps) {
   const { staff } = useStaffStore();
   const { appointments } = useAppointmentStore();
   const { purposes } = useCallPurposeStore();
@@ -29,14 +31,14 @@ export default function GenerateSchedulePro({
   const [visits, setVisits] = useState<ScheduledVisit[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
 
-  const handleRun = () => {
+  const handleRun = async () => {
     if (algorithm !== "default") return;
 
     setIsRunning(true);
 
     const ctx: SchedulerContext = {
-      staff: staff.filter((s) => !s.archived),
-      appointments: appointments.filter((a) => !a.archived),
+      staff,
+      appointments,
       purposes,
       windows,
       officePostcode,
@@ -48,6 +50,13 @@ export default function GenerateSchedulePro({
 
     setVisits(result.visits);
     setWarnings(result.warnings);
+
+    await saveSchedulerResult({
+      isFree,
+      ctx,
+      result,
+    });
+
     setIsRunning(false);
   };
 

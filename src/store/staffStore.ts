@@ -1,7 +1,10 @@
 // src/store/staffStore.ts
-
 import { create } from "zustand";
 import { normalisePostcode } from "@/lib/validatePostcode";
+import {
+  loadFreeSchedulerData,
+  saveFreeSchedulerData,
+} from "@/lib/freeSession";
 
 export type Gender = "Male" | "Female" | "Other";
 
@@ -26,8 +29,6 @@ interface StaffState {
   setSelectedStaffIds: (ids: string[]) => void;
 }
 
-const STORAGE_KEY = "georoute_staff";
-
 function generateColour(): string {
   const colours = [
     "#e6194b", "#3cb44b", "#ffe119", "#4363d8",
@@ -39,23 +40,9 @@ function generateColour(): string {
   return colours[Math.floor(Math.random() * colours.length)];
 }
 
-function loadInitialStaff(): Staff[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as Staff[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function persistStaff(staff: Staff[]) {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(staff));
-  } catch {}
+async function persistFree(staff: Staff[], selectedStaffIds: string[]) {
+  const data = (await loadFreeSchedulerData()) ?? {};
+  await saveFreeSchedulerData({ ...data, staff, selectedStaffIds });
 }
 
 export const useStaffStore = create<StaffState>((set, get) => ({
@@ -63,7 +50,7 @@ export const useStaffStore = create<StaffState>((set, get) => ({
   selectedStaffIds: [],
 
   setStaff: (staff) => {
-    persistStaff(staff);
+    persistFree(staff, get().selectedStaffIds);
     set({ staff });
   },
 
@@ -77,7 +64,7 @@ export const useStaffStore = create<StaffState>((set, get) => ({
     };
 
     const staff = [...get().staff, newStaff];
-    persistStaff(staff);
+    persistFree(staff, get().selectedStaffIds);
     set({ staff });
     return newStaff;
   },
@@ -86,10 +73,7 @@ export const useStaffStore = create<StaffState>((set, get) => ({
     const staff = get().staff.map((s) => {
       if (s.id !== id) return s;
 
-      const next: Staff = {
-        ...s,
-        ...updates,
-      };
+      const next: Staff = { ...s, ...updates };
 
       if (updates.homePostcode !== undefined) {
         next.homePostcode = normalisePostcode(updates.homePostcode);
@@ -102,25 +86,32 @@ export const useStaffStore = create<StaffState>((set, get) => ({
       return next;
     });
 
-    persistStaff(staff);
+    persistFree(staff, get().selectedStaffIds);
     set({ staff });
   },
 
   deleteStaff: (id) => {
     const staff = get().staff.filter((s) => s.id !== id);
-    persistStaff(staff);
-    set({
-      staff,
-      selectedStaffIds: get().selectedStaffIds.filter((x) => x !== id),
-    });
+    const selectedStaffIds = get().selectedStaffIds.filter((x) => x !== id);
+
+    persistFree(staff, selectedStaffIds);
+    set({ staff, selectedStaffIds });
   },
 
-  setSelectedStaffIds: (ids) => set({ selectedStaffIds: ids }),
+  setSelectedStaffIds: (ids) => {
+    persistFree(get().staff, ids);
+    set({ selectedStaffIds: ids });
+  },
 }));
 
+// INITIAL LOAD
 if (typeof window !== "undefined") {
-  const initial = loadInitialStaff();
-  if (initial.length) {
-    useStaffStore.getState().setStaff(initial);
-  }
+  loadFreeSchedulerData().then((data) => {
+    if (data?.staff?.length) {
+      useStaffStore.getState().setStaff(data.staff);
+    }
+    if (data?.selectedStaffIds?.length) {
+      useStaffStore.getState().setSelectedStaffIds(data.selectedStaffIds);
+    }
+  });
 }

@@ -1,3 +1,4 @@
+// C:\Users\matth\georoute\src\components\engine\MapVisualizerInner.tsx
 "use client";
 
 import {
@@ -14,18 +15,23 @@ import styles from "./MapVisualizer.module.css";
 import { useEffect, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useHighlightStore } from "@/lib/map/highlightStore";
+import { applyStaffColors } from "@/lib/map/staffColorMap";
+import { loadFreeSchedulerData } from "@/lib/freeSession";
 
 import L from "leaflet";
-import iconUrl from "leaflet/dist/images/marker-icon.png";
-import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
-// ⭐ THIS MUST BE HERE — OUTSIDE THE COMPONENT
-const supabase = createSupabaseBrowserClient();
+const iconUrl =
+  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png";
+const iconShadow =
+  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
+
 const DefaultIcon = L.icon({
   iconUrl,
   shadowUrl: iconShadow,
 });
 L.Marker.prototype.options.icon = DefaultIcon;
+
+const supabase = createSupabaseBrowserClient();
 
 function MapInitializer({ zoom }: { zoom: number }) {
   const map = useMap();
@@ -70,8 +76,8 @@ function StableMapWrapper({ children }: { children: React.ReactNode }) {
 type Route = {
   id: string;
   staff_id: string | null;
-  color: string;
   points: [number, number][];
+  color: string;
 };
 
 type AppointmentMarker = {
@@ -111,6 +117,33 @@ function StaffFocus({
   return null;
 }
 
+function normalizePoints(raw: any[]): [number, number][] {
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .map((p: any) => {
+      if (!p) return null;
+
+      const lat =
+        p.lat ??
+        p.latitude ??
+        p.y ??
+        null;
+
+      const lng =
+        p.lng ??
+        p.lon ??
+        p.longitude ??
+        p.x ??
+        null;
+
+      if (lat == null || lng == null) return null;
+
+      return [lat, lng] as [number, number];
+    })
+    .filter(Boolean) as [number, number][];
+}
+
 export default function MapVisualizerInner({
   isFree,
   zoom = 12,
@@ -142,56 +175,90 @@ export default function MapVisualizerInner({
   const [mapKey] = useState(() => crypto.randomUUID());
 
   useEffect(() => {
-    if (isFree) {
-      setRoutes([]);
-      setAppointments([]);
-      return;
-    }
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    async function loadRoutes() {
-      const { data } = await supabase.from("routes").select("*");
-      setRoutes(
-        data?.map((r: any) => ({
-          id: r.id,
-          staff_id: r.staff_id ?? null,
-          color: r.color ?? "#0070f3",
-          points: r.points ?? [],
-        })) ?? []
-      );
-    }
+    async function loadFree() {
+      const data = await loadFreeSchedulerData();
 
-    async function loadAppointments() {
-      const { data } = await supabase.from("appointments").select("*");
-      setAppointments(
-        data?.map((a: any) => ({
+      const freeRoutesRaw = (data as any)?.routes ?? [];
+      const freeAppointmentsRaw = (data as any)?.appointments ?? [];
+
+      const normalizedRoutes = (freeRoutesRaw ?? []).map((r: any) => ({
+        id: r.id,
+        staff_id: r.staff_id ?? null,
+        points: normalizePoints(r.points ?? []),
+      }));
+
+      const colored: Route[] = applyStaffColors(normalizedRoutes);
+
+      const normalizedAppointments: AppointmentMarker[] = (freeAppointmentsRaw ?? []).map(
+        (a: any) => ({
           id: a.id,
           lat: a.lat ?? 53.0,
           lng: a.lng ?? -2.2,
           label: a.label ?? "Appointment",
           color: a.color ?? "#d00000",
-        })) ?? []
+        })
       );
+
+      setRoutes(colored);
+      setAppointments(normalizedAppointments);
     }
 
-    loadRoutes();
-    loadAppointments();
+    async function loadPro() {
+      async function loadRoutes() {
+        const { data } = await supabase.from("routes").select("*");
 
-    const channel = supabase
-      .channel("map-updates")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "routes" },
-        () => loadRoutes()
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "appointments" },
-        () => loadAppointments()
-      )
-      .subscribe();
+        const normalized = (data ?? []).map((r: any) => ({
+          id: r.id,
+          staff_id: r.staff_id ?? null,
+          points: normalizePoints(r.points ?? []),
+        }));
+
+        const colored: Route[] = applyStaffColors(normalized);
+        setRoutes(colored);
+      }
+
+      async function loadAppointments() {
+        const { data } = await supabase.from("appointments").select("*");
+        setAppointments(
+          data?.map((a: any) => ({
+            id: a.id,
+            lat: a.lat ?? 53.0,
+            lng: a.lng ?? -2.2,
+            label: a.label ?? "Appointment",
+            color: a.color ?? "#d00000",
+          })) ?? []
+        );
+      }
+
+      await Promise.all([loadRoutes(), loadAppointments()]);
+
+      channel = supabase
+        .channel("map-updates")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "routes" },
+          () => loadRoutes()
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "appointments" },
+          () => loadAppointments()
+        )
+        .subscribe();
+    }
+
+    if (isFree) {
+      loadFree();
+    } else {
+      loadPro();
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [isFree]);
 
@@ -206,9 +273,7 @@ export default function MapVisualizerInner({
           <Popup>GeoRoute HQ</Popup>
         </Marker>
 
-        {/* ROUTES */}
-        {!isFree &&
-          showRoutes &&
+        {showRoutes &&
           routes.map((route) => {
             const isHighlighted = highlightedRouteId === route.id;
             const isSelectedStaffRoute =
@@ -247,9 +312,7 @@ export default function MapVisualizerInner({
             );
           })}
 
-        {/* APPOINTMENTS */}
-        {!isFree &&
-          showAppointments &&
+        {showAppointments &&
           appointments.map((a) => {
             const isHighlighted = highlightedAppointmentId === a.id;
 

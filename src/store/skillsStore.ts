@@ -1,6 +1,9 @@
 // src/store/skillsStore.ts
-
 import { create } from "zustand";
+import {
+  loadFreeSchedulerData,
+  saveFreeSchedulerData,
+} from "@/lib/freeSession";
 
 export interface Skill {
   id: string;
@@ -15,32 +18,16 @@ interface SkillsState {
   renameSkill: (id: string, newName: string) => void;
 }
 
-const STORAGE_KEY = "georoute_skills";
-
-function loadInitialSkills(): Skill[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as Skill[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function persistSkills(skills: Skill[]) {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(skills));
-  } catch {}
+async function persistFree(skills: Skill[]) {
+  const data = (await loadFreeSchedulerData()) ?? {};
+  await saveFreeSchedulerData({ ...data, skills });
 }
 
 export const useSkillsStore = create<SkillsState>((set, get) => ({
   skills: [],
 
   setSkills: (skills) => {
-    persistSkills(skills);
+    persistFree(skills);
     set({ skills });
   },
 
@@ -56,14 +43,14 @@ export const useSkillsStore = create<SkillsState>((set, get) => ({
     };
 
     const skills = [...get().skills, newSkill];
-    persistSkills(skills);
+    persistFree(skills);
     set({ skills });
     return newSkill;
   },
 
   deleteSkill: (id) => {
     const skills = get().skills.filter((s) => s.id !== id);
-    persistSkills(skills);
+    persistFree(skills);
     set({ skills });
   },
 
@@ -71,14 +58,16 @@ export const useSkillsStore = create<SkillsState>((set, get) => ({
     const skills = get().skills.map((s) =>
       s.id === id ? { ...s, name: newName } : s
     );
-    persistSkills(skills);
+    persistFree(skills);
     set({ skills });
   },
 }));
 
+// INITIAL LOAD
 if (typeof window !== "undefined") {
-  const initial = loadInitialSkills();
-  if (initial.length) {
-    useSkillsStore.getState().setSkills(initial);
-  }
+  loadFreeSchedulerData().then((data) => {
+    if (data?.skills?.length) {
+      useSkillsStore.getState().setSkills(data.skills);
+    }
+  });
 }

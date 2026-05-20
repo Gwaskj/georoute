@@ -2,12 +2,10 @@
 
 import "@/styles/admin-staff.css";
 import { useEffect, useState, FormEvent } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createSupabaseBrowserClient();
 
 interface Staff {
   id: number;
@@ -17,11 +15,24 @@ interface Staff {
 }
 
 export default function StaffPage() {
+  const isAdmin = useIsAdmin();
+
   const [staff, setStaff] = useState<Staff[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [color, setColor] = useState("#2563eb");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Admin gating
+  if (isAdmin === null) return null;
+
+  if (!isAdmin)
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+        <p>You do not have permission to manage staff.</p>
+      </div>
+    );
 
   useEffect(() => {
     async function load() {
@@ -29,22 +40,29 @@ export default function StaffPage() {
         .from("staff")
         .select("id, name, email, color")
         .order("id", { ascending: true });
+
       setStaff(data || []);
+      setLoading(false);
     }
+
     load();
   }, []);
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
+
     const { data } = await supabase
       .from("staff")
       .insert({ name, email, color })
       .select("id, name, email, color")
       .single();
+
     if (data) setStaff((prev) => [...prev, data]);
+
     setName("");
     setEmail("");
+    setColor("#2563eb");
     setSaving(false);
   }
 
@@ -52,6 +70,8 @@ export default function StaffPage() {
     await supabase.from("staff").delete().eq("id", id);
     setStaff((prev) => prev.filter((s) => s.id !== id));
   }
+
+  if (loading) return null;
 
   return (
     <div style={{ padding: 24 }}>
@@ -79,6 +99,7 @@ export default function StaffPage() {
             padding: "8px 10px",
           }}
         />
+
         <input
           placeholder="Email"
           value={email}
@@ -89,12 +110,14 @@ export default function StaffPage() {
             padding: "8px 10px",
           }}
         />
+
         <input
           type="color"
           value={color}
           onChange={(e) => setColor(e.target.value)}
           style={{ width: 44, height: 36, padding: 0, borderRadius: 6 }}
         />
+
         <button
           type="submit"
           disabled={saving}
@@ -122,17 +145,32 @@ export default function StaffPage() {
       >
         <thead>
           <tr>
-            <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e5e7eb" }}>Name</th>
-            <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e5e7eb" }}>Email</th>
-            <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e5e7eb" }}>Color</th>
-            <th style={{ textAlign: "right", padding: 8, borderBottom: "1px solid #e5e7eb" }}>Actions</th>
+            <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e5e7eb" }}>
+              Name
+            </th>
+            <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e5e7eb" }}>
+              Email
+            </th>
+            <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e5e7eb" }}>
+              Color
+            </th>
+            <th style={{ textAlign: "right", padding: 8, borderBottom: "1px solid #e5e7eb" }}>
+              Actions
+            </th>
           </tr>
         </thead>
+
         <tbody>
           {staff.map((s) => (
             <tr key={s.id}>
-              <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>{s.name}</td>
-              <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>{s.email}</td>
+              <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
+                {s.name}
+              </td>
+
+              <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
+                {s.email}
+              </td>
+
               <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
                 <span
                   style={{
@@ -147,7 +185,14 @@ export default function StaffPage() {
                 />
                 <span>{s.color}</span>
               </td>
-              <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6", textAlign: "right" }}>
+
+              <td
+                style={{
+                  padding: 8,
+                  borderBottom: "1px solid #f3f4f6",
+                  textAlign: "right",
+                }}
+              >
                 <button
                   onClick={() => handleDelete(s.id)}
                   style={{
@@ -165,9 +210,17 @@ export default function StaffPage() {
               </td>
             </tr>
           ))}
+
           {staff.length === 0 && (
             <tr>
-              <td colSpan={4} style={{ padding: 12, textAlign: "center", color: "#6b7280" }}>
+              <td
+                colSpan={4}
+                style={{
+                  padding: 12,
+                  textAlign: "center",
+                  color: "#6b7280",
+                }}
+              >
                 No staff yet.
               </td>
             </tr>

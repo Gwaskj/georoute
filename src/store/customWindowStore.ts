@@ -1,11 +1,16 @@
+// src/store/customWindowStore.ts
 import { create } from "zustand";
+import {
+  loadFreeSchedulerData,
+  saveFreeSchedulerData,
+} from "@/lib/freeSession";
 
 export interface CustomWindow {
   id: string;
   name: string;
-  start: string;  // "HH:mm"
-  end: string;    // "HH:mm"
-  minGapToNext: number; // minutes, default 0
+  start: string;
+  end: string;
+  minGapToNext: number;
 }
 
 interface CustomWindowState {
@@ -16,60 +21,52 @@ interface CustomWindowState {
   deleteWindow: (id: string) => void;
 }
 
-const STORAGE_KEY = "georoute_custom_windows";
-
-function loadInitial(): CustomWindow[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as CustomWindow[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function persist(windows: CustomWindow[]) {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(windows));
-  } catch {}
+async function persistFree(windows: CustomWindow[]) {
+  const data = (await loadFreeSchedulerData()) ?? {};
+  await saveFreeSchedulerData({ ...data, windows });
 }
 
 export const useCustomWindowStore = create<CustomWindowState>((set, get) => ({
   windows: [],
+
   setWindows: (windows) => {
-    persist(windows);
+    persistFree(windows);
     set({ windows });
   },
+
   addWindow: (data) => {
     const windowObj: CustomWindow = {
       id: crypto.randomUUID(),
       ...data,
     };
+
     const windows = [...get().windows, windowObj];
-    persist(windows);
+    persistFree(windows);
     set({ windows });
     return windowObj;
   },
+
   updateWindow: (id, updates) => {
     const windows = get().windows.map((w) =>
       w.id === id ? { ...w, ...updates } : w
     );
-    persist(windows);
+
+    persistFree(windows);
     set({ windows });
   },
+
   deleteWindow: (id) => {
     const windows = get().windows.filter((w) => w.id !== id);
-    persist(windows);
+    persistFree(windows);
     set({ windows });
   },
 }));
 
+// INITIAL LOAD
 if (typeof window !== "undefined") {
-  const initial = loadInitial();
-  if (initial.length) {
-    useCustomWindowStore.getState().setWindows(initial);
-  }
+  loadFreeSchedulerData().then((data) => {
+    if (data?.windows?.length) {
+      useCustomWindowStore.getState().setWindows(data.windows);
+    }
+  });
 }

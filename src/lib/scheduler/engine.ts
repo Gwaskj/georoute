@@ -1,4 +1,4 @@
-// src/lib/scheduler/engine.ts
+// C:\Users\matth\georoute\src\lib\scheduler\engine.ts
 import { SchedulerContext, SchedulerResult, ScheduledVisit } from "./types";
 import { Appointment } from "@/store/appointmentStore";
 import { Staff } from "@/store/staffStore";
@@ -175,8 +175,8 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
     const strict = appt.strictStartTime ? toMinutes(appt.strictStartTime) : null;
     const purposeWindow = getPurposeWindow(appt, purposes);
 
-    // Determine which windows apply to this appointment
-    let windowsForAppt: { start: number; end: number; minGapToNext: number }[] = [];
+    let windowsForAppt: { start: number; end: number; minGapToNext: number }[] =
+      [];
 
     const requiredWindowIds = appt.requiredWindows ?? [];
 
