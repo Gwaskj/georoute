@@ -22,15 +22,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-full">
         <div className="flex min-h-screen flex-col">
 
-          {/* GLOBAL HEADER */}
           <HeaderLoader />
 
-          {/* MAIN CONTENT */}
           <main className="flex-1">
             {children}
           </main>
 
-          {/* FOOTER */}
           <footer className="border-t border-slate-800 bg-slate-950/80">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 text-xs text-slate-400">
               <span>© {new Date().getFullYear()} GeoRoute. All rights reserved.</span>

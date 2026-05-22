@@ -1,238 +1,233 @@
 "use client";
 
-import "@/styles/admin-settings.css";
 import { useEffect, useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 import Image from "next/image";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const supabase = createSupabaseBrowserClient();
 
 export default function HeaderEditorPage() {
-  const isAdmin = useIsAdmin();
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [logoX, setLogoX] = useState(0);
+  const [logoY, setLogoY] = useState(0);
+  const [logoScale, setLogoScale] = useState(1);
 
-  const [form, setForm] = useState({
-    logo_url: "",
-    banner_url: "",
-    logo_x: 0,
-    logo_y: 0,
-    logo_scale: 1,
-    banner_offset_x: 0,
-    banner_offset_y: 0,
-  });
+  const [bannerX, setBannerX] = useState(0);
+  const [bannerY, setBannerY] = useState(0);
+  const [bannerScale, setBannerScale] = useState(1);
 
   useEffect(() => {
-    if (isAdmin !== true) return;
-
     async function load() {
-      const { data: header } = await supabase
+      const { data } = await supabase
         .from("site_header")
         .select("*")
         .eq("id", 1)
         .single();
 
-      if (header) {
-        setForm({
-          logo_url: header.logo_url || "",
-          banner_url: header.banner_url || "",
-          logo_x: header.logo_x ?? 0,
-          logo_y: header.logo_y ?? 0,
-          logo_scale: header.logo_scale ?? 1,
-          banner_offset_x: header.banner_offset_x ?? 0,
-          banner_offset_y: header.banner_offset_y ?? 0,
-        });
-      }
+      if (!data) return;
 
-      setLoading(false);
+      setLogoUrl(data.logo_url);
+      setBannerUrl(data.banner_url);
+
+      setLogoX(data.logo_x ?? 0);
+      setLogoY(data.logo_y ?? 0);
+      setLogoScale(data.logo_scale ?? 1);
+
+      setBannerX(data.banner_offset_x ?? 0);
+      setBannerY(data.banner_offset_y ?? 0);
+      setBannerScale(data.banner_scale ?? 1);
     }
 
     load();
-  }, [isAdmin]);
+  }, []);
 
-  if (isAdmin === null) return null;
+  function startDrag(e: any, type: "logo" | "banner") {
+    e.preventDefault();
 
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-        <p>You do not have permission to edit the header.</p>
-      </div>
-    );
-  }
+    const startX = e.clientX;
+    const startY = e.clientY;
 
-  if (loading) return null;
+    const initialX = type === "logo" ? logoX : bannerX;
+    const initialY = type === "logo" ? logoY : bannerY;
 
-  async function uploadImage(e: any, type: "logo" | "banner") {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    function move(ev: any) {
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
 
-    const filePath = `${type}-${Date.now()}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("header-assets")
-      .upload(filePath, file);
-
-    if (uploadError) {
-      alert("Upload failed");
-      return;
+      if (type === "logo") {
+        setLogoX(initialX + dx);
+        setLogoY(initialY + dy);
+      } else {
+        setBannerX(initialX + dx);
+        setBannerY(initialY + dy);
+      }
     }
 
-    const publicUrl = supabase.storage
-      .from("header-assets")
-      .getPublicUrl(filePath).data.publicUrl;
+    function stop() {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", stop);
+    }
 
-    setForm((prev) => ({
-      ...prev,
-      [`${type}_url`]: publicUrl,
-    }));
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", stop);
   }
 
-  async function saveChanges() {
-    setSaving(true);
+  function startResize(e: any, type: "logo" | "banner") {
+    e.preventDefault();
+    e.stopPropagation();
 
-    const { error } = await supabase
+    const startY = e.clientY;
+    const initialScale = type === "logo" ? logoScale : bannerScale;
+
+    function move(ev: any) {
+      const dy = ev.clientY - startY;
+      const newScale = Math.max(0.2, initialScale + dy * 0.01);
+
+      if (type === "logo") setLogoScale(newScale);
+      else setBannerScale(newScale);
+    }
+
+    function stop() {
+      window.removeEventListener("mousemove", move);
+      window.removeEventListener("mouseup", stop);
+    }
+
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", stop);
+  }
+
+  async function save() {
+    await supabase
       .from("site_header")
       .update({
-        logo_url: form.logo_url,
-        banner_url: form.banner_url,
-        logo_x: form.logo_x,
-        logo_y: form.logo_y,
-        logo_scale: form.logo_scale,
-        banner_offset_x: form.banner_offset_x,
-        banner_offset_y: form.banner_offset_y,
+        logo_url: logoUrl,
+        banner_url: bannerUrl,
+        logo_x: logoX,
+        logo_y: logoY,
+        logo_scale: logoScale,
+        banner_offset_x: bannerX,
+        banner_offset_y: bannerY,
+        banner_scale: bannerScale,
       })
       .eq("id", 1);
 
-    setSaving(false);
-
-    if (error) {
-      alert("Failed to save");
-    } else {
-      alert("Header updated!");
-    }
+    alert("Saved");
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
-      <h1 className="text-3xl font-semibold mb-8">Header Editor</h1>
+    <div className="p-6 space-y-6 w-full">
+      <h1 className="text-2xl font-bold mb-2">Header Editor</h1>
 
-      <div className="grid md:grid-cols-2 gap-10">
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm mb-1">Logo Image</label>
-            <input type="file" onChange={(e) => uploadImage(e, "logo")} />
-          </div>
+      {/* FULL REAL HEADER PREVIEW */}
+      <div className="relative w-full bg-slate-950 border border-slate-800 overflow-hidden">
 
-          <div>
-            <label className="block text-sm mb-1">Banner Image</label>
-            <input type="file" onChange={(e) => uploadImage(e, "banner")} />
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1">Logo X Offset</label>
-            <input
-              type="number"
-              className="w-full bg-slate-800 border border-slate-700 px-3 py-2 rounded"
-              value={form.logo_x}
-              onChange={(e) =>
-                setForm({ ...form, logo_x: Number(e.target.value) })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1">Logo Y Offset</label>
-            <input
-              type="number"
-              className="w-full bg-slate-800 border border-slate-700 px-3 py-2 rounded"
-              value={form.logo_y}
-              onChange={(e) =>
-                setForm({ ...form, logo_y: Number(e.target.value) })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1">Logo Scale</label>
-            <input
-              type="number"
-              step="0.1"
-              className="w-full bg-slate-800 border border-slate-700 px-3 py-2 rounded"
-              value={form.logo_scale}
-              onChange={(e) =>
-                setForm({ ...form, logo_scale: Number(e.target.value) })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1">Banner Offset X</label>
-            <input
-              type="number"
-              className="w-full bg-slate-800 border border-slate-700 px-3 py-2 rounded"
-              value={form.banner_offset_x}
-              onChange={(e) =>
-                setForm({ ...form, banner_offset_x: Number(e.target.value) })
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1">Banner Offset Y</label>
-            <input
-              type="number"
-              className="w-full bg-slate-800 border border-slate-700 px-3 py-2 rounded"
-              value={form.banner_offset_y}
-              onChange={(e) =>
-                setForm({ ...form, banner_offset_y: Number(e.target.value) })
-              }
-            />
-          </div>
-
-          <button
-            onClick={saveChanges}
-            disabled={saving}
-            className="mt-4 bg-teal-500 text-slate-900 px-6 py-3 rounded font-medium hover:brightness-110 disabled:opacity-50"
+        {/* Banner */}
+        {bannerUrl && (
+          <div
+            onMouseDown={(e) => startDrag(e, "banner")}
+            className="absolute inset-0 cursor-move"
+            style={{
+              transform: `translate(${bannerX}px, ${bannerY}px) scale(${bannerScale})`,
+              transformOrigin: "top left",
+            }}
           >
-            {saving ? "Saving..." : "Save Changes"}
+            <Image
+              src={bannerUrl}
+              alt="Banner"
+              fill
+              className="object-cover opacity-50"
+            />
+
+            <div
+              onMouseDown={(e) => startResize(e, "banner")}
+              className="absolute bottom-1 right-1 w-4 h-4 bg-white rounded-full cursor-nwse-resize"
+            />
+          </div>
+        )}
+
+        {/* INNER HEADER — EXACT SAME DOM AS REAL HEADER */}
+        <div className="relative max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+
+          {/* LEFT */}
+          <div className="flex items-center gap-6">
+
+            {/* Logo */}
+            {logoUrl && (
+              <div
+                onMouseDown={(e) => startDrag(e, "logo")}
+                className="absolute cursor-move"
+                style={{
+                  transform: `translate(${logoX}px, ${logoY}px) scale(${logoScale})`,
+                  transformOrigin: "top left",
+                }}
+              >
+                <Image
+                  src={logoUrl}
+                  alt="Logo"
+                  width={100}
+                  height={100}
+                  className="object-contain"
+                />
+
+                <div
+                  onMouseDown={(e) => startResize(e, "logo")}
+                  className="absolute bottom-1 right-1 w-4 h-4 bg-white rounded-full cursor-nwse-resize"
+                />
+              </div>
+            )}
+
+            <span className="font-semibold text-lg tracking-tight text-white select-none">
+              GeoRoute
+            </span>
+
+            {/* Fake nav */}
+            <nav className="hidden md:flex items-center gap-6 text-sm text-white opacity-70 select-none">
+              <span>Scheduler</span>
+              <span>Account</span>
+              <span>Billing</span>
+              <span>Admin</span>
+            </nav>
+          </div>
+
+          {/* RIGHT */}
+          <div className="hidden md:flex items-center gap-4 text-white opacity-70 select-none">
+            <span className="px-4 py-2 bg-slate-800 rounded">Logout</span>
+          </div>
+
+          <button className="md:hidden text-slate-300 opacity-50 select-none">
+            ☰
           </button>
+        </div>
+      </div>
+
+      {/* CONTROLS */}
+      <div className="max-w-3xl space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-1 text-white">Logo URL</label>
+          <input
+            className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-sm text-white placeholder-slate-400"
+            value={logoUrl || ""}
+            onChange={(e) => setLogoUrl(e.target.value)}
+          />
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold mb-4">Live Preview</h2>
-
-          <div
-            style={{
-              height: 120,
-              backgroundImage: `url(${form.banner_url || "/Banner-placeholder.jpg"})`,
-              backgroundSize: "cover",
-              backgroundPosition: `${form.banner_offset_x}px ${form.banner_offset_y}px`,
-              display: "flex",
-              alignItems: "center",
-              paddingLeft: 20,
-            }}
-          >
-            <div
-              style={{
-                transform: `translate(${form.logo_x}px, ${form.logo_y}px) scale(${form.logo_scale})`,
-                transformOrigin: "top left",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-           <Image
-  src="/logo-placeholder.png"
-  alt="Logo"
-  width={34}
-  height={34}
-  className="rounded"
-  style={{ width: "auto", height: "auto" }}
-/>
-            </div>
-          </div>
+          <label className="block text-sm font-medium mb-1 text-white">Banner URL</label>
+          <input
+            className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-sm text-white placeholder-slate-400"
+            value={bannerUrl || ""}
+            onChange={(e) => setBannerUrl(e.target.value)}
+          />
         </div>
+
+        <button
+          onClick={save}
+          className="px-4 py-2 bg-teal-500 text-slate-900 rounded font-medium"
+        >
+          Save
+        </button>
       </div>
     </div>
   );

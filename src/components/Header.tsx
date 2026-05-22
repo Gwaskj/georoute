@@ -8,7 +8,25 @@ import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 
 const supabase = createSupabaseBrowserClient();
 
-export default function Header() {
+export default function Header({
+  logoUrl,
+  bannerUrl,
+  logo_x,
+  logo_y,
+  logo_scale,
+  banner_offset_x,
+  banner_offset_y,
+  banner_scale,
+}: {
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  logo_x: number;
+  logo_y: number;
+  logo_scale: number;
+  banner_offset_x: number;
+  banner_offset_y: number;
+  banner_scale: number;
+}) {
   const isAdmin = useIsAdmin();
 
   const [user, setUser] = useState<any>(null);
@@ -44,25 +62,51 @@ export default function Header() {
   const isPro = profile?.plan === "pro";
 
   return (
-    <header className="w-full bg-slate-950 text-slate-100 border-b border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        {/* LEFT SIDE */}
+    <header className="relative w-full bg-slate-950 text-slate-100 border-b border-slate-800">
+
+      {/* BANNER */}
+      {bannerUrl && (
+        <div
+          className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none"
+          style={{
+            transform: `translate(${banner_offset_x}px, ${banner_offset_y}px) scale(${banner_scale})`,
+            transformOrigin: "top left",
+          }}
+        >
+          <Image
+            src={bannerUrl}
+            alt="Banner"
+            fill
+            className="object-cover opacity-40"
+          />
+        </div>
+      )}
+
+      {/* INNER HEADER */}
+      <div className="relative max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+
+        {/* LEFT */}
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2">
-         <Image
-  src="/logo-placeholder.png"
-  alt="Logo"
-  width={34}
-  height={34}
-  className="rounded"
-  style={{ width: "auto", height: "auto" }}
-/>
+          <Link href="/" className="flex items-center gap-2 relative">
+            {logoUrl && (
+              <Image
+                src={logoUrl}
+                alt="Logo"
+                width={100}
+                height={100}
+                style={{
+                  transform: `translate(${logo_x}px, ${logo_y}px) scale(${logo_scale})`,
+                  transformOrigin: "top left",
+                }}
+                className="object-contain"
+              />
+            )}
+
             <span className="font-semibold text-lg tracking-tight">
               GeoRoute
             </span>
           </Link>
 
-          {/* DESKTOP NAV */}
           <nav className="hidden md:flex items-center gap-6 text-sm">
             <Link href="/scheduler" className="hover:text-teal-400">
               Scheduler
@@ -80,7 +124,6 @@ export default function Header() {
               </Link>
             )}
 
-            {/* ADMIN DROPDOWN — TRUE HOVER VERSION */}
             {isAdmin && (
               <div
                 className="relative"
@@ -90,60 +133,15 @@ export default function Header() {
                 <button className="hover:text-teal-400">Admin</button>
 
                 {adminOpen && (
-                  <div
-                    className="
-                      absolute left-0 top-full w-48 z-50
-                      bg-slate-900 border border-slate-700 rounded shadow-lg py-2
-                    "
-                  >
-                    <Link
-                      href="/admin/users"
-                      className="block px-4 py-2 hover:bg-slate-800"
-                    >
-                      Users
-                    </Link>
-                    <Link
-                      href="/admin/staff"
-                      className="block px-4 py-2 hover:bg-slate-800"
-                    >
-                      Staff
-                    </Link>
-                    <Link
-                      href="/admin/appointments"
-                      className="block px-4 py-2 hover:bg-slate-800"
-                    >
-                      Appointments
-                    </Link>
-                    <Link
-                      href="/admin/pricing"
-                      className="block px-4 py-2 hover:bg-slate-800"
-                    >
-                      Pricing
-                    </Link>
-                    <Link
-                      href="/admin/header-editor"
-                      className="block px-4 py-2 hover:bg-slate-800"
-                    >
-                      Header Editor
-                    </Link>
-                    <Link
-                      href="/admin/logs"
-                      className="block px-4 py-2 hover:bg-slate-800"
-                    >
-                      Logs
-                    </Link>
-                    <Link
-                      href="/admin/settings"
-                      className="block px-4 py-2 hover:bg-slate-800"
-                    >
-                      Settings
-                    </Link>
-                    <Link
-                      href="/admin/editor"
-                      className="block px-4 py-2 hover:bg-slate-800"
-                    >
-                      Editor
-                    </Link>
+                  <div className="absolute left-0 top-full w-48 z-50 bg-slate-900 border border-slate-700 rounded shadow-lg py-2">
+                    <Link href="/admin/users" className="block px-4 py-2 hover:bg-slate-800">Users</Link>
+                    <Link href="/admin/staff" className="block px-4 py-2 hover:bg-slate-800">Staff</Link>
+                    <Link href="/admin/appointments" className="block px-4 py-2 hover:bg-slate-800">Appointments</Link>
+                    <Link href="/admin/pricing" className="block px-4 py-2 hover:bg-slate-800">Pricing</Link>
+                    <Link href="/admin/header-editor" className="block px-4 py-2 hover:bg-slate-800">Header Editor</Link>
+                    <Link href="/admin/logs" className="block px-4 py-2 hover:bg-slate-800">Logs</Link>
+                    <Link href="/admin/settings" className="block px-4 py-2 hover:bg-slate-800">Settings</Link>
+                    <Link href="/admin/editor" className="block px-4 py-2 hover:bg-slate-800">Editor</Link>
                   </div>
                 )}
               </div>
@@ -151,7 +149,7 @@ export default function Header() {
           </nav>
         </div>
 
-        {/* RIGHT SIDE */}
+        {/* RIGHT */}
         <div className="hidden md:flex items-center gap-4">
           {!user && (
             <Link
@@ -172,7 +170,6 @@ export default function Header() {
           )}
         </div>
 
-        {/* MOBILE MENU BUTTON */}
         <button
           className="md:hidden text-slate-300"
           onClick={() => setMobileOpen((v) => !v)}
@@ -180,67 +177,6 @@ export default function Header() {
           {mobileOpen ? "✕" : "☰"}
         </button>
       </div>
-
-      {/* MOBILE MENU */}
-      {mobileOpen && (
-        <div className="md:hidden border-t border-slate-800 bg-slate-900 px-4 py-4 space-y-4 text-sm">
-          <Link href="/scheduler" className="block">
-            Scheduler
-          </Link>
-
-          {user && <Link href="/account">Account</Link>}
-          {isPro && <Link href="/account/billing">Billing</Link>}
-
-          {isAdmin && (
-            <div className="pt-2 border-t border-slate-700">
-              <p className="text-xs uppercase text-slate-500 mb-2">Admin</p>
-
-              <Link href="/admin/users" className="block">
-                Users
-              </Link>
-              <Link href="/admin/staff" className="block">
-                Staff
-              </Link>
-              <Link href="/admin/appointments" className="block">
-                Appointments
-              </Link>
-              <Link href="/admin/pricing" className="block">
-                Pricing
-              </Link>
-              <Link href="/admin/header-editor" className="block">
-                Header Editor
-              </Link>
-              <Link href="/admin/logs" className="block">
-                Logs
-              </Link>
-              <Link href="/admin/settings" className="block">
-                Settings
-              </Link>
-              <Link href="/admin/editor" className="block">
-                Editor
-              </Link>
-            </div>
-          )}
-
-          {!user && (
-            <Link
-              href="/login"
-              className="block px-4 py-2 bg-teal-500 text-slate-900 rounded font-medium text-center"
-            >
-              Login
-            </Link>
-          )}
-
-          {user && (
-            <button
-              onClick={logout}
-              className="w-full px-4 py-2 bg-slate-800 rounded hover:bg-slate-700"
-            >
-              Logout
-            </button>
-          )}
-        </div>
-      )}
     </header>
   );
 }
