@@ -6,13 +6,17 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import SchedulePage from "@/components/schedule/SchedulePage";
 
 export default async function SchedulerPage() {
+  // 1. Create ONE SSR client
+  const supabase = await createSupabaseServerClient();
+
+  // 2. Get user from SSR
   const user = await getUser();
 
+  // 3. Default to free
   let isFree = true;
 
+  // 4. If logged in, check profile
   if (user) {
-    const supabase = createSupabaseServerClient();
-
     const { data } = await supabase
       .from("profiles")
       .select("is_pro")

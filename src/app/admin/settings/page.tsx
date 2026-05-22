@@ -20,17 +20,9 @@ export default function AdminSettingsPage() {
 
   const [enableNotifications, setEnableNotifications] = useState(false);
 
-  // Admin gating
-  if (isAdmin === null) return null;
-
-  if (!isAdmin)
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-        <p>You do not have permission to access business settings.</p>
-      </div>
-    );
-
   useEffect(() => {
+    if (isAdmin !== true) return;
+
     async function load() {
       const { data } = await supabase
         .from("business_settings")
@@ -49,7 +41,19 @@ export default function AdminSettingsPage() {
     }
 
     load();
-  }, []);
+  }, [isAdmin]);
+
+  if (isAdmin === null) return null;
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+        <p>You do not have permission to access business settings.</p>
+      </div>
+    );
+  }
+
+  if (loading) return null;
 
   async function saveBusinessInfo() {
     setSavingBusiness(true);
@@ -80,8 +84,6 @@ export default function AdminSettingsPage() {
     setSavingPrefs(false);
     alert("Preferences updated!");
   }
-
-  if (loading) return null;
 
   return (
     <div className="admin-settings-container">

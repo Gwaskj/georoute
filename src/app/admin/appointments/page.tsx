@@ -34,15 +34,25 @@ export default function AppointmentsPage() {
 
   const [saving, setSaving] = useState(false);
 
-  if (isAdmin === null) return null;
-  if (!isAdmin)
+  if (isAdmin === null) {
+    return (
+      <div className="p-10 text-center text-gray-500">
+        Checking permissions…
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
     return (
       <div className="p-10 text-center text-red-500">
         You do not have permission to view this page.
       </div>
     );
+  }
 
   useEffect(() => {
+    if (isAdmin !== true) return;
+
     async function load() {
       const { data: staffData } = await supabase
         .from("staff")
@@ -51,8 +61,7 @@ export default function AppointmentsPage() {
 
       const { data: apptData } = await supabase
         .from("appointments")
-        .select(
-          `
+        .select(`
           id,
           staff_id,
           customer_name,
@@ -60,8 +69,7 @@ export default function AppointmentsPage() {
           start_time,
           end_time,
           staff:staff_id ( id, name )
-        `
-        )
+        `)
         .order("start_time", { ascending: true });
 
       setStaff(staffData || []);
@@ -85,7 +93,7 @@ export default function AppointmentsPage() {
     }
 
     load();
-  }, []);
+  }, [isAdmin]);
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
@@ -102,8 +110,7 @@ export default function AppointmentsPage() {
         start_time: startTime,
         end_time: endTime,
       })
-      .select(
-        `
+      .select(`
         id,
         staff_id,
         customer_name,
@@ -111,12 +118,11 @@ export default function AppointmentsPage() {
         start_time,
         end_time,
         staff:staff_id ( id, name )
-      `
-      )
+      `)
       .single();
 
     if (data) {
-      const normalized = {
+      const normalized: Appointment = {
         id: data.id,
         staff_id: data.staff_id,
         staff: Array.isArray(data.staff)
@@ -260,78 +266,65 @@ export default function AppointmentsPage() {
       >
         <thead>
           <tr>
-            <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e5e7eb" }}>
+            <th
+              style={{
+                textAlign: "left",
+                padding: 8,
+                borderBottom: "1px solid #e5e7eb",
+              }}
+            >
               Staff
             </th>
-            <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e5e7eb" }}>
+            <th
+              style={{
+                textAlign: "left",
+                padding: 8,
+                borderBottom: "1px solid #e5e7eb",
+              }}
+            >
               Customer
             </th>
-            <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e5e7eb" }}>
+            <th
+              style={{
+                textAlign: "left",
+                padding: 8,
+                borderBottom: "1px solid #e5e7eb",
+              }}
+            >
               Address
             </th>
-            <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e5e7eb" }}>
+            <th
+              style={{
+                textAlign: "left",
+                padding: 8,
+                borderBottom: "1px solid #e5e7eb",
+              }}
+            >
               Start
             </th>
-            <th style={{ textAlign: "left", padding: 8, borderBottom: "1px solid #e5e7eb" }}>
+            <th
+              style={{
+                textAlign: "left",
+                padding: 8,
+                borderBottom: "1px solid #e5e7eb",
+              }}
+            >
               End
             </th>
-            <th style={{ textAlign: "right", padding: 8, borderBottom: "1px solid #e5e7eb" }}>
+            <th
+              style={{
+                textAlign: "right",
+                padding: 8,
+                borderBottom: "1px solid #e5e7eb",
+              }}
+            >
               Actions
             </th>
           </tr>
         </thead>
 
         <tbody>
-          {appointments.map((a) => (
-            <tr key={a.id}>
-              <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
-                {a.staff && a.staff.length > 0
-                  ? a.staff.map((s) => s.name).join(", ")
-                  : "—"}
-              </td>
-
-              <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
-                {a.customer_name}
-              </td>
-
-              <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
-                {a.address}
-              </td>
-
-              <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
-                {a.start_time}
-              </td>
-
-              <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
-                {a.end_time}
-              </td>
-
-              <td
-                style={{
-                  padding: 8,
-                  borderBottom: "1px solid #f3f4f6",
-                  textAlign: "right",
-                }}
-              >
-                <button
-                  onClick={() => handleDelete(a.id)}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: 6,
-                    border: "1px solid #ef4444",
-                    background: "white",
-                    color: "#b91c1c",
-                    fontSize: 13,
-                    cursor: "pointer",
-                  }}
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-
-          {appointments.length === 0 && (
+          {appointments.length === 0 ? (
             <tr>
               <td
                 colSpan={6}
@@ -344,6 +337,80 @@ export default function AppointmentsPage() {
                 No appointments yet.
               </td>
             </tr>
+          ) : (
+            appointments.map((a) => (
+              <tr key={a.id}>
+                <td
+                  style={{
+                    padding: 8,
+                    borderBottom: "1px solid #f3f4f6",
+                  }}
+                >
+                  {a.staff && a.staff.length > 0
+                    ? a.staff.map((s) => s.name).join(", ")
+                    : "—"}
+                </td>
+
+                <td
+                  style={{
+                    padding: 8,
+                    borderBottom: "1px solid #f3f4f6",
+                  }}
+                >
+                  {a.customer_name}
+                </td>
+
+                <td
+                  style={{
+                    padding: 8,
+                    borderBottom: "1px solid #f3f4f6",
+                  }}
+                >
+                  {a.address}
+                </td>
+
+                <td
+                  style={{
+                    padding: 8,
+                    borderBottom: "1px solid #f3f4f6",
+                  }}
+                >
+                  {a.start_time}
+                </td>
+
+                <td
+                  style={{
+                    padding: 8,
+                    borderBottom: "1px solid #f3f4f6",
+                  }}
+                >
+                  {a.end_time}
+                </td>
+
+                <td
+                  style={{
+                    padding: 8,
+                    borderBottom: "1px solid #f3f4f6",
+                    textAlign: "right",
+                  }}
+                >
+                  <button
+                    onClick={() => handleDelete(a.id)}
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: 6,
+                      border: "1px solid #ef4444",
+                      background: "white",
+                      color: "#b91c1c",
+                      fontSize: 13,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
           )}
         </tbody>
       </table>

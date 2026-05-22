@@ -1,5 +1,6 @@
 "use client";
 
+import "@/styles/admin-settings.css";
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
@@ -13,21 +14,10 @@ export default function AdminPricingEditor() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Admin gating
-  if (isAdmin === null) return null;
-
-  if (!isAdmin)
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <p className="text-slate-300 text-sm">
-          You do not have permission to edit pricing.
-        </p>
-      </div>
-    );
-
   useEffect(() => {
+    if (isAdmin !== true) return;
+
     async function load() {
-      // Load pricing plans
       const { data: pricingData } = await supabase
         .from("pricing")
         .select("*")
@@ -47,7 +37,19 @@ export default function AdminPricingEditor() {
     }
 
     load();
-  }, []);
+  }, [isAdmin]);
+
+  if (isAdmin === null) return null;
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <p className="text-slate-300 text-sm">
+          You do not have permission to edit pricing.
+        </p>
+      </div>
+    );
+  }
 
   if (loading) return null;
 
@@ -55,7 +57,6 @@ export default function AdminPricingEditor() {
     setSaving(true);
 
     for (const plan of plans) {
-      // 1. Create new Stripe price via Edge Function
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-stripe-price`,
         {
@@ -81,7 +82,6 @@ export default function AdminPricingEditor() {
 
       const priceId = json.priceId as string;
 
-      // 2. Save new price + Stripe Price ID to Supabase
       await supabase
         .from("pricing")
         .update({
@@ -128,7 +128,6 @@ export default function AdminPricingEditor() {
           >
             <h2 className="text-lg font-semibold capitalize">{plan.plan}</h2>
 
-            {/* Plan name */}
             <label className="block mt-4 text-sm text-slate-300">
               Plan name
             </label>
@@ -142,7 +141,6 @@ export default function AdminPricingEditor() {
               }}
             />
 
-            {/* Price */}
             <label className="block mt-4 text-sm text-slate-300">
               Price (£)
             </label>
@@ -157,7 +155,6 @@ export default function AdminPricingEditor() {
               }}
             />
 
-            {/* Description */}
             <label className="block mt-4 text-sm text-slate-300">
               Description
             </label>
@@ -171,7 +168,6 @@ export default function AdminPricingEditor() {
               }}
             />
 
-            {/* Features */}
             <label className="block mt-4 text-sm text-slate-300">
               Features
             </label>
@@ -202,7 +198,6 @@ export default function AdminPricingEditor() {
               + Add feature
             </button>
 
-            {/* Stripe Price ID */}
             <div className="mt-4 text-[11px] text-slate-400 break-all">
               Current Stripe price ID:
               <br />

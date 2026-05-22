@@ -1,5 +1,6 @@
 "use client";
 
+import "@/styles/admin-settings.css";
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
@@ -23,17 +24,9 @@ export default function HeaderEditorPage() {
     banner_offset_y: 0,
   });
 
-  // Admin gating
-  if (isAdmin === null) return null;
-
-  if (!isAdmin)
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-        <p>You do not have permission to edit the header.</p>
-      </div>
-    );
-
   useEffect(() => {
+    if (isAdmin !== true) return;
+
     async function load() {
       const { data: header } = await supabase
         .from("site_header")
@@ -57,7 +50,19 @@ export default function HeaderEditorPage() {
     }
 
     load();
-  }, []);
+  }, [isAdmin]);
+
+  if (isAdmin === null) return null;
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+        <p>You do not have permission to edit the header.</p>
+      </div>
+    );
+  }
+
+  if (loading) return null;
 
   async function uploadImage(e: any, type: "logo" | "banner") {
     const file = e.target.files?.[0];
@@ -108,8 +113,6 @@ export default function HeaderEditorPage() {
       alert("Header updated!");
     }
   }
-
-  if (loading) return null;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
@@ -219,13 +222,14 @@ export default function HeaderEditorPage() {
                 alignItems: "center",
               }}
             >
-              <Image
-                src={form.logo_url || "/logo-placeholder.png"}
-                alt="Logo"
-                width={70}
-                height={70}
-                style={{ height: "auto" }}
-              />
+           <Image
+  src="/logo-placeholder.png"
+  alt="Logo"
+  width={34}
+  height={34}
+  className="rounded"
+  style={{ width: "auto", height: "auto" }}
+/>
             </div>
           </div>
         </div>

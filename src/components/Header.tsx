@@ -49,14 +49,14 @@ export default function Header() {
         {/* LEFT SIDE */}
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/logo.png"
-              alt="Logo"
-              width={34}
-              height={34}
-              className="rounded"
-              style={{ height: "auto" }}
-            />
+         <Image
+  src="/logo-placeholder.png"
+  alt="Logo"
+  width={34}
+  height={34}
+  className="rounded"
+  style={{ width: "auto", height: "auto" }}
+/>
             <span className="font-semibold text-lg tracking-tight">
               GeoRoute
             </span>

@@ -24,17 +24,9 @@ export default function StaffPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Admin gating
-  if (isAdmin === null) return null;
-
-  if (!isAdmin)
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-        <p>You do not have permission to manage staff.</p>
-      </div>
-    );
-
   useEffect(() => {
+    if (isAdmin !== true) return;
+
     async function load() {
       const { data } = await supabase
         .from("staff")
@@ -46,7 +38,19 @@ export default function StaffPage() {
     }
 
     load();
-  }, []);
+  }, [isAdmin]);
+
+  if (isAdmin === null) return null;
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+        <p>You do not have permission to manage staff.</p>
+      </div>
+    );
+  }
+
+  if (loading) return null;
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
@@ -70,8 +74,6 @@ export default function StaffPage() {
     await supabase.from("staff").delete().eq("id", id);
     setStaff((prev) => prev.filter((s) => s.id !== id));
   }
-
-  if (loading) return null;
 
   return (
     <div style={{ padding: 24 }}>
@@ -161,57 +163,7 @@ export default function StaffPage() {
         </thead>
 
         <tbody>
-          {staff.map((s) => (
-            <tr key={s.id}>
-              <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
-                {s.name}
-              </td>
-
-              <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
-                {s.email}
-              </td>
-
-              <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
-                <span
-                  style={{
-                    display: "inline-block",
-                    width: 16,
-                    height: 16,
-                    borderRadius: "999px",
-                    background: s.color || "#9ca3af",
-                    marginRight: 6,
-                    verticalAlign: "middle",
-                  }}
-                />
-                <span>{s.color}</span>
-              </td>
-
-              <td
-                style={{
-                  padding: 8,
-                  borderBottom: "1px solid #f3f4f6",
-                  textAlign: "right",
-                }}
-              >
-                <button
-                  onClick={() => handleDelete(s.id)}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: 6,
-                    border: "1px solid #ef4444",
-                    background: "white",
-                    color: "#b91c1c",
-                    fontSize: 13,
-                    cursor: "pointer",
-                  }}
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-
-          {staff.length === 0 && (
+          {staff.length === 0 ? (
             <tr>
               <td
                 colSpan={4}
@@ -224,6 +176,56 @@ export default function StaffPage() {
                 No staff yet.
               </td>
             </tr>
+          ) : (
+            staff.map((s) => (
+              <tr key={s.id}>
+                <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
+                  {s.name}
+                </td>
+
+                <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
+                  {s.email}
+                </td>
+
+                <td style={{ padding: 8, borderBottom: "1px solid #f3f4f6" }}>
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: 16,
+                      height: 16,
+                      borderRadius: "999px",
+                      background: s.color || "#9ca3af",
+                      marginRight: 6,
+                      verticalAlign: "middle",
+                    }}
+                  />
+                  <span>{s.color}</span>
+                </td>
+
+                <td
+                  style={{
+                    padding: 8,
+                    borderBottom: "1px solid #f3f4f6",
+                    textAlign: "right",
+                  }}
+                >
+                  <button
+                    onClick={() => handleDelete(s.id)}
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: 6,
+                      border: "1px solid #ef4444",
+                      background: "white",
+                      color: "#b91c1c",
+                      fontSize: 13,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
           )}
         </tbody>
       </table>
