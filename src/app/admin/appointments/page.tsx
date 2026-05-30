@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client"; // ✅ correct
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
-
-const supabase = createSupabaseBrowserClient();
 
 interface Staff {
   id: number;

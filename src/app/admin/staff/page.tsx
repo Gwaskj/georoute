@@ -2,10 +2,8 @@
 
 import "@/styles/admin-staff.css";
 import { useEffect, useState, FormEvent } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
-
-const supabase = createSupabaseBrowserClient();
 
 interface Staff {
   id: number;

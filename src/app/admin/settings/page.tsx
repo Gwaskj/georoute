@@ -2,10 +2,8 @@
 
 import "@/styles/admin-settings.css";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
-
-const supabase = createSupabaseBrowserClient();
 
 export default function AdminSettingsPage() {
   const isAdmin = useIsAdmin();

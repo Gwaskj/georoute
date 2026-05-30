@@ -13,7 +13,7 @@ import "leaflet/dist/leaflet.css";
 import styles from "./MapVisualizer.module.css";
 
 import { useEffect, useRef, useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client"; // ✅ FIXED: use global client
 import { useHighlightStore } from "@/lib/map/highlightStore";
 import { applyStaffColors } from "@/lib/map/staffColorMap";
 import { loadFreeSchedulerData } from "@/lib/freeSession";
@@ -30,8 +30,6 @@ const DefaultIcon = L.icon({
   shadowUrl: iconShadow,
 });
 L.Marker.prototype.options.icon = DefaultIcon;
-
-const supabase = createSupabaseBrowserClient();
 
 function MapInitializer({ zoom }: { zoom: number }) {
   const map = useMap();

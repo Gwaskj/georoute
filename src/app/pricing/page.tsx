@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import AdBanner from "@/components/AdBanner";
-
-const supabase = createSupabaseBrowserClient();
 
 export default function PricingPage() {
   const [user, setUser] = useState<any>(null);

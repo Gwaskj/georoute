@@ -2,10 +2,8 @@
 
 import "@/styles/admin-users.css";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
-
-const supabase = createSupabaseBrowserClient();
 
 interface UserRow {
   user_id: string;

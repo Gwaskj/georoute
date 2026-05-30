@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import {
   loadFreeSchedulerData,
   saveFreeSchedulerData,
@@ -44,8 +44,6 @@ function hashColor(id: string): string {
   const hue = Math.abs(hash) % 360;
   return `hsl(${hue}, 70%, 55%)`;
 }
-
-const supabase = createSupabaseBrowserClient();
 
 export default function StaffSelector({
   isFree,

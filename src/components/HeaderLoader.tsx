@@ -1,4 +1,10 @@
 import Header from "./Header";
+import type { NavItem, BrandConfig } from "./HeaderStructure";
+
+type Layout = {
+  brand?: BrandConfig | null;
+  navItems?: NavItem[] | null;
+};
 
 export default async function HeaderLoader() {
   const res = await fetch(
@@ -14,6 +20,23 @@ export default async function HeaderLoader() {
   const data = await res.json();
   const row = data?.[0] || {};
 
+  const layout = (row.layout || {}) as Layout;
+
+  const brand: BrandConfig = layout.brand ?? {
+    enabled: true,
+    text: "GeoRoute",
+  };
+
+  const navItems: NavItem[] =
+    layout.navItems && Array.isArray(layout.navItems)
+      ? layout.navItems
+      : [
+          { id: "scheduler", text: "Scheduler", href: "/scheduler", align: "left" },
+          { id: "account", text: "Account", href: "/account", align: "left" },
+          { id: "billing", text: "Billing", href: "/account/billing", align: "left" },
+          { id: "admin", text: "Admin", href: "#", align: "right", isAdmin: true },
+        ];
+
   return (
     <Header
       logoUrl={row.logo_url || null}
@@ -21,9 +44,13 @@ export default async function HeaderLoader() {
       logo_x={row.logo_x ?? 0}
       logo_y={row.logo_y ?? 0}
       logo_scale={row.logo_scale ?? 1}
+      logo_rotation={row.logo_rotation ?? 0}
       banner_offset_x={row.banner_offset_x ?? 0}
       banner_offset_y={row.banner_offset_y ?? 0}
       banner_scale={row.banner_scale ?? 1}
+      banner_rotation={row.banner_rotation ?? 0}
+      brand={brand}
+      navItems={navItems}
     />
   );
 }

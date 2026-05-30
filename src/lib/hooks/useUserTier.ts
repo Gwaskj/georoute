@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-
-const supabase = createSupabaseBrowserClient();
+import { supabase } from "@/lib/supabase/client";
 
 export function useUserTier() {
   const [isFree, setIsFree] = useState<boolean | null>(null);

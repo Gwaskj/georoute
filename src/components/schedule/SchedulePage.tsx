@@ -19,15 +19,13 @@ import { useStaffStore } from "@/store/staffStore";
 
 // PERSISTENCE
 import { loadFreeSchedulerData } from "@/lib/freeSession";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 type SchedulePageProps = {
   isFree: boolean;
 };
 
 type Tab = "setup" | "results";
-
-const supabase = createSupabaseBrowserClient();
 
 export default function SchedulePage({ isFree }: SchedulePageProps) {
   const [activeTab, setActiveTab] = useState<Tab>("setup");

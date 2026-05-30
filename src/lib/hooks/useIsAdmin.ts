@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/supabase/supabaseClient";
+import { supabase } from "@/lib/supabase/client";
 
 export function useIsAdmin() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);

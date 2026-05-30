@@ -2,10 +2,8 @@
 
 import "@/styles/admin-settings.css";
 import { useEffect, useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
-
-const supabase = createSupabaseBrowserClient();
 
 export default function AdminPricingEditor() {
   const isAdmin = useIsAdmin();

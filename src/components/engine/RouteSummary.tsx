@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { loadFreeSchedulerData } from "@/lib/freeSession";
 
 type RouteSummaryData = {
@@ -10,8 +10,6 @@ type RouteSummaryData = {
   total_distance: number;
   vehicles: number;
 };
-
-const supabase = createSupabaseBrowserClient();
 
 export default function RouteSummary({ isFree }: { isFree: boolean }) {
   const [summary, setSummary] = useState<RouteSummaryData | null>(null);

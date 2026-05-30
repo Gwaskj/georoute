@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { useHighlightStore } from "@/lib/map/highlightStore";
 import { loadFreeSchedulerData } from "@/lib/freeSession";
 
@@ -52,8 +52,6 @@ function hasConflict(a: AppointmentRow, b: AppointmentRow): boolean {
   const aStaffIds = new Set(a.staff.map((s) => s.id));
   return b.staff.some((s) => aStaffIds.has(s.id));
 }
-
-const supabase = createSupabaseBrowserClient();
 
 export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTableProps) {
   const highlightedAppointmentId = useHighlightStore((s) => s.highlightedAppointmentId);

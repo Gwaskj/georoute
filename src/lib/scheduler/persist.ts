@@ -1,12 +1,10 @@
 // C:\Users\matth\georoute\src\lib\scheduler\persist.ts
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import {
   loadFreeSchedulerData,
   saveFreeSchedulerData,
 } from "@/lib/freeSession";
 import { SchedulerContext, SchedulerResult } from "./types";
-
-const supabase = createSupabaseBrowserClient();
 
 type PersistPayload = {
   isFree: boolean;

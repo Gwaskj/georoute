@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-
-const supabase = createSupabaseBrowserClient();
+import { supabase } from "@/lib/supabase/client";
 
 export default function UpdatePasswordPage() {
   const [password, setPassword] = useState("");

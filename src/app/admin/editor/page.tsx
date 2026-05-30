@@ -1,9 +1,7 @@
 "use client";
 
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-
-const supabase = createSupabaseBrowserClient();
+import { supabase } from "@/lib/supabase/client";
 
 export default function EditorPage() {
   const isAdmin = useIsAdmin();
