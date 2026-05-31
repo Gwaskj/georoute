@@ -1,9 +1,9 @@
-// C:\Users\matth\georoute\src\components\engine\RouteSummary.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { loadFreeSchedulerData } from "@/lib/freeSession";
+import { useUserTier } from "@/lib/hooks/useUserTier";
 
 type RouteSummaryData = {
   total_jobs: number;
@@ -11,7 +11,8 @@ type RouteSummaryData = {
   vehicles: number;
 };
 
-export default function RouteSummary({ isFree }: { isFree: boolean }) {
+export default function RouteSummary() {
+  const isFree = useUserTier(); // ⭐ moved inside
   const [summary, setSummary] = useState<RouteSummaryData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,12 +25,9 @@ export default function RouteSummary({ isFree }: { isFree: boolean }) {
     const total_jobs = visits.length;
     const vehicles = new Set(visits.map((v: any) => v.staffId)).size;
 
-    // Free mode has no distance engine → return 0
-    const total_distance = 0;
-
     return {
       total_jobs,
-      total_distance,
+      total_distance: 0, // free mode has no distance engine
       vehicles,
     };
   }

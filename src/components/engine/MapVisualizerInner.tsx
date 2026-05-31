@@ -1,4 +1,3 @@
-// C:\Users\matth\georoute\src\components\engine\MapVisualizerInner.tsx
 "use client";
 
 import {
@@ -13,10 +12,11 @@ import "leaflet/dist/leaflet.css";
 import styles from "./MapVisualizer.module.css";
 
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase/client"; // ✅ FIXED: use global client
+import { supabase } from "@/lib/supabase/client";
 import { useHighlightStore } from "@/lib/map/highlightStore";
 import { applyStaffColors } from "@/lib/map/staffColorMap";
 import { loadFreeSchedulerData } from "@/lib/freeSession";
+import { useUserTier } from "@/lib/hooks/useUserTier";
 
 import L from "leaflet";
 
@@ -143,20 +143,20 @@ function normalizePoints(raw: any[]): [number, number][] {
 }
 
 export default function MapVisualizerInner({
-  isFree,
   zoom = 12,
   showRoutes = true,
   showAppointments = true,
   showStaffRoutes = true,
   selectedStaffId,
 }: {
-  isFree: boolean;
   zoom?: number;
   showRoutes?: boolean;
   showAppointments?: boolean;
   showStaffRoutes?: boolean;
   selectedStaffId?: string | null;
 }) {
+  const isFree = useUserTier(); // ⭐ moved here
+
   const highlightedAppointmentId = useHighlightStore(
     (s) => s.highlightedAppointmentId
   );
