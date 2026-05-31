@@ -58,10 +58,21 @@ export default function StaffSelector({
     return (data?.staff as Staff[]) ?? [];
   }
 
-  async function saveFreeStaff(updated: Staff[]) {
-    const data = (await loadFreeSchedulerData()) ?? {};
-    await saveFreeSchedulerData({ ...data, staff: updated });
-  }
+async function saveFreeStaff(updated: Staff[]) {
+  const existing = (await loadFreeSchedulerData()) ?? {
+    staff: [],
+    appointments: [],
+    routes: [],
+    visits: [],
+    officePostcode: null,
+    selectedStaffIds: [],
+  };
+
+  await saveFreeSchedulerData({
+    ...existing,
+    staff: updated,
+  });
+}
 
   useEffect(() => {
     async function load() {
