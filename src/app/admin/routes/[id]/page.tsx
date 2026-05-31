@@ -4,13 +4,11 @@ import { useUserTier } from "@/lib/hooks/useUserTier";
 import MapVisualizer from "@/components/engine/MapVisualizer.client";
 import RouteSummary from "@/components/engine/RouteSummary";
 
-interface RoutePageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function RouteDetailsPage({ params }: RoutePageProps) {
+export default function RouteDetailsPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const { id } = params;
   const isFree = useUserTier();
 
