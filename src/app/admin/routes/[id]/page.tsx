@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-static";
+
 import { useUserTier } from "@/lib/hooks/useUserTier";
 import MapVisualizer from "@/components/engine/MapVisualizer.client";
 import RouteSummary from "@/components/engine/RouteSummary";
