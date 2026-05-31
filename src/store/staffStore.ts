@@ -1,9 +1,9 @@
 // src/store/staffStore.ts
 import { create } from "zustand";
-import { normalisePostcode } from "@/lib/validatePostcode";
 import {
   loadFreeSchedulerData,
   saveFreeSchedulerData,
+  FreeSchedulerData,
 } from "@/lib/freeSession";
 
 export type Gender = "Male" | "Female" | "Other";
@@ -40,9 +40,26 @@ function generateColour(): string {
   return colours[Math.floor(Math.random() * colours.length)];
 }
 
+function cleanPostcode(p: string) {
+  return p.trim().toUpperCase();
+}
+
 async function persistFree(staff: Staff[], selectedStaffIds: string[]) {
-  const data = (await loadFreeSchedulerData()) ?? {};
-  await saveFreeSchedulerData({ ...data, staff, selectedStaffIds });
+  const existing: FreeSchedulerData =
+    (await loadFreeSchedulerData()) ?? {
+      staff: [],
+      appointments: [],
+      routes: [],
+      visits: [],
+      officePostcode: null,
+      selectedStaffIds: [],
+    };
+
+  await saveFreeSchedulerData({
+    ...existing,
+    staff,
+    selectedStaffIds,
+  });
 }
 
 export const useStaffStore = create<StaffState>((set, get) => ({
@@ -59,8 +76,8 @@ export const useStaffStore = create<StaffState>((set, get) => ({
       id: crypto.randomUUID(),
       colour: generateColour(),
       ...data,
-      homePostcode: normalisePostcode(data.homePostcode),
-      officePostcode: normalisePostcode(data.officePostcode),
+      homePostcode: cleanPostcode(data.homePostcode),
+      officePostcode: cleanPostcode(data.officePostcode),
     };
 
     const staff = [...get().staff, newStaff];
@@ -76,11 +93,11 @@ export const useStaffStore = create<StaffState>((set, get) => ({
       const next: Staff = { ...s, ...updates };
 
       if (updates.homePostcode !== undefined) {
-        next.homePostcode = normalisePostcode(updates.homePostcode);
+        next.homePostcode = cleanPostcode(updates.homePostcode);
       }
 
       if (updates.officePostcode !== undefined) {
-        next.officePostcode = normalisePostcode(updates.officePostcode);
+        next.officePostcode = cleanPostcode(updates.officePostcode);
       }
 
       return next;

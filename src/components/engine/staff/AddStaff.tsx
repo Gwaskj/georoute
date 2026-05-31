@@ -4,7 +4,11 @@ import { useState, useMemo, useEffect } from "react";
 import { useStaffStore, Staff, Gender } from "@/store/staffStore";
 import { useSkillsStore, Skill } from "@/store/skillsStore";
 import { useOfficePostcodeStore } from "@/store/officePostcodeStore";
-import { isValidUKPostcode, normalisePostcode } from "@/lib/validatePostcode";
+
+// Simple cleaning now that postcode validation is removed
+function cleanPostcode(p: string) {
+  return p.trim().toUpperCase();
+}
 
 interface AddStaffProps {
   isFree: boolean;
@@ -51,8 +55,11 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
   } = useStaffStore();
 
   const { skills, addSkill } = useSkillsStore();
-  const { officePostcode: globalOfficePostcode, setOfficePostcode } =
-    useOfficePostcodeStore();
+
+  const {
+    officePostcode: globalOfficePostcode,
+    setOfficePostcode,
+  } = useOfficePostcodeStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState<StaffFormState>({
@@ -63,7 +70,7 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
 
   const [errors, setErrors] = useState<{ home?: string; office?: string }>({});
 
-  // ⭐⭐⭐ FIX: Add event listener for edit mode
+  // Edit mode listener
   useEffect(() => {
     const handler = (e: any) => {
       const { id } = e.detail;
@@ -93,23 +100,6 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
     return staff.length < 2;
   }, [isFree, staff]);
 
-  const validate = () => {
-    const newErrors: any = {};
-
-    if (!isValidUKPostcode(form.homePostcode)) {
-      newErrors.home = "Invalid UK postcode";
-    }
-
-    if (form.officePostcode.trim()) {
-      if (!isValidUKPostcode(form.officePostcode)) {
-        newErrors.office = "Invalid UK postcode";
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const openAddModal = () => {
     setIsEditing(false);
     setForm({ ...emptyForm, officePostcode: globalOfficePostcode });
@@ -134,11 +124,10 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
 
   const handleSubmit = () => {
     if (!form.name.trim()) return;
-    if (!validate()) return;
 
-    const normalisedHome = normalisePostcode(form.homePostcode);
+    const normalisedHome = cleanPostcode(form.homePostcode);
     const normalisedOffice = form.officePostcode.trim()
-      ? normalisePostcode(form.officePostcode)
+      ? cleanPostcode(form.officePostcode)
       : globalOfficePostcode;
 
     setOfficePostcode(normalisedOffice);
