@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
 export function useUserTier() {
-  const [isFree, setIsFree] = useState<boolean | null>(null);
+  const [isFree, setIsFree] = useState<boolean>(true);
 
   useEffect(() => {
     async function load() {
@@ -20,11 +20,10 @@ export function useUserTier() {
       const { data, error } = await supabase
         .from("profiles")
         .select("is_pro")
-        .eq("user_id", user.id)
+        .eq("id", user.id)
         .single();
 
       if (error) {
-        console.error("Error loading user tier:", error);
         setIsFree(true);
         return;
       }
@@ -33,7 +32,7 @@ export function useUserTier() {
     }
 
     load();
-  }, []); // FIXED
+  }, []);
 
   return isFree;
 }

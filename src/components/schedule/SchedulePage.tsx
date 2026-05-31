@@ -1,4 +1,4 @@
-// C:\Users\matth\georoute\src\components\engine\SchedulePage.tsx
+// C:\Users\matth\georoute\src\components\schedule\SchedulePage.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -136,13 +136,26 @@ function ResultsView({ isFree }: { isFree: boolean }) {
         return;
       }
 
-      const [visitsRes, routesRes] = await Promise.all([
-        supabase.from("visits").select("*"),
-        supabase.from("routes").select("*"),
-      ]);
+      // PRO MODE — only load routes
+      const { data: routesData } = await supabase.from("routes").select("*");
+      const loadedRoutes = routesData ?? [];
+      setRoutes(loadedRoutes);
 
-      setVisits(visitsRes.data ?? []);
-      setRoutes(routesRes.data ?? []);
+      // Convert routes → visits for UI
+      const reconstructedVisits = loadedRoutes.flatMap((r: any) =>
+        (r.stops ?? []).map((stop: any, idx: number) => ({
+          id: `${r.id}-${idx}`,
+          appointmentId: stop.appointment_id,
+          staffId: r.staff_id,
+          clientName: stop.client_name,
+          staffName: r.staff_name,
+          start: stop.start,
+          end: stop.end,
+          postcode: stop.postcode,
+        }))
+      );
+
+      setVisits(reconstructedVisits);
     }
 
     load();

@@ -4,14 +4,15 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
 export function useIsAdmin() {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   useEffect(() => {
     let active = true;
 
     async function load() {
-      const { data: userData } = await supabase.auth.getUser();
-      const user = userData?.user;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (!active) return;
 
@@ -24,7 +25,7 @@ export function useIsAdmin() {
         .from("admins")
         .select("user_id")
         .eq("user_id", user.id)
-        .maybeSingle(); // safer than .single()
+        .maybeSingle();
 
       if (!active) return;
 

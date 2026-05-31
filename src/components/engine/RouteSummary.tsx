@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { loadFreeSchedulerData } from "@/lib/freeSession";
 import { useUserTier } from "@/lib/hooks/useUserTier";
@@ -12,22 +12,48 @@ type RouteSummaryData = {
 };
 
 export default function RouteSummary() {
-  const isFree = useUserTier(); // ⭐ moved inside
+  const isFree = useUserTier();
   const [summary, setSummary] = useState<RouteSummaryData | null>(null);
   const [loading, setLoading] = useState(true);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   async function loadFreeSummary(): Promise<RouteSummaryData | null> {
     const data = await loadFreeSchedulerData();
-    if (!data?.visits) return null;
+    if (!data) return null;
 
-    const visits = data.visits;
+    const appointments = data.appointments ?? [];
+    const routes = data.routes ?? [];
 
-    const total_jobs = visits.length;
-    const vehicles = new Set(visits.map((v: any) => v.staffId)).size;
+    const total_jobs = appointments.length;
+    const vehicles = new Set(routes.map((r: any) => r.staff_id)).size;
 
     return {
       total_jobs,
-      total_distance: 0, // free mode has no distance engine
+      total_distance: 0,
+      vehicles,
+    };
+  }
+
+  async function loadProSummary(): Promise<RouteSummaryData | null> {
+    const { data: appointments } = await supabase
+      .from("appointments")
+      .select("id");
+
+    const { data: routes } = await supabase
+      .from("routes")
+      .select("staff_id, distance");
+
+    const total_jobs = appointments?.length ?? 0;
+    const vehicles = new Set(routes?.map((r: any) => r.staff_id)).size;
+
+    const total_distance = routes?.reduce(
+      (sum: number, r: any) => sum + (r.distance ?? 0),
+      0
+    ) ?? 0;
+
+    return {
+      total_jobs,
+      total_distance,
       vehicles,
     };
   }
@@ -36,44 +62,38 @@ export default function RouteSummary() {
     async function load() {
       setLoading(true);
 
-      if (isFree) {
-        const local = await loadFreeSummary();
-        setSummary(local);
-        setLoading(false);
-        return;
-      }
+      const result = isFree
+        ? await loadFreeSummary()
+        : await loadProSummary();
 
-      const { data, error } = await supabase
-        .from("route_summary")
-        .select("*")
-        .single();
-
-      if (error) {
-        console.error("Error loading route summary:", error);
-        setSummary(null);
-      } else {
-        setSummary(data as RouteSummaryData);
-      }
-
+      setSummary(result);
       setLoading(false);
     }
 
     load();
 
-    if (!isFree) {
-      const channel = supabase
+    if (!isFree && !channelRef.current) {
+      channelRef.current = supabase
         .channel("route-summary-updates")
         .on(
           "postgres_changes",
-          { event: "*", schema: "public", table: "route_summary" },
+          { event: "*", schema: "public", table: "routes" },
+          () => load()
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "appointments" },
           () => load()
         )
         .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
     }
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
   }, [isFree]);
 
   return (

@@ -11,8 +11,8 @@ export interface ScheduledVisit {
   staffId: string;
   clientName: string;
   staffName: string;
-  start: string;
-  end: string;
+  start: string;   // ISO datetime
+  end: string;     // ISO datetime
   postcode: string;
 }
 
@@ -22,8 +22,8 @@ export interface SchedulerContext {
   purposes: CallPurpose[];
   windows: CustomWindow[];
   officePostcode: string | null;
-  dayStart: string;
-  dayEnd: string;
+  dayStart: string; // "08:00"
+  dayEnd: string;   // "20:00"
 }
 
 export interface SchedulerResult {

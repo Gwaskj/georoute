@@ -14,7 +14,7 @@ export async function isProUser() {
   const { data, error } = await supabase
     .from("profiles")
     .select("is_pro")
-    .eq("user_id", user.id)
+    .eq("id", user.id)
     .single();
 
   if (error) return false;

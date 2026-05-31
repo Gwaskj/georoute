@@ -1,8 +1,10 @@
-// C:\Users\matth\georoute\src\lib\scheduler\persist.ts
+// src/lib/scheduler/persist.ts
+
 import { supabase } from "@/lib/supabase/client";
 import {
   loadFreeSchedulerData,
   saveFreeSchedulerData,
+  FreeSchedulerData,
 } from "@/lib/freeSession";
 import { SchedulerContext, SchedulerResult } from "./types";
 
@@ -17,24 +19,22 @@ export async function loadSchedulerData(isFree: boolean) {
     return await loadFreeSchedulerData();
   }
 
-  const [staffRes, apptRes, routesRes, visitsRes] = await Promise.all([
+  const [staffRes, apptRes, routesRes] = await Promise.all([
     supabase.from("staff").select("*"),
     supabase.from("appointments").select("*"),
     supabase.from("routes").select("*"),
-    supabase.from("visits").select("*"),
   ]);
 
   return {
     staff: staffRes.data ?? [],
     appointments: apptRes.data ?? [],
     routes: routesRes.data ?? [],
-    visits: visitsRes.data ?? [],
   };
 }
 
 export async function saveSchedulerData(
   isFree: boolean,
-  data: Record<string, any>
+  data: FreeSchedulerData
 ) {
   if (isFree) {
     await saveFreeSchedulerData(data);
@@ -50,9 +50,6 @@ export async function saveSchedulerData(
   if (data.routes) {
     await supabase.from("routes").upsert(data.routes);
   }
-  if (data.visits) {
-    await supabase.from("visits").upsert(data.visits);
-  }
 }
 
 export async function saveSchedulerResult({
@@ -63,24 +60,27 @@ export async function saveSchedulerResult({
   const { visits } = result;
 
   if (isFree) {
-    const existing = (await loadFreeSchedulerData()) ?? {};
+    const existing: FreeSchedulerData = (await loadFreeSchedulerData()) ?? {
+      staff: [],
+      appointments: [],
+      routes: [],
+    };
 
-    const updated = {
+    const updated: FreeSchedulerData = {
       ...existing,
       staff: ctx.staff,
       appointments: ctx.appointments,
-      purposes: ctx.purposes,
-      windows: ctx.windows,
-      dayStart: ctx.dayStart,
-      dayEnd: ctx.dayEnd,
-      officePostcode: ctx.officePostcode,
-      visits,
+      routes: existing.routes ?? [],
+      officePostcode: ctx.officePostcode ?? null,
+      selectedStaffIds: existing.selectedStaffIds ?? [],
     };
+
+    // Free mode keeps visits only for UI display
+    (updated as any).visits = visits;
 
     await saveFreeSchedulerData(updated);
     return;
   }
 
-  await supabase.from("visits").delete().neq("id", ""); // clear old
-  await supabase.from("visits").insert(visits);
+  // Pro mode: visits are NOT persisted
 }

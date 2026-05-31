@@ -2,7 +2,11 @@
 "use client";
 
 import { useState } from "react";
-import { loadFreeSchedulerData, saveFreeSchedulerData } from "@/lib/freeSession";
+import {
+  loadFreeSchedulerData,
+  saveFreeSchedulerData,
+  FreeSchedulerData,
+} from "@/lib/freeSession";
 
 type FreeRoute = {
   id: string;
@@ -20,8 +24,20 @@ export default function GenerateSchedule() {
   }
 
   async function saveFreeRoutes(routes: FreeRoute[]) {
-    const data = (await loadFreeSchedulerData()) ?? {};
-    await saveFreeSchedulerData({ ...data, routes });
+    const existing: FreeSchedulerData =
+      (await loadFreeSchedulerData()) ?? {
+        staff: [],
+        appointments: [],
+        routes: [],
+        visits: [],
+        officePostcode: null,
+        selectedStaffIds: [],
+      };
+
+    await saveFreeSchedulerData({
+      ...existing,
+      routes,
+    });
   }
 
   async function generate() {

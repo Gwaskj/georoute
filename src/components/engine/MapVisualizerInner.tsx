@@ -155,7 +155,7 @@ export default function MapVisualizerInner({
   showStaffRoutes?: boolean;
   selectedStaffId?: string | null;
 }) {
-  const isFree = useUserTier(); // ⭐ moved here
+  const isFree = useUserTier();
 
   const highlightedAppointmentId = useHighlightStore(
     (s) => s.highlightedAppointmentId
@@ -171,15 +171,14 @@ export default function MapVisualizerInner({
   const [appointments, setAppointments] = useState<AppointmentMarker[]>([]);
 
   const [mapKey] = useState(() => crypto.randomUUID());
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-
     async function loadFree() {
       const data = await loadFreeSchedulerData();
 
-      const freeRoutesRaw = (data as any)?.routes ?? [];
-      const freeAppointmentsRaw = (data as any)?.appointments ?? [];
+      const freeRoutesRaw = data?.routes ?? [];
+      const freeAppointmentsRaw = data?.appointments ?? [];
 
       const normalizedRoutes = (freeRoutesRaw ?? []).map((r: any) => ({
         id: r.id,
@@ -223,8 +222,8 @@ export default function MapVisualizerInner({
           data?.map((a: any) => ({
             id: a.id,
             lat: a.lat ?? 53.0,
-            lng: a.lng ?? -2.2,
-            label: a.label ?? "Appointment",
+            lng: a.lon ?? -2.2,
+            label: a.name ?? "Appointment",
             color: a.color ?? "#d00000",
           })) ?? []
         );
@@ -232,30 +231,37 @@ export default function MapVisualizerInner({
 
       await Promise.all([loadRoutes(), loadAppointments()]);
 
-      channel = supabase
-        .channel("map-updates")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "routes" },
-          () => loadRoutes()
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "appointments" },
-          () => loadAppointments()
-        )
-        .subscribe();
+      if (!channelRef.current) {
+        channelRef.current = supabase
+          .channel("map-updates")
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "routes" },
+            () => loadRoutes()
+          )
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "appointments" },
+            () => loadAppointments()
+          )
+          .subscribe();
+      }
     }
 
     if (isFree) {
       loadFree();
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     } else {
       loadPro();
     }
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
     };
   }, [isFree]);

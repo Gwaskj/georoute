@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 
 type IconDefaultPrototype = { _getIconUrl?: unknown };
 
+// Remove the internal getter so Leaflet uses your custom URLs
 delete (L.Icon.Default.prototype as IconDefaultPrototype)._getIconUrl;
 
 L.Icon.Default.mergeOptions({

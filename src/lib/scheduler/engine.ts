@@ -1,4 +1,4 @@
-// C:\Users\matth\georoute\src\lib\scheduler\engine.ts
+// src/lib/scheduler/engine.ts
 import { SchedulerContext, SchedulerResult, ScheduledVisit } from "./types";
 import { Appointment } from "@/store/appointmentStore";
 import { Staff } from "@/store/staffStore";
@@ -17,7 +17,10 @@ function fromMinutes(total: number): string {
 }
 
 // very simple placeholder travel time (minutes)
-function estimateTravelMinutes(_fromPostcode: string, _toPostcode: string): number {
+function estimateTravelMinutes(
+  _fromPostcode: string,
+  _toPostcode: string
+): number {
   return 10;
 }
 
@@ -146,7 +149,6 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
 
   const customWindows = getCustomWindows(windows);
 
-  // Expand multi-visit appointments
   const expanded: Appointment[] = [];
   for (const appt of appointments.filter((a) => !a.archived)) {
     const count = Math.max(1, appt.visitsRequired || 1);
@@ -155,7 +157,6 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
     }
   }
 
-  // Sort by strict time first, then by purpose/custom window start, then by day start
   const expandedSorted = expanded.slice().sort((a, b) => {
     const aStrict = a.strictStartTime ? toMinutes(a.strictStartTime) : null;
     const bStrict = b.strictStartTime ? toMinutes(b.strictStartTime) : null;
