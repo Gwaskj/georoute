@@ -22,8 +22,19 @@ interface CustomWindowState {
 }
 
 async function persistFree(windows: CustomWindow[]) {
-  const data = (await loadFreeSchedulerData()) ?? {};
-  await saveFreeSchedulerData({ ...data, windows });
+  const data = (await loadFreeSchedulerData()) ?? {
+    staff: [],
+    appointments: [],
+    routes: [],
+    windows: [],
+  };
+
+  await saveFreeSchedulerData({
+    staff: data.staff ?? [],
+    appointments: data.appointments ?? [],
+    routes: data.routes ?? [],
+    windows,
+  });
 }
 
 export const useCustomWindowStore = create<CustomWindowState>((set, get) => ({

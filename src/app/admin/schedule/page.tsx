@@ -13,7 +13,7 @@ import RouteSummary from "@/components/engine/RouteSummary";
 import MapVisualizer from "@/components/engine/MapVisualizer.client";
 
 export default function SchedulePage() {
-  const isFree = useUserTier(); // ✅ FIXED — no destructuring
+  const isFree = useUserTier();
 
   return (
     <div className="flex flex-col gap-8 p-6">
@@ -30,9 +30,10 @@ export default function SchedulePage() {
 
       <ScheduleTable isFree={isFree} />
 
-      <RouteSummary isFree={isFree} />
+      <RouteSummary/>
 
-      <MapVisualizer isFree={isFree} />
+      {/* ❌ remove isFree — MapVisualizer does not accept it */}
+      <MapVisualizer />
     </div>
   );
 }

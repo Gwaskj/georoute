@@ -43,8 +43,17 @@ interface AppointmentState {
 }
 
 async function persistFree(appointments: Appointment[]) {
-  const data = (await loadFreeSchedulerData()) ?? {};
-  await saveFreeSchedulerData({ ...data, appointments });
+  const data = (await loadFreeSchedulerData()) ?? {
+    staff: [],
+    routes: [],
+    appointments: [],
+  };
+
+  await saveFreeSchedulerData({
+    staff: data.staff ?? [],
+    routes: data.routes ?? [],
+    appointments,
+  });
 }
 
 export const useAppointmentStore = create<AppointmentState>((set, get) => ({

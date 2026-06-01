@@ -19,8 +19,27 @@ interface SkillsState {
 }
 
 async function persistFree(skills: Skill[]) {
-  const data = (await loadFreeSchedulerData()) ?? {};
-  await saveFreeSchedulerData({ ...data, skills });
+  const data = (await loadFreeSchedulerData()) ?? {
+    staff: [],
+    appointments: [],
+    routes: [],
+    windows: [],
+    skills: [],
+    officePostcode: "",
+    selectedStaffIds: [],
+    visits: [],
+  };
+
+  await saveFreeSchedulerData({
+    staff: data.staff ?? [],
+    appointments: data.appointments ?? [],
+    routes: data.routes ?? [],
+    windows: data.windows ?? [],
+    skills, // ← updated
+    officePostcode: data.officePostcode ?? "",
+    selectedStaffIds: data.selectedStaffIds ?? [],
+    visits: data.visits ?? [],
+  });
 }
 
 export const useSkillsStore = create<SkillsState>((set, get) => ({

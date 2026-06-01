@@ -1,4 +1,3 @@
-// C:\Users\matth\georoute\src\components\schedule\SchedulePage.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -108,7 +107,7 @@ function SetupView({ isFree }: { isFree: boolean }) {
             generate an optimised schedule.
           </p>
 
-          <GenerateSchedule isFree={isFree} algorithm="default" />
+          <GenerateSchedule algorithm="default" isFree={isFree} />
         </div>
       </div>
     </div>
@@ -174,11 +173,7 @@ function ResultsView({ isFree }: { isFree: boolean }) {
       <div className="flex flex-col">
         {/* MAP */}
         <div className="flex-1 min-h-[320px] rounded border border-slate-800 bg-slate-950 overflow-hidden">
-          <MapVisualizer
-            isFree={isFree}
-            selectedStaffId={selectedStaffId}
-            routes={routes}
-          />
+          <MapVisualizer selectedStaffId={selectedStaffId} routes={routes} />
         </div>
 
         {/* SUMMARY BAR */}
