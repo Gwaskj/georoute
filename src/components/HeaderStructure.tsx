@@ -129,6 +129,7 @@ export function HeaderStructure({
                         <Link href="/admin/staff" className="block px-4 py-2 hover:bg-slate-800">Staff</Link>
                         <Link href="/admin/appointments" className="block px-4 py-2 hover:bg-slate-800">Appointments</Link>
                         <Link href="/admin/pricing" className="block px-4 py-2 hover:bg-slate-800">Pricing</Link>
+                        <Link href="/admin/logs" className="block px-4 py-2 hover:bg-slate-800">Logs</Link>
                         <Link href="/admin/header-editor" className="block px-4 py-2 hover:bg-slate-800">Header Editor</Link>
                       </div>
                     )}
@@ -165,6 +166,7 @@ export function HeaderStructure({
                       <Link href="/admin/staff" className="block px-4 py-2 hover:bg-slate-800">Staff</Link>
                       <Link href="/admin/appointments" className="block px-4 py-2 hover:bg-slate-800">Appointments</Link>
                       <Link href="/admin/pricing" className="block px-4 py-2 hover:bg-slate-800">Pricing</Link>
+                      <Link href="/admin/logs" className="block px-4 py-2 hover:bg-slate-800">Logs</Link>
                       <Link href="/admin/header-editor" className="block px-4 py-2 hover:bg-slate-800">Header Editor</Link>
                     </div>
                   )}

@@ -273,10 +273,6 @@ export default function MapVisualizerInner({
         <MapInitializer zoom={zoom} />
         <StaffFocus selectedStaffId={selectedStaffId} routes={routes} />
 
-        <Marker position={[53.0, -2.2]}>
-          <Popup>GeoRoute HQ</Popup>
-        </Marker>
-
         {showRoutes &&
           routes.map((route) => {
             const isHighlighted = highlightedRouteId === route.id;
