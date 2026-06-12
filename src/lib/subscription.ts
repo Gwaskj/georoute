@@ -13,7 +13,7 @@ export async function getSubscriptionStatus(
   const { data, error } = await supabase
     .from("profiles")
     .select("is_pro")
-    .eq("id", userId)
+    .eq("user_id", userId)
     .single();
 
   if (error || !data) return "free";

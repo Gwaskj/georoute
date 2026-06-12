@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 // GLOBAL STYLES
 import "./globals.css";
@@ -20,6 +21,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="h-full">
       <body className="min-h-full">
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1904838490296389"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+
         <div className="flex min-h-screen flex-col">
 
           <HeaderLoader />

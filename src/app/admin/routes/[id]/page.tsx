@@ -1,12 +1,12 @@
 import RouteSummary from "@/components/engine/RouteSummary";
 import MapVisualizer from "@/components/engine/MapVisualizer.client";
 
-export default function RouteDetailsPage({
+export default async function RouteDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = params;
+  const { id } = await params;
 
   return (
     <div className="space-y-6">

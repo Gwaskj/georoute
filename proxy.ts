@@ -20,12 +20,24 @@ export const proxy = async (request: Request) => {
     return match ? match.split("=")[1] : undefined;
   };
 
+  const setCookie = (name: string, value: string, options: any) => {
+    // In the proxy context, we can't set cookies directly on the request
+    // This is a no-op for the proxy; cookies are set via response headers elsewhere
+  };
+
+  const removeCookie = (name: string, options: any) => {
+    // In the proxy context, we can't remove cookies directly on the request
+    // This is a no-op for the proxy; cookies are removed via response headers elsewhere
+  };
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         get: getCookie,
+        set: setCookie,
+        remove: removeCookie,
       },
     }
   );
