@@ -87,12 +87,39 @@ function findSlotForVisit(
   const baseStart = window ? Math.max(dayStart, window.start) : dayStart;
   const baseEnd = window ? Math.min(dayEnd, window.end) : dayEnd;
 
-  const sorted = existing.slice().sort((a, b) => a.start - b.start);
+  // ── STRICT START TIME ──────────────────────────────────
+  // When a strict start is set, assign all staff to the exact same time slot.
+  // No slot-scanning — just validate the slot fits within bounds and doesn't
+  // overlap with this staff member's existing commitments.
+  if (strictStartMinutes !== null) {
+    const desiredStart = strictStartMinutes;
+    const desiredEnd = desiredStart + visitDuration;
 
-  const candidateStart = (t: number) => {
-    if (strictStartMinutes !== null) return strictStartMinutes;
-    return t;
-  };
+    // Must fit within the window
+    if (desiredStart < baseStart || desiredEnd > baseEnd) return null;
+
+    // Check no overlap with existing timeline slots
+    for (const slot of existing) {
+      const travelBefore = estimateTravelMinutes(slot.postcode, clientPostcode);
+      const travelAfter = estimateTravelMinutes(clientPostcode, slot.postcode);
+
+      // Expand the existing slot by travel time + min gap on each side
+      const slotBufferedStart = slot.start - travelBefore - minGapMinutes;
+      const slotBufferedEnd = slot.end + travelAfter + minGapMinutes;
+
+      // Overlap occurs if the desired block intersects the buffered slot
+      if (desiredStart < slotBufferedEnd && desiredEnd > slotBufferedStart) {
+        return null;
+      }
+    }
+
+    // All clear — assign to the strict time
+    return { start: desiredStart, end: desiredEnd };
+  }
+
+  // ── DYNAMIC (NON-STRICT) SCHEDULING ────────────────────
+  // Scan through existing timeline slots and find the first available gap.
+  const sorted = existing.slice().sort((a, b) => a.start - b.start);
 
   let current = baseStart;
 
@@ -100,7 +127,7 @@ function findSlotForVisit(
     const travelBefore = estimateTravelMinutes(slot.postcode, clientPostcode);
     const travelAfter = estimateTravelMinutes(clientPostcode, slot.postcode);
 
-    const earliestStart = candidateStart(current);
+    const earliestStart = current;
     const latestEnd = earliestStart + visitDuration;
 
     if (
@@ -117,7 +144,7 @@ function findSlotForVisit(
 
   const originPostcode = staff.officePostcode || officePostcode || "";
   const travelFromOffice = estimateTravelMinutes(originPostcode, clientPostcode);
-  const start = candidateStart(current + travelFromOffice);
+  const start = current + travelFromOffice;
   const end = start + visitDuration;
 
   if (start >= baseStart && end <= baseEnd) {
