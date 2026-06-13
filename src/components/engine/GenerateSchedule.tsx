@@ -1,12 +1,13 @@
 // C:\Users\matth\georoute\src\components\engine\GenerateSchedule.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStaffStore } from "@/store/staffStore";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import { useCallPurposeStore } from "@/store/callPurposeStore";
 import { useCustomWindowStore } from "@/store/customWindowStore";
 import { useOfficePostcodeStore } from "@/store/officePostcodeStore";
+import { useSettingsStore } from "@/store/settingsStore";
 
 import { runScheduler } from "@/lib/scheduler/engine";
 import { saveSchedulerResult } from "@/lib/scheduler/persist";
@@ -26,10 +27,18 @@ export default function GenerateSchedule({
   const { purposes } = useCallPurposeStore();
   const { windows } = useCustomWindowStore();
   const { officePostcode } = useOfficePostcodeStore();
+  const { settings, loaded: settingsLoaded, loadSettings } = useSettingsStore();
 
   const [isRunning, setIsRunning] = useState(false);
   const [visits, setVisits] = useState<ScheduledVisit[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
+
+  // Load settings on mount
+  useEffect(() => {
+    if (!settingsLoaded) {
+      loadSettings(isFree);
+    }
+  }, [isFree, settingsLoaded, loadSettings]);
 
   const handleRun = async () => {
     if (algorithm !== "default") return;
@@ -42,8 +51,8 @@ export default function GenerateSchedule({
       purposes,
       windows,
       officePostcode,
-      dayStart: "06:00",
-      dayEnd: "22:00",
+      dayStart: settings.dayStart,
+      dayEnd: settings.dayEnd,
     };
 
     const result = runScheduler(ctx);

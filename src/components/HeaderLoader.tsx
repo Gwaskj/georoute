@@ -32,6 +32,7 @@ export default async function HeaderLoader() {
       ? layout.navItems
       : [
           { id: "scheduler", text: "Scheduler", href: "/scheduler", align: "left" },
+          { id: "settings", text: "Settings", href: "/settings", align: "left" },
           { id: "account", text: "Account", href: "/account", align: "left" },
           { id: "billing", text: "Billing", href: "/account/billing", align: "left" },
           { id: "admin", text: "Admin", href: "#", align: "right", isAdmin: true },
