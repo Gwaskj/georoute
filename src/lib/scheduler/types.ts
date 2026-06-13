@@ -24,6 +24,9 @@ export interface SchedulerContext {
   officePostcode: string | null;
   dayStart: string; // "08:00"
   dayEnd: string;   // "20:00"
+  /** Custom travel time lookup (fromPostcode, toPostcode) => minutes.
+   *  If not provided, falls back to a hardcoded 10 minutes. */
+  getTravelMinutes?: (fromPostcode: string, toPostcode: string) => number;
 }
 
 export interface SchedulerResult {

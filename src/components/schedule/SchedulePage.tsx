@@ -15,6 +15,7 @@ import MapVisualizer from "@/components/engine/MapVisualizer.client";
 
 // STORES
 import { useStaffStore } from "@/store/staffStore";
+import { useSettingsStore } from "@/store/settingsStore";
 
 // PERSISTENCE
 import { loadFreeSchedulerData } from "@/lib/freeSession";
@@ -125,6 +126,11 @@ function ResultsView({ isFree }: { isFree: boolean }) {
   const [visits, setVisits] = useState<any[]>([]);
   const [routes, setRoutes] = useState<any[]>([]);
   const { staff } = useStaffStore();
+  const { settings, loadSettings } = useSettingsStore();
+
+  useEffect(() => {
+    loadSettings(isFree);
+  }, [isFree, loadSettings]);
 
   useEffect(() => {
     async function load() {
@@ -180,8 +186,8 @@ function ResultsView({ isFree }: { isFree: boolean }) {
         <StaffSummaryBar
           staff={selectedStaff}
           visits={selectedStaffVisits}
-          dayStart="06:00"
-          dayEnd="22:00"
+          dayStart={settings.dayStart}
+          dayEnd={settings.dayEnd}
         />
       </div>
 
@@ -189,8 +195,8 @@ function ResultsView({ isFree }: { isFree: boolean }) {
       <StaffResultsList
         staff={staff}
         visits={visits}
-        dayStart="06:00"
-        dayEnd="22:00"
+        dayStart={settings.dayStart}
+        dayEnd={settings.dayEnd}
         selectedStaffId={selectedStaffId}
         onSelectStaff={setSelectedStaffId}
       />

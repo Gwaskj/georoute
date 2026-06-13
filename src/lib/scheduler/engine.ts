@@ -16,7 +16,7 @@ function fromMinutes(total: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-// very simple placeholder travel time (minutes)
+// Fallback travel time used when no getTravelMinutes is provided
 function estimateTravelMinutes(
   _fromPostcode: string,
   _toPostcode: string
@@ -82,50 +82,42 @@ function findSlotForVisit(
   strictStartMinutes: number | null,
   window: { start: number; end: number } | null,
   minGapMinutes: number,
-  officePostcode: string | null
+  officePostcode: string | null,
+  travelMin: (from: string, to: string) => number
 ): { start: number; end: number } | null {
   const baseStart = window ? Math.max(dayStart, window.start) : dayStart;
   const baseEnd = window ? Math.min(dayEnd, window.end) : dayEnd;
 
   // ── STRICT START TIME ──────────────────────────────────
-  // When a strict start is set, assign all staff to the exact same time slot.
-  // No slot-scanning — just validate the slot fits within bounds and doesn't
-  // overlap with this staff member's existing commitments.
   if (strictStartMinutes !== null) {
     const desiredStart = strictStartMinutes;
     const desiredEnd = desiredStart + visitDuration;
 
-    // Must fit within the window
     if (desiredStart < baseStart || desiredEnd > baseEnd) return null;
 
-    // Check no overlap with existing timeline slots
     for (const slot of existing) {
-      const travelBefore = estimateTravelMinutes(slot.postcode, clientPostcode);
-      const travelAfter = estimateTravelMinutes(clientPostcode, slot.postcode);
+      const travelBefore = travelMin(slot.postcode, clientPostcode);
+      const travelAfter = travelMin(clientPostcode, slot.postcode);
 
-      // Expand the existing slot by travel time + min gap on each side
       const slotBufferedStart = slot.start - travelBefore - minGapMinutes;
       const slotBufferedEnd = slot.end + travelAfter + minGapMinutes;
 
-      // Overlap occurs if the desired block intersects the buffered slot
       if (desiredStart < slotBufferedEnd && desiredEnd > slotBufferedStart) {
         return null;
       }
     }
 
-    // All clear — assign to the strict time
     return { start: desiredStart, end: desiredEnd };
   }
 
   // ── DYNAMIC (NON-STRICT) SCHEDULING ────────────────────
-  // Scan through existing timeline slots and find the first available gap.
   const sorted = existing.slice().sort((a, b) => a.start - b.start);
 
   let current = baseStart;
 
   for (const slot of sorted) {
-    const travelBefore = estimateTravelMinutes(slot.postcode, clientPostcode);
-    const travelAfter = estimateTravelMinutes(clientPostcode, slot.postcode);
+    const travelBefore = travelMin(slot.postcode, clientPostcode);
+    const travelAfter = travelMin(clientPostcode, slot.postcode);
 
     const earliestStart = current;
     const latestEnd = earliestStart + visitDuration;
@@ -143,7 +135,7 @@ function findSlotForVisit(
   }
 
   const originPostcode = staff.officePostcode || officePostcode || "";
-  const travelFromOffice = estimateTravelMinutes(originPostcode, clientPostcode);
+  const travelFromOffice = travelMin(originPostcode, clientPostcode);
   const start = current + travelFromOffice;
   const end = start + visitDuration;
 
@@ -163,7 +155,11 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
     dayStart,
     dayEnd,
     officePostcode,
+    getTravelMinutes,
   } = ctx;
+
+  /** Resolve travel minutes using callback if provided, else fallback */
+  const travelMin = getTravelMinutes ?? estimateTravelMinutes;
 
   const warnings: string[] = [];
   const visits: ScheduledVisit[] = [];
@@ -266,7 +262,8 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
           strict,
           { start: w.start, end: w.end },
           effectiveMinGap,
-          officePostcode
+          officePostcode,
+          travelMin
         );
 
         if (slot) break;

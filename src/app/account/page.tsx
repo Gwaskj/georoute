@@ -20,7 +20,7 @@ export default async function AccountPage() {
           </p>
           <div className="mt-4">
             <Link
-              href="/app/account/billing"
+              href="/account/billing"
               className="text-sm font-medium text-teal-300 hover:text-teal-200"
             >
               Manage billing →

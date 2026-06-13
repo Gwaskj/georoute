@@ -44,10 +44,6 @@ export default function ScheduleSidebar({ isFree }: ScheduleSidebarProps) {
         </div>
       )}
 
-      {/* CALL PURPOSES */}
-      <div className="rounded-md border border-slate-800 bg-slate-950 p-3">
-      </div>
-
       {/* CUSTOM WINDOWS */}
       <div className="rounded-md border border-slate-800 bg-slate-950 p-3">
         <CustomWindowsManager isFree={isFree} />

@@ -12,6 +12,7 @@ import { useSettingsStore } from "@/store/settingsStore";
 import { runScheduler } from "@/lib/scheduler/engine";
 import { saveSchedulerResult } from "@/lib/scheduler/persist";
 import { SchedulerContext, ScheduledVisit } from "@/lib/scheduler/types";
+import { getRouteBatched, clearLocalCache } from "@/lib/routing";
 
 interface GenerateScheduleProps {
   algorithm: "default";
@@ -44,6 +45,61 @@ export default function GenerateSchedule({
     if (algorithm !== "default") return;
 
     setIsRunning(true);
+    clearLocalCache();
+
+    // Pre-fetch all relevant postcode pairs to build a travel-time lookup
+    // We'll fetch routes from office→clients, client→office, and client→client
+    const uniquePostcodes = new Set<string>();
+
+    // Collect all postcodes we might route between
+    if (officePostcode) uniquePostcodes.add(officePostcode);
+    for (const s of staff) {
+      if (s.homePostcode) uniquePostcodes.add(s.homePostcode);
+      if (s.officePostcode) uniquePostcodes.add(s.officePostcode);
+    }
+    // Use officePostcode as fallback for staff without their own
+    const effectiveOffice = officePostcode || "";
+    for (const a of appointments) {
+      if (a.postcode) uniquePostcodes.add(a.postcode);
+    }
+
+    const postcodes = Array.from(uniquePostcodes).filter(Boolean);
+
+    // Build a synchronous travel-minutes lookup function from pre-fetched data
+    const travelLookup = new Map<string, number>();
+
+    // Fetch all pairs concurrently
+    const fetchPromises: Promise<void>[] = [];
+    for (const from of postcodes) {
+      for (const to of postcodes) {
+        if (from === to) {
+          travelLookup.set(`${from}→${to}`, 0);
+          continue;
+        }
+        fetchPromises.push(
+          getRouteBatched(from, to).then((route) => {
+            travelLookup.set(`${from}→${to}`, route.duration_minutes);
+          })
+        );
+      }
+    }
+
+    if (fetchPromises.length > 0) {
+      await Promise.all(fetchPromises);
+    }
+
+    function getTravelMinutes(from: string, to: string): number {
+      const key = `${from}→${to}`;
+      const cached = travelLookup.get(key);
+      if (cached !== undefined) return cached;
+
+      // For staff without office postcode, use the global office postcode
+      const origin = from || effectiveOffice;
+      const dest = to || effectiveOffice;
+      if (origin === dest) return 0;
+
+      return 10; // fallback
+    }
 
     const ctx: SchedulerContext = {
       staff,
@@ -53,6 +109,7 @@ export default function GenerateSchedule({
       officePostcode,
       dayStart: settings.dayStart,
       dayEnd: settings.dayEnd,
+      getTravelMinutes,
     };
 
     const result = runScheduler(ctx);

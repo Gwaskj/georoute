@@ -1,5 +1,6 @@
 // src/store/staffStore.ts
 import { create } from "zustand";
+import { supabase } from "@/lib/supabase/client";
 import {
   loadFreeSchedulerData,
   saveFreeSchedulerData,
@@ -27,6 +28,8 @@ interface StaffState {
   updateStaff: (id: string, updates: Partial<Staff>) => void;
   deleteStaff: (id: string) => void;
   setSelectedStaffIds: (ids: string[]) => void;
+  /** Load staff from Supabase for pro users */
+  loadFromSupabase: () => Promise<void>;
 }
 
 function generateColour(): string {
@@ -42,6 +45,18 @@ function generateColour(): string {
 
 function cleanPostcode(p: string) {
   return p.trim().toUpperCase();
+}
+
+/** Check if current user is pro */
+async function isPro(): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data } = await supabase
+    .from("profiles")
+    .select("is_pro")
+    .eq("user_id", user.id)
+    .single();
+  return data?.is_pro === true;
 }
 
 async function persistFree(staff: Staff[], selectedStaffIds: string[]) {
@@ -60,6 +75,44 @@ async function persistFree(staff: Staff[], selectedStaffIds: string[]) {
     staff,
     selectedStaffIds,
   });
+}
+
+async function persistPro(staff: Staff[], selectedStaffIds: string[]) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  // Upsert all staff (replace user's staff)
+  // First delete all existing staff for this user, then insert
+  const { error: delError } = await supabase
+    .from("staff")
+    .delete()
+    .eq("user_id", user.id);
+
+  if (delError) {
+    console.error("Failed to clear pro staff:", delError);
+    return;
+  }
+
+  if (staff.length === 0) return;
+
+  const { error: insError } = await supabase.from("staff").insert(
+    staff.map((s) => ({
+      user_id: user.id,
+      name: s.name,
+      home_postcode: s.homePostcode,
+      office_postcode: s.officePostcode,
+      date_of_birth: s.dateOfBirth,
+      gender: s.gender,
+      skills: s.skills,
+      colour: s.colour,
+      // Store the UUID so we can map back
+      local_id: s.id,
+    }))
+  );
+
+  if (insError) {
+    console.error("Failed to insert pro staff:", insError);
+  }
 }
 
 export const useStaffStore = create<StaffState>((set, get) => ({
@@ -82,6 +135,10 @@ export const useStaffStore = create<StaffState>((set, get) => ({
 
     const staff = [...get().staff, newStaff];
     persistFree(staff, get().selectedStaffIds);
+    // Also persist to Supabase if pro
+    isPro().then((pro) => {
+      if (pro) persistPro(staff, get().selectedStaffIds);
+    });
     set({ staff });
     return newStaff;
   },
@@ -104,6 +161,9 @@ export const useStaffStore = create<StaffState>((set, get) => ({
     });
 
     persistFree(staff, get().selectedStaffIds);
+    isPro().then((pro) => {
+      if (pro) persistPro(staff, get().selectedStaffIds);
+    });
     set({ staff });
   },
 
@@ -112,12 +172,43 @@ export const useStaffStore = create<StaffState>((set, get) => ({
     const selectedStaffIds = get().selectedStaffIds.filter((x) => x !== id);
 
     persistFree(staff, selectedStaffIds);
+    isPro().then((pro) => {
+      if (pro) persistPro(staff, selectedStaffIds);
+    });
     set({ staff, selectedStaffIds });
   },
 
   setSelectedStaffIds: (ids) => {
     persistFree(get().staff, ids);
     set({ selectedStaffIds: ids });
+  },
+
+  loadFromSupabase: async () => {
+    const pro = await isPro();
+    if (!pro) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("staff")
+      .select("*")
+      .eq("user_id", user.id);
+
+    if (!data) return;
+
+    const mapped: Staff[] = data.map((row: any) => ({
+      id: row.local_id ?? crypto.randomUUID(),
+      name: row.name ?? "",
+      homePostcode: row.home_postcode ?? "",
+      officePostcode: row.office_postcode ?? "",
+      dateOfBirth: row.date_of_birth ?? "",
+      gender: row.gender ?? "",
+      skills: row.skills ?? [],
+      colour: row.colour ?? generateColour(),
+    }));
+
+    set({ staff: mapped });
   },
 }));
 
