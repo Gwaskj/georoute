@@ -3,6 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { useThemeStore } from "@/store/themeStore";
+import SeasonalDoodle from "@/components/effects/SeasonalDoodle";
 
 export type NavItem = {
   id: string;
@@ -56,6 +58,7 @@ export function HeaderStructure({
 }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const { activeConfig } = useThemeStore();
 
   const leftNav = navItems.filter((n) => n.align !== "right");
   const rightNav = navItems.filter((n) => n.align === "right");
@@ -103,7 +106,19 @@ export function HeaderStructure({
             )}
 
             {brand.enabled && (
-              <span className="font-semibold text-lg tracking-tight">
+              <span className="relative inline-flex items-end font-semibold text-lg tracking-tight">
+                {activeConfig.logoDoodle !== "none" && (
+                  <span
+                    className="absolute pointer-events-none"
+                    style={{ top: "-22px", left: "-4px" }}
+                    aria-hidden
+                  >
+                    <SeasonalDoodle
+                      doodle={activeConfig.logoDoodle}
+                      color={activeConfig.logoDoodleColor}
+                    />
+                  </span>
+                )}
                 {brand.text}
               </span>
             )}
@@ -131,6 +146,7 @@ export function HeaderStructure({
                         <Link href="/admin/pricing" className="block px-4 py-2 hover:bg-slate-800">Pricing</Link>
                         <Link href="/admin/logs" className="block px-4 py-2 hover:bg-slate-800">Logs</Link>
                         <Link href="/admin/header-editor" className="block px-4 py-2 hover:bg-slate-800">Header Editor</Link>
+                        <Link href="/admin/themes" className="block px-4 py-2 hover:bg-slate-800">Theme Builder</Link>
                       </div>
                     )}
                   </div>

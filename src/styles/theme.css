@@ -1,9 +1,23 @@
 :root {
-  /* BRAND COLORS */
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
-  --color-secondary: #06b6d4;
-  --color-accent: #f97316;
+  /* ── Theme variables (overridden at runtime by ThemeProvider) ── */
+  --theme-primary: #4f46e5;
+  --theme-secondary: #06b6d4;
+  --theme-accent: #f97316;
+  --theme-bg: #0f172a;
+  --theme-bg-muted: #1e293b;
+  --theme-card: #1e293b;
+  --theme-text: #f1f5f9;
+  --theme-text-muted: #94a3b8;
+  --theme-border: #334155;
+  --theme-radius: 8px;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+
+  /* BRAND COLORS (alias to theme vars) */
+  --color-primary: var(--theme-primary);
+  --color-primary-hover: color-mix(in srgb, var(--theme-primary) 80%, black);
+  --color-secondary: var(--theme-secondary);
+  --color-accent: var(--theme-accent);
 
   /* GRAYS */
   --gray-50: #f9fafb;
@@ -22,10 +36,10 @@
   --text-secondary: var(--gray-600);
   --text-light: #ffffff;
 
-  /* BACKGROUND */
-  --bg-body: #ffffff;
-  --bg-muted: var(--gray-50);
-  --bg-card: #ffffff;
+  /* BACKGROUND (alias to theme vars) */
+  --bg-body: var(--theme-bg);
+  --bg-muted: var(--theme-bg-muted);
+  --bg-card: var(--theme-card);
 
   /* RADIUS */
   --radius-sm: 6px;
@@ -67,6 +81,10 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: system-ui, sans-serif;
+  font-family: var(--theme-font-body);
   transition: background var(--transition), color var(--transition);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--theme-font-heading);
 }

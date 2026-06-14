@@ -11,6 +11,7 @@ import "@/styles/Card.module.css";
 
 import { ReactNode } from "react";
 import HeaderLoader from "@/components/HeaderLoader";
+import ThemeProvider from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "GeoRoute – Smarter Route Planning",
@@ -28,22 +29,24 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           strategy="afterInteractive"
         />
 
-        <div className="flex min-h-screen flex-col">
+        <ThemeProvider>
+          <div className="flex min-h-screen flex-col">
 
-          <HeaderLoader />
+            <HeaderLoader />
 
-          <main className="flex-1">
-            {children}
-          </main>
+            <main className="flex-1">
+              {children}
+            </main>
 
-          <footer className="border-t border-slate-800 bg-slate-950/80">
-            <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 text-xs text-slate-400">
-              <span>© {new Date().getFullYear()} GeoRoute. All rights reserved.</span>
-              <span>Smarter route planning for teams that don’t slow down.</span>
-            </div>
-          </footer>
+            <footer className="border-t border-slate-800 bg-slate-950/80">
+              <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 text-xs text-slate-400">
+                <span>© {new Date().getFullYear()} GeoRoute. All rights reserved.</span>
+                <span>Smarter route planning for teams that don’t slow down.</span>
+              </div>
+            </footer>
 
-        </div>
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );
