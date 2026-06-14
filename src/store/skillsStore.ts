@@ -146,10 +146,18 @@ export const useSkillsStore = create<SkillsState>((set, get) => ({
 
     if (!data) return;
 
-    const mapped: Skill[] = data.map((row) => ({
-      id: row.local_id ?? crypto.randomUUID(),
-      name: row.name ?? "",
-    }));
+    const seen = new Set<string>();
+    const mapped: Skill[] = data
+      .filter((row) => {
+        const id = row.local_id;
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      })
+      .map((row) => ({
+        id: row.local_id,
+        name: row.name ?? "",
+      }));
 
     set({ skills: mapped });
   },

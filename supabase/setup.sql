@@ -181,42 +181,24 @@ create policy "Users can delete own staff" on public.staff for delete using (aut
 
 
 -- ─── 4. BUSINESS SETTINGS ────────────────────────────────────
--- Single global row (id=1). All authenticated users can read (scheduler
--- needs office postcode / day hours). Only admins can change it.
+-- Per-user row keyed by user_id. Each user has their own office postcode,
+-- hours, and business info. No shared global state.
 
 create table public.business_settings (
-  id                   bigint  primary key default 1,
-  business_name        text    default '',
-  support_email        text    default '',
-  phone_number         text    default '',
-  enable_notifications boolean default false,
-  office_postcode      text    default '',
-  day_start            text    default '06:00',
-  day_end              text    default '22:00',
-  created_at           timestamptz not null default now(),
-  updated_at           timestamptz not null default now(),
-  constraint business_settings_single_row check (id = 1)
+  user_id         uuid primary key references auth.users(id) on delete cascade,
+  office_postcode text default '',
+  day_start       text default '06:00',
+  day_end         text default '22:00',
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
 );
-
-insert into public.business_settings (id, office_postcode, day_start, day_end)
-values (1, '', '06:00', '22:00');
 
 alter table public.business_settings enable row level security;
 
--- Everyone can read (scheduler uses office_postcode / day_start / day_end)
-create policy "Anyone can read business settings"
-  on public.business_settings for select using (true);
-
--- Only authenticated users can update (pro users save their settings here)
--- Note: this is a single shared row — a proper multi-tenant design would use
--- per-user settings, but that's a future refactor.
-create policy "Authenticated users can update business settings"
-  on public.business_settings for update
-  using (auth.uid() is not null);
-
-create policy "Authenticated users can upsert business settings"
-  on public.business_settings for insert
-  with check (auth.uid() is not null);
+create policy "Users manage own settings"
+  on public.business_settings for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
 
 -- ─── 5. APPOINTMENTS ─────────────────────────────────────────

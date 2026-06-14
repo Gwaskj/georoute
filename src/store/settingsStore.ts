@@ -71,12 +71,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       return;
     }
 
-    // Pro/logged-in: load from Supabase
+    // Pro/logged-in: load from Supabase (per-user row)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      set({ settings: loadFromSession(), loaded: true });
+      return;
+    }
+
     const { data, error } = await supabase
       .from("business_settings")
       .select("office_postcode, day_start, day_end")
-      .eq("id", 1)
-      .single();
+      .eq("user_id", user.id)
+      .maybeSingle();
 
     if (!error && data) {
       set({
@@ -102,15 +108,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       return;
     }
 
-    // Pro: save to Supabase
+    // Pro: save to Supabase (per-user row keyed by user_id)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     await supabase.from("business_settings").upsert(
       {
-        id: 1,
+        user_id: user.id,
         office_postcode: settings.officePostcode,
         day_start: settings.dayStart,
         day_end: settings.dayEnd,
       },
-      { onConflict: "id" }
+      { onConflict: "user_id" }
     );
   },
 }));

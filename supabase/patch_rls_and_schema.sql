@@ -105,22 +105,32 @@ create policy "Users can delete own routes"
   on public.routes for delete using (auth.uid() = user_id);
 
 
--- ─── 5. BUSINESS SETTINGS — add RLS ─────────────────────────
+-- ─── 5. BUSINESS SETTINGS — rebuild as per-user ──────────────
+-- Old table was a single global row (id=1). Replace with per-user rows.
 
-drop policy if exists "Anyone can read business settings"              on public.business_settings;
+drop policy if exists "Anyone can read business settings"               on public.business_settings;
 drop policy if exists "Authenticated users can update business settings" on public.business_settings;
 drop policy if exists "Authenticated users can upsert business settings" on public.business_settings;
+drop policy if exists "Users manage own settings"                        on public.business_settings;
+
+-- Rebuild the table entirely (no data worth keeping — was one shared row)
+drop table if exists public.business_settings cascade;
+
+create table public.business_settings (
+  user_id         uuid primary key references auth.users(id) on delete cascade,
+  office_postcode text default '',
+  day_start       text default '06:00',
+  day_end         text default '22:00',
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
 
 alter table public.business_settings enable row level security;
 
-create policy "Anyone can read business settings"
-  on public.business_settings for select using (true);
-
-create policy "Authenticated users can update business settings"
-  on public.business_settings for update using (auth.uid() is not null);
-
-create policy "Authenticated users can upsert business settings"
-  on public.business_settings for insert with check (auth.uid() is not null);
+create policy "Users manage own settings"
+  on public.business_settings for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
 
 -- ─── 6. SITE HEADER — add RLS + seed row if missing ─────────

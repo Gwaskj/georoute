@@ -54,6 +54,21 @@ async function persistFree(windows: CustomWindow[]) {
   });
 }
 
+let _syncTimer: ReturnType<typeof setTimeout> | null = null;
+let _pendingSync: CustomWindow[] | null = null;
+
+function scheduleSyncPro(windows: CustomWindow[]) {
+  _pendingSync = windows;
+  if (_syncTimer) return;
+  _syncTimer = setTimeout(async () => {
+    _syncTimer = null;
+    const wins = _pendingSync!;
+    _pendingSync = null;
+    const pro = await isPro();
+    if (pro) await persistPro(wins);
+  }, 300);
+}
+
 async function persistPro(windows: CustomWindow[]) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
@@ -102,9 +117,7 @@ export const useCustomWindowStore = create<CustomWindowState>((set, get) => ({
 
     const windows = [...get().windows, windowObj];
     persistFree(windows);
-    isPro().then((pro) => {
-      if (pro) persistPro(windows);
-    });
+    scheduleSyncPro(windows);
     set({ windows });
     return windowObj;
   },
@@ -115,18 +128,14 @@ export const useCustomWindowStore = create<CustomWindowState>((set, get) => ({
     );
 
     persistFree(windows);
-    isPro().then((pro) => {
-      if (pro) persistPro(windows);
-    });
+    scheduleSyncPro(windows);
     set({ windows });
   },
 
   deleteWindow: (id) => {
     const windows = get().windows.filter((w) => w.id !== id);
     persistFree(windows);
-    isPro().then((pro) => {
-      if (pro) persistPro(windows);
-    });
+    scheduleSyncPro(windows);
     set({ windows });
   },
 
@@ -144,13 +153,21 @@ export const useCustomWindowStore = create<CustomWindowState>((set, get) => ({
 
     if (!data) return;
 
-    const mapped: CustomWindow[] = data.map((row) => ({
-      id: row.local_id ?? crypto.randomUUID(),
-      name: row.name ?? "",
-      start: row.start_time ?? "00:00",
-      end: row.end_time ?? "00:00",
-      minGapToNext: row.min_gap_to_next ?? 0,
-    }));
+    const seen = new Set<string>();
+    const mapped: CustomWindow[] = data
+      .filter((row) => {
+        const id = row.local_id;
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      })
+      .map((row) => ({
+        id: row.local_id,
+        name: row.name ?? "",
+        start: row.start_time ?? "00:00",
+        end: row.end_time ?? "00:00",
+        minGapToNext: row.min_gap_to_next ?? 0,
+      }));
 
     set({ windows: mapped });
   },
@@ -172,9 +189,9 @@ if (typeof window !== "undefined") {
     const pro = await isPro();
     if (pro) {
       await store.loadFromSupabase();
-      // Seed defaults if pro user has no windows yet
-      if (store.windows.length === 0) {
-        DEFAULT_WINDOWS.forEach((w) => store.addWindow(w));
+      // Re-read current state — store snapshot above is stale after set()
+      if (useCustomWindowStore.getState().windows.length === 0) {
+        DEFAULT_WINDOWS.forEach((w) => useCustomWindowStore.getState().addWindow(w));
       }
       return;
     }

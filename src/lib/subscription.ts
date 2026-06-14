@@ -14,7 +14,7 @@ export async function getSubscriptionStatus(
     .from("profiles")
     .select("is_pro")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
 
   if (error || !data) return "free";
 

@@ -197,16 +197,24 @@ export const useStaffStore = create<StaffState>((set, get) => ({
 
     if (!data) return;
 
-    const mapped: Staff[] = data.map((row: any) => ({
-      id: row.local_id ?? crypto.randomUUID(),
-      name: row.name ?? "",
-      homePostcode: row.home_postcode ?? "",
-      officePostcode: row.office_postcode ?? "",
-      dateOfBirth: row.date_of_birth ?? "",
-      gender: row.gender ?? "",
-      skills: row.skills ?? [],
-      colour: row.colour ?? generateColour(),
-    }));
+    const seen = new Set<string>();
+    const mapped: Staff[] = data
+      .filter((row: any) => {
+        const id = row.local_id;
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      })
+      .map((row: any) => ({
+        id: row.local_id,
+        name: row.name ?? "",
+        homePostcode: row.home_postcode ?? "",
+        officePostcode: row.office_postcode ?? "",
+        dateOfBirth: row.date_of_birth ?? "",
+        gender: row.gender ?? "",
+        skills: row.skills ?? [],
+        colour: row.colour ?? generateColour(),
+      }));
 
     set({ staff: mapped });
   },

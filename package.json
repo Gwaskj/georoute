@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
@@ -19,6 +21,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/leaflet": "1.9.21",
     "@types/node": "^20.19.0",
     "@types/react": "18.3.28",

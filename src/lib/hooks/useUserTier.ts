@@ -20,8 +20,8 @@ export function useUserTier() {
       const { data, error } = await supabase
         .from("profiles")
         .select("is_pro")
-        .eq("user_id", user.id)   // ✅ FIXED
-        .single();
+        .eq("user_id", user.id)
+        .maybeSingle();
 
       if (error) {
         setIsFree(true);

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import type { AnyBlock, SchedulerHeaderData, SectionIntroData } from "@/lib/types/cms";
 
 // SETUP COMPONENTS
 import StaffSelectorSetup from "@/components/engine/staff/StaffSelector";
 import AddAppointment from "@/components/engine/appointments/AddAppointment";
-import CustomWindowsManager from "@/components/engine/windows/CustomWindowsManager";
 import GenerateSchedule from "@/components/engine/GenerateSchedule";
 
 // RESULTS COMPONENTS
@@ -23,24 +23,30 @@ import { supabase } from "@/lib/supabase/client";
 
 type SchedulePageProps = {
   isFree: boolean;
+  cmsBlocks?: AnyBlock[];
 };
 
 type Tab = "setup" | "results";
 
-export default function SchedulePage({ isFree }: SchedulePageProps) {
+export default function SchedulePage({ isFree, cmsBlocks = [] }: SchedulePageProps) {
   const [activeTab, setActiveTab] = useState<Tab>("setup");
+
+  const headerBlock = cmsBlocks.find((b) => b.type === "scheduler_header");
+  const headerData = (headerBlock?.data ?? {}) as Partial<SchedulerHeaderData>;
+  const pageTitle = headerData.title ?? "GeoRoute Scheduler";
+  const pageSubtitle = isFree
+    ? (headerData.freeSubtitle ?? "Free mode — data stored in this browser session only.")
+    : (headerData.proSubtitle ?? "Pro mode — data stored in your GeoRoute workspace.");
+
+  const sectionIntros = cmsBlocks.filter((b) => b.type === "section_intro");
 
   return (
     <div className="flex h-full flex-col gap-4">
       {/* HEADER */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-2">
         <div>
-          <h1 className="text-lg font-semibold text-slate-100">GeoRoute Scheduler</h1>
-          <p className="text-xs text-slate-400">
-            {isFree
-              ? "Free mode — data stored in this browser session only."
-              : "Pro mode — data stored in your GeoRoute workspace."}
-          </p>
+          <h1 className="text-lg font-semibold text-slate-100">{pageTitle}</h1>
+          <p className="text-xs text-slate-400">{pageSubtitle}</p>
         </div>
 
         {/* TABS */}
@@ -73,7 +79,7 @@ export default function SchedulePage({ isFree }: SchedulePageProps) {
 
       {/* BODY */}
       {activeTab === "setup" ? (
-        <SetupView isFree={isFree} />
+        <SetupView isFree={isFree} sectionIntros={sectionIntros} />
       ) : (
         <ResultsView isFree={isFree} />
       )}
@@ -87,29 +93,22 @@ export default function SchedulePage({ isFree }: SchedulePageProps) {
 // ────────────────────────────────────────────────────────────────
 //
 
-function SetupView({ isFree }: { isFree: boolean }) {
-  return (
-    <div className="grid h-full grid-cols-1 gap-4 lg:grid-cols-2">
-      <div className="flex flex-col gap-4">
-        <StaffSelectorSetup isFree={isFree} />
+function SetupView({ isFree, sectionIntros }: { isFree: boolean; sectionIntros: AnyBlock[] }) {
+  const generateIntro = sectionIntros[0]?.data as SectionIntroData | undefined;
+  const generateTitle = generateIntro?.title ?? "Generate schedule";
+  const generateDesc = generateIntro?.description ?? "Use your current staff, appointments, call purposes and custom windows to generate an optimised schedule.";
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <CustomWindowsManager isFree={isFree} />
-        </div>
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <StaffSelectorSetup isFree={isFree} />
+        <AddAppointment isFree={isFree} />
       </div>
 
-      <div className="flex flex-col gap-4">
-        <AddAppointment isFree={isFree} />
-
-        <div className="rounded border border-slate-800 bg-slate-950 p-4">
-          <h2 className="mb-2 text-sm font-semibold text-slate-100">Generate schedule</h2>
-          <p className="mb-3 text-xs text-slate-400">
-            Use your current staff, appointments, call purposes and custom windows to
-            generate an optimised schedule.
-          </p>
-
-          <GenerateSchedule algorithm="default" isFree={isFree} />
-        </div>
+      <div className="rounded border border-slate-800 bg-slate-950 p-4">
+        <h2 className="mb-2 text-sm font-semibold text-slate-100">{generateTitle}</h2>
+        <p className="mb-3 text-xs text-slate-400">{generateDesc}</p>
+        <GenerateSchedule algorithm="default" isFree={isFree} />
       </div>
     </div>
   );
@@ -124,7 +123,6 @@ function SetupView({ isFree }: { isFree: boolean }) {
 function ResultsView({ isFree }: { isFree: boolean }) {
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [visits, setVisits] = useState<any[]>([]);
-  const [routes, setRoutes] = useState<any[]>([]);
   const { staff } = useStaffStore();
   const { settings, loadSettings } = useSettingsStore();
 
@@ -137,16 +135,13 @@ function ResultsView({ isFree }: { isFree: boolean }) {
       if (isFree) {
         const data = await loadFreeSchedulerData();
         setVisits(data?.visits ?? []);
-        setRoutes(data?.routes ?? []);
         return;
       }
 
-      // PRO MODE — only load routes
+      // PRO MODE — load routes and convert to visits for UI
       const { data: routesData } = await supabase.from("routes").select("*");
       const loadedRoutes = routesData ?? [];
-      setRoutes(loadedRoutes);
 
-      // Convert routes → visits for UI
       const reconstructedVisits = loadedRoutes.flatMap((r: any) =>
         (r.stops ?? []).map((stop: any, idx: number) => ({
           id: `${r.id}-${idx}`,

@@ -74,6 +74,23 @@ async function persistFree(appointments: Appointment[]) {
   });
 }
 
+// Debounce: collapses rapid successive saves into one Supabase call.
+// Prevents the DELETE+INSERT race when multiple actions fire in quick succession.
+let _syncTimer: ReturnType<typeof setTimeout> | null = null;
+let _pendingSync: Appointment[] | null = null;
+
+function scheduleSyncPro(appointments: Appointment[]) {
+  _pendingSync = appointments;
+  if (_syncTimer) return;
+  _syncTimer = setTimeout(async () => {
+    _syncTimer = null;
+    const apps = _pendingSync!;
+    _pendingSync = null;
+    const pro = await isPro();
+    if (pro) await persistPro(apps);
+  }, 300);
+}
+
 async function persistPro(appointments: Appointment[]) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
@@ -137,9 +154,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
     const appointments = [...get().appointments, appointment];
     persistFree(appointments);
-    isPro().then((pro) => {
-      if (pro) persistPro(appointments);
-    });
+    scheduleSyncPro(appointments);
     set({ appointments });
     return appointment;
   },
@@ -157,18 +172,14 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     );
 
     persistFree(appointments);
-    isPro().then((pro) => {
-      if (pro) persistPro(appointments);
-    });
+    scheduleSyncPro(appointments);
     set({ appointments });
   },
 
   deleteAppointment: (id) => {
     const appointments = get().appointments.filter((a) => a.id !== id);
     persistFree(appointments);
-    isPro().then((pro) => {
-      if (pro) persistPro(appointments);
-    });
+    scheduleSyncPro(appointments);
     set({ appointments });
   },
 
@@ -187,9 +198,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
     const appointments = [...get().appointments, copy];
     persistFree(appointments);
-    isPro().then((pro) => {
-      if (pro) persistPro(appointments);
-    });
+    scheduleSyncPro(appointments);
     set({ appointments });
   },
 
@@ -199,9 +208,7 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     );
 
     persistFree(appointments);
-    isPro().then((pro) => {
-      if (pro) persistPro(appointments);
-    });
+    scheduleSyncPro(appointments);
     set({ appointments });
   },
 
@@ -219,8 +226,16 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
     if (!data) return;
 
-    const mapped: Appointment[] = data.map((row) => ({
-      id: row.local_id ?? crypto.randomUUID(),
+    const seen = new Set<string>();
+    const mapped: Appointment[] = data
+      .filter((row) => {
+        const id = row.local_id;
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      })
+      .map((row) => ({
+      id: row.local_id,
       name: row.name ?? "",
       houseNumberOrName: row.house_number_or_name ?? undefined,
       address: row.address ?? "",

@@ -23,7 +23,7 @@ export async function saveRoute(route: {
     .from("profiles")
     .select("is_pro")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (!profile?.is_pro) {
     return { error: "Upgrade required" };

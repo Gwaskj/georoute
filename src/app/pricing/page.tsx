@@ -4,17 +4,34 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import AdBanner from "@/components/AdBanner";
+import type { AnyBlock, PricingHeaderData } from "@/lib/types/cms";
+
+const DEFAULT_HEADER: PricingHeaderData = {
+  title: "Simple pricing for growing teams",
+  subtitle: "Start free, then upgrade when you're ready to scale.",
+};
 
 export default function PricingPage() {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [plans, setPlans] = useState<any[]>([]);
+  const [header, setHeader] = useState<PricingHeaderData>(DEFAULT_HEADER);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const { data: userData } = await supabase.auth.getUser();
-      const currentUser = userData?.user || null;
+      const [{ data: userData }, { data: pricingData }, { data: cmsData }] =
+        await Promise.all([
+          supabase.auth.getUser(),
+          supabase.from("pricing").select("*").order("price"),
+          supabase
+            .from("page_content")
+            .select("blocks")
+            .eq("page_id", "pricing")
+            .maybeSingle(),
+        ]);
+
+      const currentUser = userData?.user ?? null;
       setUser(currentUser);
 
       if (currentUser) {
@@ -22,22 +39,24 @@ export default function PricingPage() {
           .from("profiles")
           .select("is_pro, is_admin")
           .eq("user_id", currentUser.id)
-          .single();
-
+          .maybeSingle();
         setProfile(profileData);
       }
 
-      const { data: pricingData } = await supabase
-        .from("pricing")
-        .select("*")
-        .order("price");
+      setPlans(pricingData ?? []);
 
-      setPlans(pricingData || []);
+      const headerBlock = (cmsData?.blocks as AnyBlock[] | null)?.find(
+        (b) => b.type === "pricing_header"
+      );
+      if (headerBlock) {
+        setHeader(headerBlock.data as PricingHeaderData);
+      }
+
       setLoading(false);
     }
 
     load();
-  }, []); // FIXED
+  }, []);
 
   if (loading) return null;
 
@@ -46,11 +65,13 @@ export default function PricingPage() {
       <div className="mx-auto max-w-6xl px-4 py-16">
         <div className="mb-10 text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-50 sm:text-4xl">
-            Simple pricing for growing teams
+            {header.title}
           </h1>
-          <p className="mt-3 text-sm text-slate-300 sm:text-base">
-            Start free, then upgrade when you’re ready to scale.
-          </p>
+          {header.subtitle && (
+            <p className="mt-3 text-sm text-slate-300 sm:text-base">
+              {header.subtitle}
+            </p>
+          )}
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -98,12 +119,18 @@ export default function PricingPage() {
         ) : null}
 
         {profile?.is_admin && (
-          <div className="mt-10 text-center">
+          <div className="mt-10 text-center space-x-6">
             <Link
               href="/admin/pricing"
               className="text-teal-400 hover:text-teal-300 text-sm underline"
             >
               Edit pricing
+            </Link>
+            <Link
+              href="/admin/editor"
+              className="text-slate-400 hover:text-slate-300 text-sm underline"
+            >
+              Edit page content
             </Link>
           </div>
         )}

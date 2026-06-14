@@ -114,6 +114,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
   const toggleWindow = (id: string) => {
     setForm((prev) => {
       const exists = prev.requiredWindows.includes(id);
+      const maxWindows = Math.max(1, parseInt(prev.visitsRequired || "1", 10) || 1);
+      if (!exists && prev.requiredWindows.length >= maxWindows) return prev;
       return {
         ...prev,
         requiredWindows: exists
@@ -191,7 +193,7 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
         </div>
       </div>
 
-      <AppointmentList isFree={isFree} onEdit={openEditModal} />
+      <AppointmentList onEdit={openEditModal} />
 
       {isModalOpen && (
         <div className="modal-overlay">
@@ -410,35 +412,65 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                 </div>
 
                 {/* REQUIRED WINDOWS */}
-                <label className="block text-xs mb-1">Required windows</label>
+                {windows.length > 0 && (() => {
+                  const maxWindows = Math.max(1, parseInt(form.visitsRequired || "1", 10) || 1);
+                  const selectedCount = form.requiredWindows.length;
+                  const remaining = maxWindows - selectedCount;
+                  const mismatch = selectedCount > 0 && selectedCount !== maxWindows;
+
+                  return (
+                    <>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs">Required windows</label>
+                        <span className="text-xs text-slate-400">
+                          {selectedCount}/{maxWindows} selected
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {windows.map((w) => {
+                          const active = form.requiredWindows.includes(w.id);
+                          const atMax = !active && selectedCount >= maxWindows;
+                          return (
+                            <button
+                              key={w.id}
+                              type="button"
+                              onClick={() => toggleWindow(w.id)}
+                              disabled={atMax}
+                              className={`rounded border px-2 py-0.5 text-xs transition-colors ${
+                                active
+                                  ? "border-emerald-500 bg-emerald-900 text-emerald-300"
+                                  : atMax
+                                  ? "border-slate-700 text-slate-600 cursor-not-allowed"
+                                  : "border-slate-600 text-slate-300 hover:bg-slate-800"
+                              }`}
+                            >
+                              {w.name} ({w.start}–{w.end})
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {mismatch && (
+                        <div className="mb-2 rounded border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                          <span className="font-semibold">⚠ Window mismatch</span>
+                          {" — "}
+                          {selectedCount < maxWindows
+                            ? `${selectedCount} window${selectedCount !== 1 ? "s" : ""} selected for ${maxWindows} visit${maxWindows !== 1 ? "s" : ""}. The remaining ${remaining} visit${remaining !== 1 ? "s" : ""} will be scheduled at any available time.`
+                            : `${selectedCount} window${selectedCount !== 1 ? "s" : ""} selected but only ${maxWindows} visit${maxWindows !== 1 ? "s" : ""} required.`}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
 
                 {windows.length === 0 && (
                   <p className="text-xs text-slate-500 mb-2">
-                    No custom windows created yet.
+                    No time windows set. Add them in Settings to restrict when visits can be scheduled.
                   </p>
                 )}
 
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {windows.map((w) => {
-                    const active = form.requiredWindows.includes(w.id);
-                    return (
-                      <button
-                        key={w.id}
-                        type="button"
-                        onClick={() => toggleWindow(w.id)}
-                        className={`rounded border px-2 py-0.5 text-xs ${
-                          active
-                            ? "border-emerald-500 bg-emerald-900 text-emerald-300"
-                            : "border-slate-600 text-slate-300 hover:bg-slate-800"
-                        }`}
-                      >
-                        {w.name} ({w.start}–{w.end})
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   If strict time is set, it overrides required windows.
                 </p>
               </div>

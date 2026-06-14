@@ -65,16 +65,31 @@ export default function HeaderEditorPage() {
         }
       );
 
-      setNavItems(
+      const defaultNav: NavItem[] = [
+        { id: "scheduler", text: "Scheduler", href: "/scheduler", align: "left" },
+        { id: "settings", text: "Settings", href: "/settings", align: "left" },
+        { id: "account", text: "Account", href: "/account", align: "left" },
+        { id: "billing", text: "Billing", href: "/account/billing", align: "left" },
+        { id: "admin", text: "Admin", href: "#", align: "right", isAdmin: true },
+      ];
+
+      let items: NavItem[] =
         layout.navItems && Array.isArray(layout.navItems)
           ? layout.navItems
-          : [
-              { id: "scheduler", text: "Scheduler", href: "/scheduler", align: "left" },
-              { id: "account", text: "Account", href: "/account", align: "left" },
-              { id: "billing", text: "Billing", href: "/account/billing", align: "left" },
-              { id: "admin", text: "Admin", href: "#", align: "right", isAdmin: true },
-            ]
-      );
+          : defaultNav;
+
+      // Inject Settings if missing so the user can position and save it
+      if (!items.some((n) => n.href === "/settings")) {
+        const after = items.findIndex((n) => n.href === "/scheduler");
+        const at = after >= 0 ? after + 1 : 1;
+        items = [
+          ...items.slice(0, at),
+          { id: "settings", text: "Settings", href: "/settings", align: "left" },
+          ...items.slice(at),
+        ];
+      }
+
+      setNavItems(items);
     }
 
     load();

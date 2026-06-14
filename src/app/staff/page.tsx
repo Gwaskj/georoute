@@ -75,7 +75,7 @@ export default function StaffPage() {
         .from("profiles")
         .select("is_pro")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
       setIsFree(!data?.is_pro);
       setAuthChecking(false);
 
