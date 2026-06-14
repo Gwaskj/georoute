@@ -34,6 +34,10 @@ async function persistFree(windows: CustomWindow[]) {
     appointments: data.appointments ?? [],
     routes: data.routes ?? [],
     windows,
+    skills: data.skills ?? [],
+    officePostcode: data.officePostcode ?? "",
+    selectedStaffIds: data.selectedStaffIds ?? [],
+    visits: data.visits ?? [],
   });
 }
 

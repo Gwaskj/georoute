@@ -53,6 +53,11 @@ async function persistFree(appointments: Appointment[]) {
     staff: data.staff ?? [],
     routes: data.routes ?? [],
     appointments,
+    windows: data.windows ?? [],
+    skills: data.skills ?? [],
+    officePostcode: data.officePostcode ?? "",
+    selectedStaffIds: data.selectedStaffIds ?? [],
+    visits: data.visits ?? [],
   });
 }
 

@@ -1,4 +1,3 @@
-// C:\Users\matth\georoute\src\components\schedule\ScheduleTable.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -62,7 +61,16 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
 
   async function loadFreeAppointments(): Promise<AppointmentRow[]> {
     const data = await loadFreeSchedulerData();
-    return (data?.appointments as AppointmentRow[]) ?? [];
+    const freeAppts = data?.appointments ?? [];
+
+    // Map free-session Appointment objects to AppointmentRow format
+    return freeAppts.map((a: any) => ({
+      id: a.id ?? crypto.randomUUID(),
+      start_time: a.strictStartTime ?? null,
+      end_time: null,
+      staff: [],
+      clients: [{ id: a.id ?? "unknown", name: a.name ?? "Unknown" }],
+    }));
   }
 
   useEffect(() => {

@@ -61,7 +61,7 @@ export default function Header({
     window.location.href = "/login";
   }
 
-  const isPro = profile?.plan === "pro";
+  const isPro = profile?.is_pro === true;
 
   return (
     <HeaderStructure

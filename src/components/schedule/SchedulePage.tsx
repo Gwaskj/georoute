@@ -179,7 +179,7 @@ function ResultsView({ isFree }: { isFree: boolean }) {
       <div className="flex flex-col">
         {/* MAP */}
         <div className="flex-1 min-h-[320px] rounded border border-slate-800 bg-slate-950 overflow-hidden">
-          <MapVisualizer selectedStaffId={selectedStaffId} routes={routes} />
+          <MapVisualizer selectedStaffId={selectedStaffId} />
         </div>
 
         {/* SUMMARY BAR */}

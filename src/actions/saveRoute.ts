@@ -22,6 +22,7 @@ export async function saveRoute(route: {
   const { data: profile } = await supabase
     .from("profiles")
     .select("is_pro")
+    .eq("user_id", user.id)
     .single();
 
   if (!profile?.is_pro) {

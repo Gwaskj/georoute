@@ -1,10 +1,11 @@
-import { supabase } from "@/lib/supabase/client";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function logAction(
   action: string,
   targetUserId: string | null,
   details: any = {}
 ) {
+  const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();
   const actorId = data.user?.id ?? null;
 

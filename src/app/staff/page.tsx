@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { useStaffStore, Staff, Gender } from "@/store/staffStore";
 import { useSkillsStore, Skill } from "@/store/skillsStore";
 import { useOfficePostcodeStore } from "@/store/officePostcodeStore";
@@ -42,7 +41,6 @@ const emptyForm: StaffFormState = {
 };
 
 export default function StaffPage() {
-  const router = useRouter();
   const {
     staff,
     addStaff,

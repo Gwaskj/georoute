@@ -2,7 +2,7 @@
 
 import { useUserTier } from "@/lib/hooks/useUserTier";
 
-import StaffSelector from "@/components/engine/StaffSelector";
+import StaffSelector from "@/components/engine/staff/StaffSelector";
 import AddStaff from "@/components/engine/staff/AddStaff";
 import AddAppointment from "@/components/engine/appointments/AddAppointment";
 import CustomWindowsManager from "@/components/engine/windows/CustomWindowsManager";

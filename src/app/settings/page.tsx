@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { useSettingsStore } from "@/store/settingsStore";
 
 export default function SettingsPage() {
-  const router = useRouter();
   const {
     settings,
     loaded,
