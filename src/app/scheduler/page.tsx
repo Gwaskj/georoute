@@ -21,7 +21,7 @@ export default async function SchedulerPage() {
       .from("profiles")
       .select("is_pro")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     isFree = !data?.is_pro;
   }

@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 export async function POST(req: Request) {
-  // IMPORTANT: cookies() returns a Promise in your environment
   const cookieStore = await cookies();
 
   const supabase = createServerClient(

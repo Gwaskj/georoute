@@ -3,7 +3,7 @@
 import "@/styles/admin-users.css";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 import { supabase } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, FormEvent } from "react";
 
 interface AdminUserRow {
   user_id: string;
@@ -145,7 +145,7 @@ export default function AdminUsersPage() {
     alert("Password reset email sent.");
   }
 
-  async function handleAddUser(e: any) {
+  async function handleAddUser(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!newUserEmail.trim()) {
       alert("Email is required.");

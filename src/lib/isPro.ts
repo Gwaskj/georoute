@@ -15,7 +15,7 @@ export async function isProUser() {
     .from("profiles")
     .select("is_pro")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (error) return false;
 

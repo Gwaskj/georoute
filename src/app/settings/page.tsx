@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useSettingsStore } from "@/store/settingsStore";
+import { useSkillsStore } from "@/store/skillsStore";
 
 export default function SettingsPage() {
   const {
@@ -15,9 +16,14 @@ export default function SettingsPage() {
     saveSettings,
   } = useSettingsStore();
 
+  const { skills, addSkill, deleteSkill, renameSkill } = useSkillsStore();
+
   const [saving, setSaving] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
   const [isFree, setIsFree] = useState(true);
+  const [newSkillName, setNewSkillName] = useState("");
+  const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
+  const [editingSkillName, setEditingSkillName] = useState("");
 
   // Determine auth and tier
   useEffect(() => {
@@ -37,7 +43,7 @@ export default function SettingsPage() {
         .from("profiles")
         .select("is_pro")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       setIsFree(!data?.is_pro);
       setAuthChecking(false);
@@ -131,6 +137,107 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Skills */}
+            <div className="rounded border border-slate-800 bg-slate-900 p-4">
+              <h2 className="mb-1 text-sm font-medium text-slate-200">Skills</h2>
+              <p className="mb-3 text-xs text-slate-500">
+                Define the skills staff members can have. These appear in the staff
+                form and can be required by appointments.
+              </p>
+
+              <div className="space-y-2 mb-3">
+                {skills.length === 0 && (
+                  <p className="text-xs text-slate-500">No skills added yet.</p>
+                )}
+                {skills.map((skill) => (
+                  <div key={skill.id} className="flex items-center gap-2">
+                    {editingSkillId === skill.id ? (
+                      <>
+                        <input
+                          type="text"
+                          value={editingSkillName}
+                          onChange={(e) => setEditingSkillName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              if (editingSkillName.trim()) renameSkill(skill.id, editingSkillName.trim());
+                              setEditingSkillId(null);
+                            }
+                            if (e.key === "Escape") setEditingSkillId(null);
+                          }}
+                          autoFocus
+                          className="flex-1 rounded border border-slate-600 bg-slate-800 px-2 py-1 text-sm text-slate-50 outline-none focus:border-teal-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (editingSkillName.trim()) renameSkill(skill.id, editingSkillName.trim());
+                            setEditingSkillId(null);
+                          }}
+                          className="rounded bg-teal-600 px-2 py-1 text-xs text-white hover:bg-teal-700"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingSkillId(null)}
+                          className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex-1 text-sm text-slate-200">{skill.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingSkillId(skill.id);
+                            setEditingSkillName(skill.name);
+                          }}
+                          className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+                        >
+                          Rename
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteSkill(skill.id)}
+                          className="rounded border border-red-800 px-2 py-1 text-xs text-red-400 hover:bg-red-900/30"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const name = newSkillName.trim();
+                  if (name) {
+                    addSkill(name);
+                    setNewSkillName("");
+                  }
+                }}
+                className="flex gap-2"
+              >
+                <input
+                  type="text"
+                  value={newSkillName}
+                  onChange={(e) => setNewSkillName(e.target.value)}
+                  placeholder="New skill name…"
+                  className="flex-1 rounded border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-50 outline-none focus:border-teal-400"
+                />
+                <button
+                  type="submit"
+                  className="rounded bg-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-600"
+                >
+                  Add
+                </button>
+              </form>
             </div>
 
             {/* Save */}

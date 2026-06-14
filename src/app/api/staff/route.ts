@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 export async function GET() {
-  // FIX: cookies() must be awaited in your environment
   const cookieStore = await cookies();
 
   const supabase = createServerClient(
@@ -22,5 +21,9 @@ export async function GET() {
 
   const { data, error } = await supabase.from("staff").select("*");
 
-  return NextResponse.json({ data, error });
+  if (error) {
+    return NextResponse.json({ error: "Failed to load staff" }, { status: 500 });
+  }
+
+  return NextResponse.json({ data });
 }

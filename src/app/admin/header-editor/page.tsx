@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import type { NavItem, BrandConfig } from "@/components/HeaderStructure";
@@ -80,7 +80,7 @@ export default function HeaderEditorPage() {
     load();
   }, []);
 
-  function startDrag(e: any, type: "logo" | "banner") {
+  function startDrag(e: React.MouseEvent<HTMLElement>, type: "logo" | "banner") {
     e.preventDefault();
 
     const startX = e.clientX;
@@ -89,7 +89,7 @@ export default function HeaderEditorPage() {
     const initialX = type === "logo" ? logoX : bannerX;
     const initialY = type === "logo" ? logoY : bannerY;
 
-    function move(ev: any) {
+    function move(ev: MouseEvent) {
       const dx = ev.clientX - startX;
       const dy = ev.clientY - startY;
 
@@ -114,14 +114,14 @@ export default function HeaderEditorPage() {
     window.addEventListener("mouseup", stop);
   }
 
-  function startResize(e: any, type: "logo" | "banner") {
+  function startResize(e: React.MouseEvent<HTMLDivElement>, type: "logo" | "banner") {
     e.preventDefault();
     e.stopPropagation();
 
     const startY = e.clientY;
     const initialScale = type === "logo" ? logoScale : bannerScale;
 
-    function move(ev: any) {
+    function move(ev: MouseEvent) {
       const dy = ev.clientY - startY;
       const newScale = Math.max(0.2, initialScale + dy * 0.01);
 
@@ -138,14 +138,14 @@ export default function HeaderEditorPage() {
     window.addEventListener("mouseup", stop);
   }
 
-  function startRotate(e: any, type: "logo" | "banner") {
+  function startRotate(e: React.MouseEvent<HTMLDivElement>, type: "logo" | "banner") {
     e.preventDefault();
     e.stopPropagation();
 
     const startX = e.clientX;
     const initialRotation = type === "logo" ? logoRotation : bannerRotation;
 
-    function move(ev: any) {
+    function move(ev: MouseEvent) {
       const dx = ev.clientX - startX;
       const delta = dx * 0.5;
       const newRotation = Math.round((initialRotation + delta) / 5) * 5;

@@ -55,7 +55,7 @@ async function isPro(): Promise<boolean> {
     .from("profiles")
     .select("is_pro")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
   return data?.is_pro === true;
 }
 

@@ -32,22 +32,6 @@ export default function AppointmentsPage() {
 
   const [saving, setSaving] = useState(false);
 
-  if (isAdmin === null) {
-    return (
-      <div className="p-10 text-center text-gray-500">
-        Checking permissions…
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="p-10 text-center text-red-500">
-        You do not have permission to view this page.
-      </div>
-    );
-  }
-
   useEffect(() => {
     if (isAdmin !== true) return;
 
@@ -149,6 +133,22 @@ export default function AppointmentsPage() {
   async function handleDelete(id: number) {
     await supabase.from("appointments").delete().eq("id", id);
     setAppointments((prev) => prev.filter((a) => a.id !== id));
+  }
+
+  if (isAdmin === null) {
+    return (
+      <div className="p-10 text-center text-gray-500">
+        Checking permissions…
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="p-10 text-center text-red-500">
+        You do not have permission to view this page.
+      </div>
+    );
   }
 
   return (

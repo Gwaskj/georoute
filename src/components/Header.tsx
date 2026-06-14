@@ -33,13 +33,13 @@ export default function Header({
   navItems: NavItem[];
 }) {
   const isAdmin = useIsAdmin();
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string } | null>(null);
+  const [profile, setProfile] = useState<{ is_pro?: boolean } | null>(null);
 
   useEffect(() => {
     async function load() {
       const { data: auth } = await supabase.auth.getUser();
-      const u = auth?.user || null;
+      const u = auth?.user ?? null;
       setUser(u);
 
       if (u) {
@@ -47,7 +47,7 @@ export default function Header({
           .from("profiles")
           .select("*")
           .eq("user_id", u.id)
-          .single();
+          .maybeSingle();
 
         setProfile(p || null);
       }

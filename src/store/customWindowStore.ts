@@ -4,6 +4,7 @@ import {
   loadFreeSchedulerData,
   saveFreeSchedulerData,
 } from "@/lib/freeSession";
+import { supabase } from "@/lib/supabase/client";
 
 export interface CustomWindow {
   id: string;
@@ -19,6 +20,18 @@ interface CustomWindowState {
   addWindow: (data: Omit<CustomWindow, "id">) => CustomWindow;
   updateWindow: (id: string, updates: Partial<CustomWindow>) => void;
   deleteWindow: (id: string) => void;
+  loadFromSupabase: () => Promise<void>;
+}
+
+async function isPro(): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data } = await supabase
+    .from("profiles")
+    .select("is_pro")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  return data?.is_pro === true;
 }
 
 async function persistFree(windows: CustomWindow[]) {
@@ -41,6 +54,38 @@ async function persistFree(windows: CustomWindow[]) {
   });
 }
 
+async function persistPro(windows: CustomWindow[]) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { error: delError } = await supabase
+    .from("user_windows")
+    .delete()
+    .eq("user_id", user.id);
+
+  if (delError) {
+    console.error("Failed to clear pro windows:", delError);
+    return;
+  }
+
+  if (windows.length === 0) return;
+
+  const { error: insError } = await supabase.from("user_windows").insert(
+    windows.map((w) => ({
+      user_id: user.id,
+      local_id: w.id,
+      name: w.name,
+      start_time: w.start,
+      end_time: w.end,
+      min_gap_to_next: w.minGapToNext,
+    }))
+  );
+
+  if (insError) {
+    console.error("Failed to insert pro windows:", insError);
+  }
+}
+
 export const useCustomWindowStore = create<CustomWindowState>((set, get) => ({
   windows: [],
 
@@ -57,6 +102,9 @@ export const useCustomWindowStore = create<CustomWindowState>((set, get) => ({
 
     const windows = [...get().windows, windowObj];
     persistFree(windows);
+    isPro().then((pro) => {
+      if (pro) persistPro(windows);
+    });
     set({ windows });
     return windowObj;
   },
@@ -67,21 +115,75 @@ export const useCustomWindowStore = create<CustomWindowState>((set, get) => ({
     );
 
     persistFree(windows);
+    isPro().then((pro) => {
+      if (pro) persistPro(windows);
+    });
     set({ windows });
   },
 
   deleteWindow: (id) => {
     const windows = get().windows.filter((w) => w.id !== id);
     persistFree(windows);
+    isPro().then((pro) => {
+      if (pro) persistPro(windows);
+    });
     set({ windows });
+  },
+
+  loadFromSupabase: async () => {
+    const pro = await isPro();
+    if (!pro) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("user_windows")
+      .select("*")
+      .eq("user_id", user.id);
+
+    if (!data) return;
+
+    const mapped: CustomWindow[] = data.map((row) => ({
+      id: row.local_id ?? crypto.randomUUID(),
+      name: row.name ?? "",
+      start: row.start_time ?? "00:00",
+      end: row.end_time ?? "00:00",
+      minGapToNext: row.min_gap_to_next ?? 0,
+    }));
+
+    set({ windows: mapped });
   },
 }));
 
+const DEFAULT_WINDOWS: Omit<CustomWindow, "id">[] = [
+  { name: "Breakfast", start: "07:00", end: "09:30", minGapToNext: 120 },
+  { name: "Lunch",     start: "11:30", end: "14:00", minGapToNext: 120 },
+  { name: "Tea",       start: "15:00", end: "17:30", minGapToNext: 120 },
+  { name: "Bedtime",   start: "19:00", end: "22:00", minGapToNext: 0   },
+];
+
 // INITIAL LOAD
 if (typeof window !== "undefined") {
-  loadFreeSchedulerData().then((data) => {
+  loadFreeSchedulerData().then(async (data) => {
+    const store = useCustomWindowStore.getState();
+
+    // Pro users: load from Supabase
+    const pro = await isPro();
+    if (pro) {
+      await store.loadFromSupabase();
+      // Seed defaults if pro user has no windows yet
+      if (store.windows.length === 0) {
+        DEFAULT_WINDOWS.forEach((w) => store.addWindow(w));
+      }
+      return;
+    }
+
+    // Free users: load from session, seed defaults if empty
     if (data?.windows?.length) {
-      useCustomWindowStore.getState().setWindows(data.windows);
+      store.setWindows(data.windows);
+    } else {
+      DEFAULT_WINDOWS.forEach((w) => store.addWindow(w));
     }
   });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 import {
   Appointment,
@@ -57,8 +57,13 @@ const emptyForm: AppointmentFormState = {
 };
 
 export default function AddAppointment({ isFree }: AddAppointmentProps) {
-  const { addAppointment, updateAppointment } = useAppointmentStore();
+  const { appointments, addAppointment, updateAppointment } = useAppointmentStore();
   const { skills } = useSkillsStore();
+
+  const canAddMore = useMemo(() => {
+    if (!isFree) return true;
+    return appointments.filter((a) => !a.archived).length < 10;
+  }, [isFree, appointments]);
   const { windows } = useCustomWindowStore();   // ⭐ FIXED
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -169,13 +174,21 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
         <h2 className="text-lg font-semibold text-slate-200">
           Appointments / Clients
         </h2>
-        <button
-          type="button"
-          onClick={openAddModal}
-          className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
-        >
-          Add appointment
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            type="button"
+            onClick={openAddModal}
+            disabled={!canAddMore}
+            className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Add appointment
+          </button>
+          {!canAddMore && (
+            <p className="text-xs text-amber-400">
+              Free limit reached (10). Upgrade to Pro for unlimited appointments.
+            </p>
+          )}
+        </div>
       </div>
 
       <AppointmentList isFree={isFree} onEdit={openEditModal} />
