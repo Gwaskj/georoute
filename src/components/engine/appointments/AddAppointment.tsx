@@ -57,7 +57,7 @@ const emptyForm: AppointmentFormState = {
 };
 
 export default function AddAppointment({ isFree }: AddAppointmentProps) {
-  const { appointments, addAppointment, updateAppointment } = useAppointmentStore();
+  const { appointments, addAppointment, updateAppointment, clearAllAppointments } = useAppointmentStore();
   const { skills } = useSkillsStore();
 
   const canAddMore = useMemo(() => {
@@ -171,20 +171,36 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold text-slate-200">
+    <div className="space-y-4 rounded border border-slate-700 bg-slate-900 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-base font-semibold text-slate-200">
           Appointments / Clients
         </h2>
         <div className="flex flex-col items-end gap-1">
-          <button
-            type="button"
-            onClick={openAddModal}
-            disabled={!canAddMore}
-            className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Add appointment
-          </button>
+          <div className="flex items-center gap-2">
+            {appointments.filter((a) => !a.archived).length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const count = appointments.filter((a) => !a.archived).length;
+                  if (window.confirm(`Remove all ${count} appointment${count !== 1 ? "s" : ""}?`)) {
+                    clearAllAppointments();
+                  }
+                }}
+                className="rounded border border-red-600 px-3 py-1.5 text-xs text-red-400 hover:bg-red-950"
+              >
+                Clear all
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={openAddModal}
+              disabled={!canAddMore}
+              className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Add appointment
+            </button>
+          </div>
           {!canAddMore && (
             <p className="text-xs text-amber-400">
               Free limit reached (10). Upgrade to Pro for unlimited appointments.

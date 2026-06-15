@@ -39,6 +39,7 @@ interface AppointmentState {
   addAppointment: (data: Omit<Appointment, "id" | "archived">) => Appointment;
   updateAppointment: (id: string, updates: Partial<Appointment>) => void;
   deleteAppointment: (id: string) => void;
+  clearAllAppointments: () => void;
   duplicateAppointment: (id: string) => void;
   archiveAppointment: (id: string) => void;
   loadFromSupabase: () => Promise<void>;
@@ -181,6 +182,12 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     persistFree(appointments);
     scheduleSyncPro(appointments);
     set({ appointments });
+  },
+
+  clearAllAppointments: () => {
+    persistFree([]);
+    scheduleSyncPro([]);
+    set({ appointments: [] });
   },
 
   duplicateAppointment: (id) => {

@@ -86,10 +86,13 @@ function clientGapOk(
   newMinGapToNext: number
 ): boolean {
   for (const v of clientVisits) {
-    // Previous visit too close before candidate
-    if (v.end + v.minGapToNext > candidateStart) return false;
-    // Candidate too close before an existing later visit
-    if (candidateEnd + newMinGapToNext > v.start) return false;
+    if (v.start <= candidateStart) {
+      // Existing visit is earlier — check gap from it to the candidate
+      if (v.end + v.minGapToNext > candidateStart) return false;
+    } else {
+      // Existing visit is later — check gap from candidate to it
+      if (candidateEnd + newMinGapToNext > v.start) return false;
+    }
   }
   return true;
 }
@@ -187,7 +190,8 @@ function makeISOVisit(
   appt: Appointment,
   s: Staff,
   startTime: number,
-  endTime: number
+  endTime: number,
+  windowName?: string
 ): ScheduledVisit {
   const startDate = new Date(baseDate.getTime() + startTime * 60 * 1000);
   const endDate = new Date(baseDate.getTime() + endTime * 60 * 1000);
@@ -200,6 +204,8 @@ function makeISOVisit(
     start: startDate.toISOString(),
     end: endDate.toISOString(),
     postcode: appt.postcode,
+    address: appt.address,
+    windowName,
   };
 }
 
@@ -254,38 +260,53 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
 
   const customWindows = getCustomWindows(windows);
 
-  const expanded: Appointment[] = [];
+  type ExpandedVisit = { appt: Appointment; visitIndex: number };
+
+  const expanded: ExpandedVisit[] = [];
   for (const appt of appointments.filter((a) => !a.archived)) {
     const count = Math.max(1, appt.visitsRequired || 1);
     for (let i = 0; i < count; i++) {
-      expanded.push(appt);
+      expanded.push({ appt, visitIndex: i });
     }
   }
 
   const expandedSorted = expanded.slice().sort((a, b) => {
-    const aStrict = a.strictStartTime ? toMinutes(a.strictStartTime) : null;
-    const bStrict = b.strictStartTime ? toMinutes(b.strictStartTime) : null;
-
-    const aWindow = getPurposeWindow(a, purposes);
-    const bWindow = getPurposeWindow(b, purposes);
-
-    const aKey = aStrict ?? aWindow?.start ?? dayStartMin;
-    const bKey = bStrict ?? bWindow?.start ?? dayStartMin;
-
-    return aKey - bKey;
+    const getKey = ({ appt, visitIndex }: ExpandedVisit): number => {
+      const strict = appt.strictStartTime ? toMinutes(appt.strictStartTime) : null;
+      if (strict !== null) return strict;
+      const pw = getPurposeWindow(appt, purposes);
+      if (pw) return pw.start;
+      const reqIds = appt.requiredWindows ?? [];
+      if (reqIds.length > 0 && visitIndex < reqIds.length) {
+        const w = customWindows.find((cw) => reqIds.includes(cw.id));
+        if (w) return w.start;
+      }
+      return dayStartMin;
+    };
+    return getKey(a) - getKey(b);
   });
 
-  for (const appt of expandedSorted) {
+  for (const { appt, visitIndex } of expandedSorted) {
     const duration = appt.durationMinutes || 30;
     const minGapBase = appt.minGapMinutes ?? 120;
     const strict = appt.strictStartTime ? toMinutes(appt.strictStartTime) : null;
     const purposeWindow = getPurposeWindow(appt, purposes);
 
+    const requiredWindowIds = appt.requiredWindows ?? [];
+    // A visit is window-constrained only when its index falls within the number
+    // of selected windows. Extra visits (visitIndex >= windows count) are free
+    // to be scheduled at any point during the day.
+    const isWindowConstrained =
+      requiredWindowIds.length > 0 && visitIndex < requiredWindowIds.length;
+
+    // Resolve the display name for this visit's time window (e.g. "Breakfast", "Lunch")
+    const visitWindowName: string | undefined = isWindowConstrained
+      ? windows.find((w) => w.id === requiredWindowIds[visitIndex])?.name
+      : undefined;
+
     let windowsForAppt: CustomWindowSlot[] = [];
 
-    const requiredWindowIds = appt.requiredWindows ?? [];
-
-    if (requiredWindowIds.length > 0) {
+    if (isWindowConstrained) {
       windowsForAppt = customWindows.filter((w) =>
         requiredWindowIds.includes(w.id)
       );
@@ -306,9 +327,11 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
             minGapToNext: minGapBase,
           },
         ];
-      } else if (customWindows.length > 0) {
+      } else if (!isWindowConstrained && customWindows.length > 0 && requiredWindowIds.length === 0) {
+        // Appointment has no windows set at all — use all global custom windows
         windowsForAppt = customWindows;
       } else {
+        // Unconstrained extra visit, or no windows at all — use full day
         windowsForAppt = [
           {
             id: "",
@@ -337,19 +360,21 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
       for (const s of eligibleStaff) {
         if (candidates.length >= appt.requiredStaff) break;
 
+        const staffDayStart = s.workStart ? Math.max(dayStartMin, toMinutes(s.workStart)) : dayStartMin;
+        const staffDayEnd = s.workEnd ? Math.min(dayEndMin, toMinutes(s.workEnd)) : dayEndMin;
         const timeline = staffTimelines.get(s.id) ?? [];
         let found: { slot: { start: number; end: number }; minGapToNext: number } | null = null;
 
         for (const w of windowsForAppt) {
-          const effectiveMinGap = Math.max(minGapBase, w.minGapToNext || 0);
+          const clientMinGap = Math.max(minGapBase, w.minGapToNext || 0);
           const slot = findSlotForVisit(
-            s, timeline, duration, dayStartMin, dayEndMin,
+            s, timeline, duration, staffDayStart, staffDayEnd,
             appt.postcode, strict, { start: w.start, end: w.end },
-            effectiveMinGap, officePostcode, travelMin,
-            clientVisits, w.minGapToNext || 0
+            0, officePostcode, travelMin,
+            clientVisits, clientMinGap
           );
           if (slot) {
-            found = { slot, minGapToNext: w.minGapToNext || 0 };
+            found = { slot, minGapToNext: clientMinGap };
             break;
           }
         }
@@ -364,7 +389,7 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
           const timeline = staffTimelines.get(s.id) ?? [];
           timeline.push({ start: slot.start, end: slot.end, postcode: appt.postcode });
           staffTimelines.set(s.id, timeline);
-          visits.push(makeISOVisit(baseDate, appt, s, slot.start, slot.end));
+          visits.push(makeISOVisit(baseDate, appt, s, slot.start, slot.end, visitWindowName));
 
           // Record client visit only once (all candidates share the same slot)
           if (!clientRecorded) {
@@ -387,20 +412,22 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
     for (const s of eligibleStaff) {
       if (assigned >= appt.requiredStaff) break;
 
+      const staffDayStart = s.workStart ? Math.max(dayStartMin, toMinutes(s.workStart)) : dayStartMin;
+      const staffDayEnd = s.workEnd ? Math.min(dayEndMin, toMinutes(s.workEnd)) : dayEndMin;
       const timeline = staffTimelines.get(s.id) ?? [];
       let slot: { start: number; end: number } | null = null;
       let usedMinGapToNext = 0;
 
       for (const w of windowsForAppt) {
-        const effectiveMinGap = Math.max(minGapBase, w.minGapToNext || 0);
+        const clientMinGap = Math.max(minGapBase, w.minGapToNext || 0);
         slot = findSlotForVisit(
-          s, timeline, duration, dayStartMin, dayEndMin,
+          s, timeline, duration, staffDayStart, staffDayEnd,
           appt.postcode, strict, { start: w.start, end: w.end },
-          effectiveMinGap, officePostcode, travelMin,
-          clientVisits, w.minGapToNext || 0
+          0, officePostcode, travelMin,
+          clientVisits, clientMinGap
         );
         if (slot) {
-          usedMinGapToNext = w.minGapToNext || 0;
+          usedMinGapToNext = clientMinGap;
           break;
         }
       }
@@ -409,7 +436,7 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
 
       timeline.push({ start: slot.start, end: slot.end, postcode: appt.postcode });
       staffTimelines.set(s.id, timeline);
-      visits.push(makeISOVisit(baseDate, appt, s, slot.start, slot.end));
+      visits.push(makeISOVisit(baseDate, appt, s, slot.start, slot.end, visitWindowName));
 
       // Record client visit on first staff assignment
       if (assigned === 0) {
@@ -426,5 +453,50 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
     }
   }
 
-  return { visits, warnings };
+  // ── GAP HINTS ─────────────────────────────────────────────────────────────
+  // Identify staff members who have at least one appointment but also have a
+  // gap large enough that another visit could potentially fit.
+  const hints: string[] = [];
+  const MIN_GAP_HINT = 30; // minutes — smallest meaningful visit duration
+
+  function minsToTimeStr(mins: number): string {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  }
+
+  for (const s of staff) {
+    const timeline = (staffTimelines.get(s.id) ?? [])
+      .slice()
+      .sort((a, b) => a.start - b.start);
+
+    if (timeline.length === 0) continue;
+
+    const staffDayStart = s.workStart ? Math.max(dayStartMin, toMinutes(s.workStart)) : dayStartMin;
+    const staffDayEnd = s.workEnd ? Math.min(dayEndMin, toMinutes(s.workEnd)) : dayEndMin;
+
+    const gaps: Array<{ start: number; end: number }> = [];
+
+    const gapBefore = timeline[0].start - staffDayStart;
+    if (gapBefore >= MIN_GAP_HINT) gaps.push({ start: staffDayStart, end: timeline[0].start });
+
+    for (let i = 1; i < timeline.length; i++) {
+      const gap = timeline[i].start - timeline[i - 1].end;
+      if (gap >= MIN_GAP_HINT) gaps.push({ start: timeline[i - 1].end, end: timeline[i].start });
+    }
+
+    const gapAfter = staffDayEnd - timeline[timeline.length - 1].end;
+    if (gapAfter >= MIN_GAP_HINT) gaps.push({ start: timeline[timeline.length - 1].end, end: staffDayEnd });
+
+    if (gaps.length > 0) {
+      const gapList = gaps
+        .map((g) => `${minsToTimeStr(g.start)}–${minsToTimeStr(g.end)}`)
+        .join(", ");
+      hints.push(
+        `${s.name} has ${gaps.length} free gap${gaps.length > 1 ? "s" : ""} today that could potentially fit an additional appointment: ${gapList}.`
+      );
+    }
+  }
+
+  return { visits, warnings, hints };
 }

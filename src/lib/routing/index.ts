@@ -42,7 +42,7 @@ export async function getRoute(
     });
 
     if (error) {
-      console.error("Route optimizer error:", error);
+      // Edge Function unavailable — caller uses 10-min fallback
       return null;
     }
 
@@ -52,8 +52,7 @@ export async function getRoute(
       polyline: data.polyline ?? null,
       cached: data.cached ?? false,
     };
-  } catch (err) {
-    console.error("Failed to get route:", err);
+  } catch {
     return null;
   }
 }
@@ -74,11 +73,12 @@ function cacheKey(from: string, to: string): string {
 
 /**
  * Get route with local in-memory caching on top of Supabase caching.
+ * Returns null if the routing service is unavailable.
  */
 export async function getRouteBatched(
   originPostcode: string,
   destinationPostcode: string
-): Promise<RouteResult> {
+): Promise<RouteResult | null> {
   const origin = originPostcode.trim().toUpperCase();
   const destination = destinationPostcode.trim().toUpperCase();
   const key = cacheKey(origin, destination);
@@ -88,15 +88,8 @@ export async function getRouteBatched(
   if (local) return local;
 
   const result = await getRoute(origin, destination);
+  if (!result) return null;
 
-  // Provide a fallback if ORS call fails
-  const fallback: RouteResult = result ?? {
-    distance_km: 5,
-    duration_minutes: 10,
-    polyline: null,
-    cached: false,
-  };
-
-  localRouteCache.set(key, fallback);
-  return fallback;
+  localRouteCache.set(key, result);
+  return result;
 }

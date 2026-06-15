@@ -6,6 +6,12 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
 interface RouteRequest {
   originPostcode: string;
   destinationPostcode: string;
@@ -21,11 +27,17 @@ interface CacheEntry {
 }
 
 serve(async (req: Request) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   try {
     // Only accept POST
     if (req.method !== "POST") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), {
         status: 405,
+        headers: corsHeaders,
       });
     }
 
@@ -34,7 +46,7 @@ serve(async (req: Request) => {
     if (!body.originPostcode || !body.destinationPostcode) {
       return new Response(
         JSON.stringify({ error: "originPostcode and destinationPostcode are required" }),
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -50,7 +62,7 @@ serve(async (req: Request) => {
           polyline: null,
           cached: false,
         }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -81,21 +93,21 @@ serve(async (req: Request) => {
           polyline: cached.polyline,
           cached: true,
         }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     console.log(`Cache miss: ${origin} → ${destination}, calling ORS...`);
 
-    // ---- STEP 2: Geocode postcodes to coordinates ----
+    // ---- STEP 2: Geocode postcodes to coordinates using postcodes.io ----
     const orsKey = Deno.env.get("DENO_ORS_API_KEY");
     if (!orsKey) {
       throw new Error("ORS API key not configured (DENO_ORS_API_KEY)");
     }
 
     const [originCoords, destCoords] = await Promise.all([
-      geocodePostcode(origin, orsKey),
-      geocodePostcode(destination, orsKey),
+      geocodePostcode(origin),
+      geocodePostcode(destination),
     ]);
 
     if (!originCoords || !destCoords) {
@@ -135,7 +147,7 @@ serve(async (req: Request) => {
         polyline: routeResult.polyline,
         cached: false,
       }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (err) {
@@ -144,17 +156,14 @@ serve(async (req: Request) => {
 
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
 
-// ── Geocode a postcode to [lng, lat] using ORS Geocode API ──
-async function geocodePostcode(
-  postcode: string,
-  apiKey: string
-): Promise<[number, number] | null> {
-  const url = `https://api.openrouteservice.org/geocode/search?api_key=${apiKey}&text=${encodeURIComponent(postcode)}&size=1`;
+// ── Geocode a UK postcode to [lng, lat] using postcodes.io ──
+async function geocodePostcode(postcode: string): Promise<[number, number] | null> {
+  const url = `https://api.postcodes.io/postcodes/${encodeURIComponent(postcode)}`;
 
   const res = await fetch(url);
   if (!res.ok) {
@@ -163,14 +172,13 @@ async function geocodePostcode(
   }
 
   const data = await res.json();
-  const feature = data?.features?.[0];
-  if (!feature) {
+  if (!data?.result) {
     console.error(`No geocode result for ${postcode}`);
     return null;
   }
 
-  // ORS returns [lng, lat]
-  return feature.geometry.coordinates as [number, number];
+  // postcodes.io returns { latitude, longitude }; ORS needs [lng, lat]
+  return [data.result.longitude, data.result.latitude] as [number, number];
 }
 
 // ── Call ORS directions API ──
@@ -184,22 +192,14 @@ async function callOrsRouting(
   polyline: unknown;
   raw_response: unknown;
 }> {
-  const body = {
-    coordinates: [origin, destination],
-    profile: "driving-car",
-    format: "json",
-    // Return decoded polyline as GeoJSON
-    geometry_format: "geojson",
-  };
-
-  const res = await fetch("https://api.openrouteservice.org/v2/directions/driving-car/json", {
+  const res = await fetch("https://api.openrouteservice.org/v2/directions/driving-car/geojson", {
     method: "POST",
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Accept": "application/json, application/geo+json",
+      "Accept": "application/geo+json",
       "Authorization": apiKey,
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ coordinates: [origin, destination] }),
   });
 
   if (!res.ok) {
@@ -209,26 +209,19 @@ async function callOrsRouting(
 
   const data = await res.json();
 
-  const route = data?.routes?.[0];
-  if (!route) {
+  const feature = data?.features?.[0];
+  if (!feature) {
     throw new Error("ORS returned no route");
   }
 
-  const distanceKm = route.summary.distance / 1000; // ORS returns meters
-  const durationMinutes = route.summary.duration / 60; // ORS returns seconds
+  const summary = feature.properties?.summary;
+  const distanceKm = summary.distance / 1000;   // ORS returns meters
+  const durationMinutes = summary.duration / 60; // ORS returns seconds
 
-  // Polyline in GeoJSON format
-  const polyline = route.geometry ?? null;
+  // GeoJSON LineString geometry with [lng, lat] coordinates
+  const polyline = feature.geometry ?? null;
 
-  // Strip potentially large raw_response to just what we need (keep summary, but drop full geometry if too large)
-  const raw_response = {
-    summary: route.summary,
-    segments: route.segments?.map((seg: any) => ({
-      distance: seg.distance,
-      duration: seg.duration,
-      steps_count: seg.steps?.length ?? 0,
-    })),
-  };
+  const raw_response = { summary };
 
   return {
     distance_km: Math.round(distanceKm * 100) / 100,

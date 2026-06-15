@@ -18,6 +18,8 @@ export interface Staff {
   gender: Gender | "";
   skills: string[];
   colour: string;
+  workStart?: string;
+  workEnd?: string;
 }
 
 interface StaffState {
@@ -27,6 +29,7 @@ interface StaffState {
   addStaff: (staff: Omit<Staff, "id" | "colour">) => Staff;
   updateStaff: (id: string, updates: Partial<Staff>) => void;
   deleteStaff: (id: string) => void;
+  clearAllStaff: () => void;
   setSelectedStaffIds: (ids: string[]) => void;
   /** Load staff from Supabase for pro users */
   loadFromSupabase: () => Promise<void>;
@@ -105,7 +108,8 @@ async function persistPro(staff: Staff[], selectedStaffIds: string[]) {
       gender: s.gender,
       skills: s.skills,
       colour: s.colour,
-      // Store the UUID so we can map back
+      work_start: s.workStart ?? null,
+      work_end: s.workEnd ?? null,
       local_id: s.id,
     }))
   );
@@ -178,6 +182,14 @@ export const useStaffStore = create<StaffState>((set, get) => ({
     set({ staff, selectedStaffIds });
   },
 
+  clearAllStaff: () => {
+    persistFree([], []);
+    isPro().then((pro) => {
+      if (pro) persistPro([], []);
+    });
+    set({ staff: [], selectedStaffIds: [] });
+  },
+
   setSelectedStaffIds: (ids) => {
     persistFree(get().staff, ids);
     set({ selectedStaffIds: ids });
@@ -214,6 +226,8 @@ export const useStaffStore = create<StaffState>((set, get) => ({
         gender: row.gender ?? "",
         skills: row.skills ?? [],
         colour: row.colour ?? generateColour(),
+        workStart: row.work_start ?? undefined,
+        workEnd: row.work_end ?? undefined,
       }));
 
     set({ staff: mapped });

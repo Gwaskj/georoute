@@ -6,7 +6,7 @@ import {
   saveFreeSchedulerData,
   FreeSchedulerData,
 } from "@/lib/freeSession";
-import { SchedulerContext, SchedulerResult } from "./types";
+import { ScheduledVisit, SchedulerContext, SchedulerResult } from "./types";
 
 type PersistPayload = {
   isFree: boolean;
@@ -82,5 +82,53 @@ export async function saveSchedulerResult({
     return;
   }
 
-  // Pro mode: visits are NOT persisted
+  // Pro mode: persist visits to Supabase
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.from("scheduled_visits").delete().eq("user_id", user.id);
+
+  if (visits.length === 0) return;
+
+  await supabase.from("scheduled_visits").insert(
+    visits.map((v) => ({
+      user_id: user.id,
+      visit_id: v.id,
+      appointment_id: v.appointmentId,
+      staff_id: v.staffId,
+      client_name: v.clientName,
+      staff_name: v.staffName,
+      start_time: v.start,
+      end_time: v.end,
+      postcode: v.postcode,
+      address: v.address,
+      window_name: v.windowName,
+    }))
+  );
+}
+
+export async function loadProScheduledVisits(): Promise<ScheduledVisit[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data } = await supabase
+    .from("scheduled_visits")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("start_time", { ascending: true });
+
+  if (!data) return [];
+
+  return data.map((row: any) => ({
+    id: row.visit_id,
+    appointmentId: row.appointment_id ?? "",
+    staffId: row.staff_id ?? "",
+    clientName: row.client_name ?? "",
+    staffName: row.staff_name ?? "",
+    start: row.start_time,
+    end: row.end_time,
+    postcode: row.postcode ?? "",
+    address: row.address ?? undefined,
+    windowName: row.window_name ?? undefined,
+  }));
 }

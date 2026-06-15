@@ -16,10 +16,11 @@ import MapVisualizer from "@/components/engine/MapVisualizer.client";
 // STORES
 import { useStaffStore } from "@/store/staffStore";
 import { useSettingsStore } from "@/store/settingsStore";
+import { useScheduleResultStore } from "@/store/scheduleResultStore";
 
 // PERSISTENCE
 import { loadFreeSchedulerData } from "@/lib/freeSession";
-import { supabase } from "@/lib/supabase/client";
+import { loadProScheduledVisits } from "@/lib/scheduler/persist";
 
 type SchedulePageProps = {
   isFree: boolean;
@@ -122,44 +123,29 @@ function SetupView({ isFree, sectionIntros }: { isFree: boolean; sectionIntros: 
 
 function ResultsView({ isFree }: { isFree: boolean }) {
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
-  const [visits, setVisits] = useState<any[]>([]);
   const { staff } = useStaffStore();
   const { settings, loadSettings } = useSettingsStore();
+  const { visits, hasResult, setResult } = useScheduleResultStore();
 
   useEffect(() => {
     loadSettings(isFree);
   }, [isFree, loadSettings]);
 
+  // On mount: if the store is empty (page refresh), reload the last persisted result.
   useEffect(() => {
-    async function load() {
-      if (isFree) {
-        const data = await loadFreeSchedulerData();
-        setVisits(data?.visits ?? []);
-        return;
-      }
-
-      // PRO MODE — load routes and convert to visits for UI
-      const { data: routesData } = await supabase.from("routes").select("*");
-      const loadedRoutes = routesData ?? [];
-
-      const reconstructedVisits = loadedRoutes.flatMap((r: any) =>
-        (r.stops ?? []).map((stop: any, idx: number) => ({
-          id: `${r.id}-${idx}`,
-          appointmentId: stop.appointment_id,
-          staffId: r.staff_id,
-          clientName: stop.client_name,
-          staffName: r.staff_name,
-          start: stop.start,
-          end: stop.end,
-          postcode: stop.postcode,
-        }))
-      );
-
-      setVisits(reconstructedVisits);
+    if (hasResult) return;
+    if (isFree) {
+      loadFreeSchedulerData().then((data) => {
+        if ((data as any)?.visits?.length) {
+          setResult((data as any).visits, [], []);
+        }
+      });
+    } else {
+      loadProScheduledVisits().then((loaded) => {
+        if (loaded.length) setResult(loaded, [], []);
+      });
     }
-
-    load();
-  }, [isFree]);
+  }, [hasResult, isFree, setResult]);
 
   const selectedStaff =
     selectedStaffId ? staff.find((s) => s.id === selectedStaffId) || null : null;
@@ -174,7 +160,11 @@ function ResultsView({ isFree }: { isFree: boolean }) {
       <div className="flex flex-col">
         {/* MAP */}
         <div className="flex-1 min-h-[320px] rounded border border-slate-800 bg-slate-950 overflow-hidden">
-          <MapVisualizer selectedStaffId={selectedStaffId} />
+          <MapVisualizer
+            selectedStaffId={selectedStaffId}
+            scheduledVisits={visits}
+            staffList={staff}
+          />
         </div>
 
         {/* SUMMARY BAR */}

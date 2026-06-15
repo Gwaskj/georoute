@@ -1,6 +1,7 @@
 "use client";
 
 import { Appointment, useAppointmentStore } from "@/store/appointmentStore";
+import { useCustomWindowStore } from "@/store/customWindowStore";
 
 interface AppointmentListProps {
   onEdit: (appointment: Appointment) => void;
@@ -8,6 +9,7 @@ interface AppointmentListProps {
 
 export default function AppointmentList({ onEdit }: AppointmentListProps) {
   const { appointments, deleteAppointment } = useAppointmentStore();
+  const { windows } = useCustomWindowStore();
 
   const activeAppointments = appointments.filter((a) => !a.archived);
 
@@ -22,8 +24,9 @@ export default function AppointmentList({ onEdit }: AppointmentListProps) {
           <tr className="border-b border-slate-700 text-left text-xs font-semibold uppercase tracking-wide text-slate-300">
             <th className="pb-2 pr-4">Name</th>
             <th className="pb-2 pr-4">Address</th>
-            <th className="pb-2 pr-4 text-center">Mins</th>
-            <th className="pb-2 pr-4 text-center">Staff</th>
+            <th className="pb-2 pr-4 text-center">Calls/day</th>
+            <th className="pb-2 pr-4 text-center">Required Staff</th>
+            <th className="pb-2 pr-4">Windows</th>
             <th className="pb-2 text-right">Actions</th>
           </tr>
         </thead>
@@ -39,8 +42,24 @@ export default function AppointmentList({ onEdit }: AppointmentListProps) {
               <td className="py-2 pr-4 text-slate-200 text-xs">
                 {[a.houseNumberOrName, a.address, a.postcode].filter(Boolean).join(", ")}
               </td>
-              <td className="py-2 pr-4 text-center text-slate-100">{a.durationMinutes}</td>
+              <td className="py-2 pr-4 text-center text-slate-100">{a.visitsRequired}</td>
               <td className="py-2 pr-4 text-center text-slate-100">{a.requiredStaff}</td>
+              <td className="py-2 pr-4">
+                {a.requiredWindows && a.requiredWindows.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {a.requiredWindows.map((wid) => {
+                      const w = windows.find((x) => x.id === wid);
+                      return w ? (
+                        <span key={wid} className="rounded bg-emerald-900/60 px-1.5 py-0.5 text-xs text-emerald-300">
+                          {w.name}
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
+                ) : (
+                  <span className="text-xs text-slate-500">Any time</span>
+                )}
+              </td>
               <td className="py-2 text-right">
                 <div className="flex items-center justify-end gap-1.5">
                   <button

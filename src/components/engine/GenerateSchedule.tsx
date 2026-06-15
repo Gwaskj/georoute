@@ -7,10 +7,11 @@ import { useCallPurposeStore } from "@/store/callPurposeStore";
 import { useCustomWindowStore } from "@/store/customWindowStore";
 import { useOfficePostcodeStore } from "@/store/officePostcodeStore";
 import { useSettingsStore } from "@/store/settingsStore";
+import { useScheduleResultStore } from "@/store/scheduleResultStore";
 
 import { runScheduler } from "@/lib/scheduler/engine";
 import { saveSchedulerResult } from "@/lib/scheduler/persist";
-import { SchedulerContext, ScheduledVisit } from "@/lib/scheduler/types";
+import { SchedulerContext } from "@/lib/scheduler/types";
 import { getRouteBatched, clearLocalCache } from "@/lib/routing";
 
 interface GenerateScheduleProps {
@@ -29,9 +30,9 @@ export default function GenerateSchedule({
   const { officePostcode } = useOfficePostcodeStore();
   const { settings, loaded: settingsLoaded, loadSettings } = useSettingsStore();
 
+  const { visits, warnings, hints, setResult } = useScheduleResultStore();
   const [isRunning, setIsRunning] = useState(false);
-  const [visits, setVisits] = useState<ScheduledVisit[]>([]);
-  const [warnings, setWarnings] = useState<string[]>([]);
+  const [routeError, setRouteError] = useState<string | null>(null);
 
   // Load settings on mount
   useEffect(() => {
@@ -44,19 +45,17 @@ export default function GenerateSchedule({
     if (algorithm !== "default") return;
 
     setIsRunning(true);
+    setRouteError(null);
     clearLocalCache();
 
     // Pre-fetch all relevant postcode pairs to build a travel-time lookup
-    // We'll fetch routes from office→clients, client→office, and client→client
     const uniquePostcodes = new Set<string>();
 
-    // Collect all postcodes we might route between
     if (officePostcode) uniquePostcodes.add(officePostcode);
     for (const s of staff) {
       if (s.homePostcode) uniquePostcodes.add(s.homePostcode);
       if (s.officePostcode) uniquePostcodes.add(s.officePostcode);
     }
-    // Use officePostcode as fallback for staff without their own
     const effectiveOffice = officePostcode || "";
     for (const a of appointments) {
       if (a.postcode) uniquePostcodes.add(a.postcode);
@@ -64,10 +63,9 @@ export default function GenerateSchedule({
 
     const postcodes = Array.from(uniquePostcodes).filter(Boolean);
 
-    // Build a synchronous travel-minutes lookup function from pre-fetched data
     const travelLookup = new Map<string, number>();
+    const failedPairs: string[] = [];
 
-    // Fetch all pairs concurrently
     const fetchPromises: Promise<void>[] = [];
     for (const from of postcodes) {
       for (const to of postcodes) {
@@ -77,7 +75,11 @@ export default function GenerateSchedule({
         }
         fetchPromises.push(
           getRouteBatched(from, to).then((route) => {
-            travelLookup.set(`${from}→${to}`, route.duration_minutes);
+            if (route === null) {
+              failedPairs.push(`${from} → ${to}`);
+            } else {
+              travelLookup.set(`${from}→${to}`, route.duration_minutes);
+            }
           })
         );
       }
@@ -87,17 +89,24 @@ export default function GenerateSchedule({
       await Promise.all(fetchPromises);
     }
 
+    if (failedPairs.length > 0) {
+      setRouteError(
+        "Could not fetch travel times from the routing service. Please ensure the route-optimizer Edge Function is deployed and your ORS API key is configured."
+      );
+      setIsRunning(false);
+      return;
+    }
+
     function getTravelMinutes(from: string, to: string): number {
       const key = `${from}→${to}`;
       const cached = travelLookup.get(key);
       if (cached !== undefined) return cached;
 
-      // For staff without office postcode, use the global office postcode
       const origin = from || effectiveOffice;
       const dest = to || effectiveOffice;
       if (origin === dest) return 0;
 
-      return 10; // fallback
+      return 0;
     }
 
     const ctx: SchedulerContext = {
@@ -113,8 +122,7 @@ export default function GenerateSchedule({
 
     const result = runScheduler(ctx);
 
-    setVisits(result.visits);
-    setWarnings(result.warnings);
+    setResult(result.visits, result.warnings, result.hints);
 
     await saveSchedulerResult({
       isFree,
@@ -136,12 +144,30 @@ export default function GenerateSchedule({
         {isRunning ? "Generating..." : "Generate schedule"}
       </button>
 
+      {routeError && (
+        <div className="rounded border border-red-700 bg-red-950/40 p-2 text-[11px] text-red-300">
+          <div className="mb-1 font-semibold">Routing error</div>
+          {routeError}
+        </div>
+      )}
+
       {warnings.length > 0 && (
         <div className="rounded border border-yellow-700 bg-yellow-950/40 p-2 text-[11px] text-yellow-200">
           <div className="mb-1 font-semibold">Warnings</div>
           <ul className="list-disc pl-4">
             {warnings.map((w, idx) => (
               <li key={idx}>{w}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {hints.length > 0 && (
+        <div className="rounded border border-blue-700 bg-blue-950/40 p-2 text-[11px] text-blue-200">
+          <div className="mb-1 font-semibold">Capacity hints</div>
+          <ul className="list-disc pl-4">
+            {hints.map((h, idx) => (
+              <li key={idx}>{h}</li>
             ))}
           </ul>
         </div>

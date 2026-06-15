@@ -110,9 +110,8 @@ export default function StaffResultsList({
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      {/* ⭐ NEW: Staff colour dot */}
                       <span
-                        className="inline-block h-3 w-3 rounded-full"
+                        className="inline-block h-3 w-3 flex-shrink-0 rounded-full"
                         style={{ backgroundColor: s.colour }}
                       />
                       <span className="text-sm font-medium text-slate-100">
@@ -131,13 +130,37 @@ export default function StaffResultsList({
                     </p>
                   ) : hasBigGap ? (
                     <p className="mt-1 text-[11px] text-amber-300">
-                      Potentially could have taken more calls (depending on
-                      care‑call location and requirements).
+                      Potentially could have taken more calls.
                     </p>
                   ) : (
                     <p className="mt-1 text-[11px] text-emerald-300">
                       Fully utilised.
                     </p>
+                  )}
+
+                  {isSelected && count > 0 && (
+                    <ul className="mt-2 space-y-1 border-t border-slate-700/60 pt-2">
+                      {[...staffVisits]
+                        .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+                        .map((v) => {
+                          const s = new Date(v.start);
+                          const e = new Date(v.end);
+                          const fmt = (d: Date) =>
+                            d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                          return (
+                            <li
+                              key={v.id}
+                              className="flex items-center justify-between rounded bg-slate-800/60 px-2 py-1 text-[11px]"
+                            >
+                              <span className="font-medium text-slate-100">{v.clientName}</span>
+                              <div className="flex items-center gap-2 text-slate-400">
+                                <span>{v.postcode}</span>
+                                <span>{fmt(s)}–{fmt(e)}</span>
+                              </div>
+                            </li>
+                          );
+                        })}
+                    </ul>
                   )}
                 </button>
               </li>

@@ -23,6 +23,8 @@ interface StaffFormState {
   dateOfBirth: string;
   gender: Gender | "";
   skills: string[];
+  workStart: string;
+  workEnd: string;
 }
 
 const emptyForm: StaffFormState = {
@@ -32,6 +34,8 @@ const emptyForm: StaffFormState = {
   dateOfBirth: "",
   gender: "",
   skills: [],
+  workStart: "",
+  workEnd: "",
 };
 
 function calculateAge(dob: string): number | null {
@@ -86,6 +90,8 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
         dateOfBirth: s.dateOfBirth,
         gender: s.gender,
         skills: [...s.skills],
+        workStart: s.workStart ?? "",
+        workEnd: s.workEnd ?? "",
       });
       setErrors({});
       setIsModalOpen(true);
@@ -117,6 +123,8 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
       dateOfBirth: s.dateOfBirth,
       gender: s.gender,
       skills: [...s.skills],
+      workStart: s.workStart ?? "",
+      workEnd: s.workEnd ?? "",
     });
     setErrors({});
     setIsModalOpen(true);
@@ -140,6 +148,8 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
         skills: form.skills,
+        workStart: form.workStart || undefined,
+        workEnd: form.workEnd || undefined,
       });
     } else {
       if (!canAddMore) return;
@@ -150,6 +160,8 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
         skills: form.skills,
+        workStart: form.workStart || undefined,
+        workEnd: form.workEnd || undefined,
       });
     }
 
@@ -422,6 +434,26 @@ function StaffForm({
           <option value="Female">Female</option>
           <option value="Other">Other</option>
         </select>
+      </div>
+
+      <div>
+        <label className="mb-1 block font-medium text-slate-200">Working hours</label>
+        <p className="mb-2 text-xs text-slate-400">Leave blank to use the global day start/end from settings.</p>
+        <div className="flex items-center gap-2">
+          <input
+            type="time"
+            value={form.workStart}
+            onChange={(e) => setForm((f: any) => ({ ...f, workStart: e.target.value }))}
+            className="flex-1 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
+          />
+          <span className="text-slate-400">to</span>
+          <input
+            type="time"
+            value={form.workEnd}
+            onChange={(e) => setForm((f: any) => ({ ...f, workEnd: e.target.value }))}
+            className="flex-1 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
+          />
+        </div>
       </div>
 
       <div>

@@ -14,6 +14,8 @@ export interface ScheduledVisit {
   start: string;   // ISO datetime
   end: string;     // ISO datetime
   postcode: string;
+  address?: string;
+  windowName?: string;
 }
 
 export interface SchedulerContext {
@@ -32,4 +34,5 @@ export interface SchedulerContext {
 export interface SchedulerResult {
   visits: ScheduledVisit[];
   warnings: string[];
+  hints: string[];
 }

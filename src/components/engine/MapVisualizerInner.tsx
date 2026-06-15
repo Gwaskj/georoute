@@ -17,6 +17,11 @@ import { useHighlightStore } from "@/lib/map/highlightStore";
 import { applyStaffColors } from "@/lib/map/staffColorMap";
 import { loadFreeSchedulerData } from "@/lib/freeSession";
 import { useUserTier } from "@/lib/hooks/useUserTier";
+import { geocodePostcodes } from "@/lib/geocode";
+import { getRoute } from "@/lib/routing";
+import { ScheduledVisit } from "@/lib/scheduler/types";
+import { Staff } from "@/store/staffStore";
+import { useOfficePostcodeStore } from "@/store/officePostcodeStore";
 
 import L from "leaflet";
 
@@ -82,7 +87,12 @@ type AppointmentMarker = {
   id: string;
   lat: number;
   lng: number;
-  label: string;
+  clientName: string;
+  postcode: string;
+  address?: string;
+  time: string;
+  staffName: string;
+  windowName?: string;
   color: string;
 };
 
@@ -148,12 +158,16 @@ export default function MapVisualizerInner({
   showAppointments = true,
   showStaffRoutes = true,
   selectedStaffId,
+  scheduledVisits,
+  staffList,
 }: {
   zoom?: number;
   showRoutes?: boolean;
   showAppointments?: boolean;
   showStaffRoutes?: boolean;
   selectedStaffId?: string | null;
+  scheduledVisits?: ScheduledVisit[];
+  staffList?: Staff[];
 }) {
   const isFree = useUserTier();
 
@@ -169,11 +183,160 @@ export default function MapVisualizerInner({
 
   const [routes, setRoutes] = useState<Route[]>([]);
   const [appointments, setAppointments] = useState<AppointmentMarker[]>([]);
+  const [routeLoading, setRouteLoading] = useState(false);
+
+  // geoMap and baseRoutes are kept in refs so the ORS effect can read the
+  // latest values without being listed as dependencies (avoiding extra fetches).
+  const geoMapRef = useRef<Map<string, { lat: number; lng: number }>>(new Map());
+  const baseRoutesRef = useRef<Route[]>([]);
+  const orsRouteCacheRef = useRef<Map<string, [number, number][]>>(new Map());
 
   const [mapKey] = useState(() => crypto.randomUUID());
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const { officePostcode: officePost } = useOfficePostcodeStore();
+
+  // ── EFFECT 1: geocode postcodes → markers + straight-line base routes ──────
+  useEffect(() => {
+    if (scheduledVisits === undefined) return;
+
+    if (scheduledVisits.length === 0) {
+      setAppointments([]);
+      setRoutes([]);
+      baseRoutesRef.current = [];
+      return;
+    }
+
+    const visitPostcodes = [...new Set(scheduledVisits.map((v) => v.postcode).filter(Boolean))];
+    const allPostcodes = officePost ? [...visitPostcodes, officePost] : visitPostcodes;
+
+    geocodePostcodes(allPostcodes).then((geoMap) => {
+      geoMapRef.current = geoMap;
+      orsRouteCacheRef.current = new Map(); // invalidate ORS cache when visits change
+
+      const fmt = (iso: string) =>
+        new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+      const markers: AppointmentMarker[] = scheduledVisits.map((v) => {
+        const geo = geoMap.get(v.postcode.toUpperCase());
+        const staffMember = staffList?.find((s) => s.id === v.staffId);
+        return {
+          id: v.id,
+          lat: geo?.lat ?? 53.0,
+          lng: geo?.lng ?? -2.2,
+          clientName: v.clientName,
+          postcode: v.postcode,
+          address: v.address,
+          time: `${fmt(v.start)}–${fmt(v.end)}`,
+          staffName: v.staffName,
+          windowName: v.windowName,
+          color: staffMember?.colour ?? "#3b82f6",
+        };
+      });
+
+      // Build straight-line base routes: office → v1 → v2 → ... → office (per staff)
+      const officeGeo = officePost ? geoMap.get(officePost.toUpperCase()) : null;
+      const staffVisitMap = new Map<string, { points: [number, number][]; colour: string }>();
+      const sorted = [...scheduledVisits].sort(
+        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+      );
+      for (const v of sorted) {
+        const geo = geoMap.get(v.postcode.toUpperCase());
+        if (!geo) continue;
+        if (!staffVisitMap.has(v.staffId)) {
+          const staffMember = staffList?.find((s) => s.id === v.staffId);
+          const start: [number, number][] = officeGeo ? [[officeGeo.lat, officeGeo.lng]] : [];
+          staffVisitMap.set(v.staffId, { points: start, colour: staffMember?.colour ?? "#3b82f6" });
+        }
+        staffVisitMap.get(v.staffId)!.points.push([geo.lat, geo.lng]);
+      }
+      // Append office at end of each staff route
+      if (officeGeo) {
+        for (const entry of staffVisitMap.values()) {
+          entry.points.push([officeGeo.lat, officeGeo.lng]);
+        }
+      }
+
+      const base: Route[] = [...staffVisitMap.entries()].map(([staffId, { points, colour }]) => ({
+        id: staffId,
+        staff_id: staffId,
+        points,
+        color: colour,
+      }));
+
+      baseRoutesRef.current = base;
+      setAppointments(markers);
+      setRoutes(base);
+    });
+  }, [scheduledVisits, staffList, officePost]);
+
+  // ── EFFECT 2: when a staff member is selected, fetch ORS road-following routes ──
+  useEffect(() => {
+    if (scheduledVisits === undefined || !selectedStaffId) return;
+
+    const geoMap = geoMapRef.current;
+    const base = baseRoutesRef.current;
+
+    // Use cached ORS points if available
+    const cached = orsRouteCacheRef.current.get(selectedStaffId);
+    if (cached) {
+      setRoutes(base.map((r) => r.staff_id === selectedStaffId ? { ...r, points: cached } : r));
+      return;
+    }
+
+    const staffVisits = (scheduledVisits ?? [])
+      .filter((v) => v.staffId === selectedStaffId)
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+    if (staffVisits.length === 0) return;
+
+    // Show straight-line immediately; replace with ORS when ready
+    setRoutes(base);
+    setRouteLoading(true);
+
+    // Build ordered postcode sequence: office → v1 → v2 → ... → vN → office
+    const seq: string[] = [
+      ...(officePost ? [officePost] : []),
+      ...staffVisits.map((v) => v.postcode),
+      ...(officePost ? [officePost] : []),
+    ].filter(Boolean);
+
+    const pairs: [string, string][] = [];
+    for (let i = 0; i < seq.length - 1; i++) {
+      if (seq[i] !== seq[i + 1]) pairs.push([seq[i], seq[i + 1]]);
+    }
+
+    // No meaningful route to fetch — keep base routes as-is
+    if (pairs.length === 0) {
+      setRouteLoading(false);
+      return;
+    }
+
+    Promise.all(pairs.map(([from, to]) => getRoute(from, to))).then((results) => {
+      const orsPoints: [number, number][] = [];
+
+      results.forEach((result, i) => {
+        if (result?.polyline && (result.polyline as any)?.coordinates) {
+          // ORS GeoJSON coords are [lng, lat] — Leaflet needs [lat, lng]
+          const coords = (result.polyline as any).coordinates as number[][];
+          coords.forEach(([lng, lat]) => orsPoints.push([lat, lng]));
+        } else {
+          // Fallback: straight line between this pair using geocoded positions
+          const fromGeo = geoMap.get(pairs[i][0].toUpperCase());
+          const toGeo = geoMap.get(pairs[i][1].toUpperCase());
+          if (fromGeo) orsPoints.push([fromGeo.lat, fromGeo.lng]);
+          if (toGeo) orsPoints.push([toGeo.lat, toGeo.lng]);
+        }
+      });
+
+      orsRouteCacheRef.current.set(selectedStaffId, orsPoints);
+      setRoutes(base.map((r) => r.staff_id === selectedStaffId ? { ...r, points: orsPoints } : r));
+      setRouteLoading(false);
+    });
+  }, [selectedStaffId, scheduledVisits, officePost]);
 
   useEffect(() => {
+    // Skip legacy loading when visits are provided directly
+    if (scheduledVisits !== undefined) return;
     async function loadFree() {
       const data = await loadFreeSchedulerData();
 
@@ -268,6 +431,13 @@ export default function MapVisualizerInner({
 
   return (
     <StableMapWrapper>
+      {routeLoading && (
+        <div className="absolute inset-x-0 top-2 z-[1000] flex justify-center pointer-events-none">
+          <span className="rounded-full bg-slate-900/90 px-3 py-1 text-xs text-slate-300 shadow">
+            Loading route…
+          </span>
+        </div>
+      )}
       <MapContainer key={mapKey} className={styles.map}>
         <ZoomControl position="topright" />
         <MapInitializer zoom={zoom} />
@@ -341,7 +511,18 @@ export default function MapVisualizerInner({
                   }),
                 } as any)}
               >
-                <Popup>{a.label}</Popup>
+                <Popup>
+                  <div style={{ fontSize: 12, lineHeight: 1.5, minWidth: 140 }}>
+                    <div style={{ fontWeight: 700, marginBottom: 2 }}>{a.clientName}</div>
+                    {a.windowName && (
+                      <div style={{ color: "#2563eb", fontWeight: 600, marginBottom: 2 }}>{a.windowName}</div>
+                    )}
+                    {a.address && <div style={{ color: "#475569" }}>{a.address}</div>}
+                    <div style={{ color: "#475569" }}>{a.postcode}</div>
+                    <div style={{ color: "#475569" }}>{a.time}</div>
+                    <div style={{ color: "#94a3b8", marginTop: 4 }}>Staff: {a.staffName}</div>
+                  </div>
+                </Popup>
               </Marker>
             );
           })}
