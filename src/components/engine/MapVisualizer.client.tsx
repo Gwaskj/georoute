@@ -10,6 +10,7 @@ const MapVisualizerInner = dynamic(() => import("./MapVisualizerInner"), {
 
 export interface MapVisualizerClientProps {
   selectedStaffId?: string | null;
+  selectedVisitId?: string | null;
   zoom?: number;
   showRoutes?: boolean;
   showAppointments?: boolean;

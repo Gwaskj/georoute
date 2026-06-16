@@ -2,6 +2,7 @@
 
 import { ScheduledVisit } from "@/lib/scheduler/types";
 import { Staff } from "@/store/staffStore";
+import { LEG_COLORS } from "@/lib/map/legColors";
 
 interface StaffResultsListProps {
   staff: Staff[];
@@ -10,6 +11,8 @@ interface StaffResultsListProps {
   dayEnd: string;   // "22:00"
   selectedStaffId: string | null;
   onSelectStaff: (staffId: string | null) => void;
+  selectedVisitId: string | null;
+  onSelectVisit: (visitId: string | null) => void;
 }
 
 function toMinutes(time: string): number {
@@ -63,6 +66,8 @@ export default function StaffResultsList({
   dayEnd,
   selectedStaffId,
   onSelectStaff,
+  selectedVisitId,
+  onSelectVisit,
 }: StaffResultsListProps) {
   const visitsByStaff = staff.reduce<Record<string, ScheduledVisit[]>>(
     (acc, s) => {
@@ -97,12 +102,17 @@ export default function StaffResultsList({
 
             return (
               <li key={s.id}>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onSelectStaff(isSelected ? null : s.id)
-                  }
-                  className={`flex w-full flex-col rounded border px-3 py-2 text-left transition-colors ${
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onSelectStaff(isSelected ? null : s.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onSelectStaff(isSelected ? null : s.id);
+                    }
+                  }}
+                  className={`flex w-full flex-col rounded border px-3 py-2 text-left transition-colors cursor-pointer ${
                     isSelected
                       ? "border-sky-500/70 bg-sky-500/10"
                       : "border-slate-800 bg-slate-900 hover:bg-slate-800/80"
@@ -142,27 +152,40 @@ export default function StaffResultsList({
                     <ul className="mt-2 space-y-1 border-t border-slate-700/60 pt-2">
                       {[...staffVisits]
                         .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
-                        .map((v) => {
-                          const s = new Date(v.start);
-                          const e = new Date(v.end);
+                        .map((v, i) => {
                           const fmt = (d: Date) =>
                             d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                          const isVisitSelected = selectedVisitId === v.id;
+                          const legColor = LEG_COLORS[i % LEG_COLORS.length];
                           return (
-                            <li
-                              key={v.id}
-                              className="flex items-center justify-between rounded bg-slate-800/60 px-2 py-1 text-[11px]"
-                            >
-                              <span className="font-medium text-slate-100">{v.clientName}</span>
-                              <div className="flex items-center gap-2 text-slate-400">
-                                <span>{v.postcode}</span>
-                                <span>{fmt(s)}–{fmt(e)}</span>
-                              </div>
+                            <li key={v.id}>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onSelectVisit(isVisitSelected ? null : v.id);
+                                }}
+                                style={{ borderLeftColor: legColor }}
+                                className={`flex w-full items-center justify-between rounded border-l-[3px] px-2 py-1 text-[11px] text-left transition-colors ${
+                                  isVisitSelected
+                                    ? "bg-sky-500/20 ring-1 ring-sky-500/50"
+                                    : "bg-slate-800/60 hover:bg-slate-700/60"
+                                }`}
+                              >
+                                <span className="font-medium text-slate-100">{v.clientName}</span>
+                                <div className="flex items-center gap-2 text-slate-400">
+                                  <span>{v.postcode}</span>
+                                  <span>
+                                    {fmt(new Date(v.start))}–{fmt(new Date(v.end))}
+                                  </span>
+                                </div>
+                              </button>
                             </li>
                           );
                         })}
                     </ul>
                   )}
-                </button>
+                </div>
               </li>
             );
           })}

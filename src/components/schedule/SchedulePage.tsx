@@ -123,6 +123,7 @@ function SetupView({ isFree, sectionIntros }: { isFree: boolean; sectionIntros: 
 
 function ResultsView({ isFree }: { isFree: boolean }) {
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+  const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
   const { staff } = useStaffStore();
   const { settings, loadSettings } = useSettingsStore();
   const { visits, hasResult, setResult } = useScheduleResultStore();
@@ -154,6 +155,15 @@ function ResultsView({ isFree }: { isFree: boolean }) {
     ? visits.filter((v) => v.staffId === selectedStaffId)
     : [];
 
+  function handleSelectStaff(staffId: string | null) {
+    setSelectedStaffId(staffId);
+    setSelectedVisitId(null); // clear visit focus when switching staff
+  }
+
+  function handleSelectVisit(visitId: string | null) {
+    setSelectedVisitId(visitId);
+  }
+
   return (
     <div className="grid h-full grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)] gap-4">
       {/* LEFT SIDE — MAP + SUMMARY */}
@@ -162,6 +172,7 @@ function ResultsView({ isFree }: { isFree: boolean }) {
         <div className="flex-1 min-h-[320px] rounded border border-slate-800 bg-slate-950 overflow-hidden">
           <MapVisualizer
             selectedStaffId={selectedStaffId}
+            selectedVisitId={selectedVisitId}
             scheduledVisits={visits}
             staffList={staff}
           />
@@ -183,7 +194,9 @@ function ResultsView({ isFree }: { isFree: boolean }) {
         dayStart={settings.dayStart}
         dayEnd={settings.dayEnd}
         selectedStaffId={selectedStaffId}
-        onSelectStaff={setSelectedStaffId}
+        onSelectStaff={handleSelectStaff}
+        selectedVisitId={selectedVisitId}
+        onSelectVisit={handleSelectVisit}
       />
     </div>
   );
