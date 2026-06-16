@@ -13,7 +13,10 @@ export default defineConfig({
   reporter: "list",
   use: {
     baseURL: "http://localhost:3000",
-    trace: "on-first-retry",
+    trace: "off",
+    extraHTTPHeaders: {
+      "accept-encoding": "identity",
+    },
   },
   projects: [
     // 1. Sign in and save storage state

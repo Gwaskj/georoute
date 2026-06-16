@@ -30,10 +30,12 @@ test.describe("Scheduler page — pro user", () => {
   test("staff tab loads", async ({ page }) => {
     await page.goto("/staff");
     await expect(page).not.toHaveURL(/\/login/);
+    await expect(page.getByRole("heading", { name: "Staff" })).toBeVisible();
   });
 
   test("settings page loads", async ({ page }) => {
     await page.goto("/settings");
     await expect(page).not.toHaveURL(/\/login/);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   });
 });

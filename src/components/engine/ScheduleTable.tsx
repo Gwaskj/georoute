@@ -84,17 +84,13 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
         return;
       }
 
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setRows([]); setLoading(false); return; }
+
       const { data, error } = await supabase
-        .from("appointments")
-        .select(
-          `
-          id,
-          start_time,
-          end_time,
-          staff:staff_id ( id, name ),
-          clients:client_id ( id, name )
-        `
-        )
+        .from("scheduled_visits")
+        .select("*")
+        .eq("user_id", user.id)
         .order("start_time", { ascending: true });
 
       if (error) {
@@ -105,11 +101,11 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
       }
 
       const normalized: AppointmentRow[] = (data ?? []).map((row: any) => ({
-        id: row.id,
+        id: row.visit_id,
         start_time: row.start_time,
         end_time: row.end_time,
-        staff: Array.isArray(row.staff) ? row.staff : row.staff ? [row.staff] : [],
-        clients: Array.isArray(row.clients) ? row.clients : row.clients ? [row.clients] : [],
+        staff: row.staff_name ? [{ id: row.staff_id, name: row.staff_name }] : [],
+        clients: row.client_name ? [{ id: row.appointment_id, name: row.client_name }] : [],
       }));
 
       setRows(normalized);
@@ -123,7 +119,7 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
         .channel("schedule-table-engine")
         .on(
           "postgres_changes",
-          { event: "*", schema: "public", table: "appointments" },
+          { event: "*", schema: "public", table: "scheduled_visits" },
           () => load()
         )
         .subscribe();
