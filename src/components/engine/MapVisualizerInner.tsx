@@ -358,6 +358,10 @@ export default function MapVisualizerInner({
           lng: a.lng ?? -2.2,
           label: a.label ?? "Appointment",
           color: a.color ?? "#d00000",
+          clientName: a.clientName ?? a.label ?? "Appointment",
+          postcode: a.postcode ?? "",
+          time: a.time ?? "",
+          staffName: a.staffName ?? "",
         })
       );
 
