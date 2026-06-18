@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import PageRenderer from "@/components/cms/PageRenderer";
+import FreeTierAdSlot from "@/components/ads/FreeTierAdSlot";
 import type { AnyBlock } from "@/lib/types/cms";
 
 export const dynamic = "force-dynamic";
@@ -117,6 +118,10 @@ export default async function HomePage() {
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.04] bg-[url('/grid.svg')] bg-repeat" />
 
       <PageRenderer blocks={blocks} />
+
+      <div className="mx-auto max-w-6xl px-4 pb-16">
+        <FreeTierAdSlot />
+      </div>
     </div>
   );
 }

@@ -10,6 +10,7 @@ import "@/styles/Input.module.css";
 import "@/styles/Card.module.css";
 
 import { ReactNode } from "react";
+import Link from "next/link";
 import HeaderLoader from "@/components/HeaderLoader";
 import ThemeProvider from "@/components/ThemeProvider";
 
@@ -39,9 +40,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             </main>
 
             <footer className="border-t border-slate-800 bg-slate-950/80">
-              <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 text-xs text-slate-400">
+              <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
                 <span>© {new Date().getFullYear()} GeoRoute. All rights reserved.</span>
-                <span>Smarter route planning for teams that don’t slow down.</span>
+                <div className="flex items-center gap-4">
+                  <span className="hidden sm:inline">Smarter route planning for teams that don’t slow down.</span>
+                  <Link href="/privacy" className="hover:text-slate-200">Privacy Policy</Link>
+                  <Link href="/terms" className="hover:text-slate-200">Terms of Service</Link>
+                </div>
               </div>
             </footer>
 
