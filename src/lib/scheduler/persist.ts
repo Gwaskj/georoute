@@ -107,6 +107,22 @@ export async function saveSchedulerResult({
   );
 }
 
+export async function clearSchedulerResult(isFree: boolean) {
+  if (isFree) {
+    const existing: FreeSchedulerData = (await loadFreeSchedulerData()) ?? {
+      staff: [],
+      appointments: [],
+      routes: [],
+    };
+    await saveFreeSchedulerData({ ...existing, visits: [] });
+    return;
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("scheduled_visits").delete().eq("user_id", user.id);
+}
+
 export async function loadProScheduledVisits(): Promise<ScheduledVisit[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];

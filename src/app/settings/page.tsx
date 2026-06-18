@@ -334,23 +334,6 @@ export default function SettingsPage() {
               </div>
             </SectionCard>
 
-            {/* Save for office + hours */}
-            <div className="flex items-center justify-end gap-3">
-              {saved && (
-                <span className="text-xs text-teal-400 font-medium">
-                  Settings saved
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                className="rounded-xl bg-gradient-to-r from-teal-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-slate-900 hover:brightness-110 transition-all disabled:opacity-50"
-              >
-                {saving ? "Saving…" : "Save settings"}
-              </button>
-            </div>
-
             {/* ── Custom Time Windows ── */}
             <SectionCard
               title="Custom Time Windows"
@@ -518,6 +501,23 @@ export default function SettingsPage() {
                 </button>
               </form>
             </SectionCard>
+
+            {/* Save for office + hours */}
+            <div className="flex items-center justify-end gap-3">
+              {saved && (
+                <span className="text-xs text-teal-400 font-medium">
+                  Settings saved
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="rounded-xl bg-gradient-to-r from-teal-500 to-cyan-400 px-6 py-2.5 text-sm font-semibold text-slate-900 hover:brightness-110 transition-all disabled:opacity-50"
+              >
+                {saving ? "Saving…" : "Save settings"}
+              </button>
+            </div>
 
           </div>
         )}

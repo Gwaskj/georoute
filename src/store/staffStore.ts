@@ -236,12 +236,23 @@ export const useStaffStore = create<StaffState>((set, get) => ({
 
 // INITIAL LOAD
 if (typeof window !== "undefined") {
-  loadFreeSchedulerData().then((data) => {
+  loadFreeSchedulerData().then(async (data) => {
+    const store = useStaffStore.getState();
+
+    const pro = await isPro();
+    if (pro) {
+      await store.loadFromSupabase();
+      if (data?.selectedStaffIds?.length) {
+        store.setSelectedStaffIds(data.selectedStaffIds);
+      }
+      return;
+    }
+
     if (data?.staff?.length) {
-      useStaffStore.getState().setStaff(data.staff);
+      store.setStaff(data.staff);
     }
     if (data?.selectedStaffIds?.length) {
-      useStaffStore.getState().setSelectedStaffIds(data.selectedStaffIds);
+      store.setSelectedStaffIds(data.selectedStaffIds);
     }
   });
 }

@@ -54,46 +54,63 @@ export default function AdminPricingEditor() {
   async function saveChanges() {
     setSaving(true);
 
-    for (const plan of plans) {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-stripe-price`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            plan: plan.plan,
-            amount: plan.price,
-          }),
+    try {
+      for (const plan of plans) {
+        let res: Response;
+        try {
+          res = await fetch(
+            `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-stripe-price`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+              },
+              body: JSON.stringify({
+                plan: plan.plan,
+                amount: plan.price,
+              }),
+            }
+          );
+        } catch (networkErr) {
+          console.error("Stripe price request failed:", networkErr);
+          alert(
+            `Could not reach the Stripe pricing function for plan "${plan.plan}". Check that the create-stripe-price Edge Function is deployed.`
+          );
+          return;
         }
-      );
 
-      const json = await res.json();
-      if (!res.ok || !json.priceId) {
-        console.error("Stripe price creation failed:", json);
-        alert("Failed to create Stripe price for plan: " + plan.plan);
-        setSaving(false);
-        return;
+        const json = await res.json();
+        if (!res.ok || !json.priceId) {
+          console.error("Stripe price creation failed:", json);
+          alert("Failed to create Stripe price for plan: " + plan.plan + (json.error ? ` (${json.error})` : ""));
+          return;
+        }
+
+        const priceId = json.priceId as string;
+
+        const { error: updateError } = await supabase
+          .from("pricing")
+          .update({
+            plan: plan.plan,
+            price: plan.price,
+            description: plan.description,
+            features: plan.features,
+            stripe_price_id: priceId,
+          })
+          .eq("id", plan.id);
+
+        if (updateError) {
+          console.error("Failed to save pricing row:", updateError);
+          alert(`Stripe price created but saving to the database failed for plan "${plan.plan}": ${updateError.message}`);
+          return;
+        }
       }
 
-      const priceId = json.priceId as string;
-
-      await supabase
-        .from("pricing")
-        .update({
-          plan: plan.plan,
-          price: plan.price,
-          description: plan.description,
-          features: plan.features,
-          stripe_price_id: priceId,
-        })
-        .eq("id", plan.id);
+      alert("Pricing + Stripe updated successfully");
+    } finally {
+      setSaving(false);
     }
-
-    setSaving(false);
-    alert("Pricing + Stripe updated successfully");
   }
 
   function updateFeature(planIndex: number, featureIndex: number, value: string) {

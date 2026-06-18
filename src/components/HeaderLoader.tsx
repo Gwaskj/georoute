@@ -27,16 +27,19 @@ export default async function HeaderLoader() {
     text: "GeoRoute",
   };
 
-  const navItems: NavItem[] =
+  const rawNavItems: NavItem[] =
     layout.navItems && Array.isArray(layout.navItems)
       ? layout.navItems
       : [
           { id: "scheduler", text: "Scheduler", href: "/scheduler", align: "left" },
           { id: "settings", text: "Settings", href: "/settings", align: "left" },
           { id: "account", text: "Account", href: "/account", align: "left" },
-          { id: "billing", text: "Billing", href: "/account/billing", align: "left" },
           { id: "admin", text: "Admin", href: "#", align: "right", isAdmin: true },
         ];
+
+  // The standalone Billing page was merged into /account — drop any
+  // stale nav item still pointing at the old route.
+  const navItems = rawNavItems.filter((n) => n.href !== "/account/billing");
 
   return (
     <Header

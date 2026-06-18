@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { AnyBlock, SchedulerHeaderData, SectionIntroData } from "@/lib/types/cms";
 
 // SETUP COMPONENTS
@@ -133,8 +133,13 @@ function ResultsView({ isFree }: { isFree: boolean }) {
   }, [isFree, loadSettings]);
 
   // On mount: if the store is empty (page refresh), reload the last persisted result.
+  // Guarded by a ref so this only ever runs once — otherwise clearing the result
+  // (hasResult -> false) would immediately reload the stale persisted data.
+  const hasAttemptedRestore = useRef(false);
   useEffect(() => {
+    if (hasAttemptedRestore.current) return;
     if (hasResult) return;
+    hasAttemptedRestore.current = true;
     if (isFree) {
       loadFreeSchedulerData().then((data) => {
         if ((data as any)?.visits?.length) {

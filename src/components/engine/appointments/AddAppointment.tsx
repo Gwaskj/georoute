@@ -10,6 +10,8 @@ import {
 
 import { useSkillsStore, Skill } from "@/store/skillsStore";
 import { useCustomWindowStore } from "@/store/customWindowStore";   // ⭐ FIXED
+import { useScheduleResultStore } from "@/store/scheduleResultStore";
+import { clearSchedulerResult } from "@/lib/scheduler/persist";
 import AppointmentList from "./AppointmentList";
 
 interface AddAppointmentProps {
@@ -59,6 +61,7 @@ const emptyForm: AppointmentFormState = {
 export default function AddAppointment({ isFree }: AddAppointmentProps) {
   const { appointments, addAppointment, updateAppointment, clearAllAppointments } = useAppointmentStore();
   const { skills } = useSkillsStore();
+  const clearScheduleResult = useScheduleResultStore((s) => s.clearResult);
 
   const canAddMore = useMemo(() => {
     if (!isFree) return true;
@@ -185,6 +188,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                   const count = appointments.filter((a) => !a.archived).length;
                   if (window.confirm(`Remove all ${count} appointment${count !== 1 ? "s" : ""}?`)) {
                     clearAllAppointments();
+                    clearScheduleResult();
+                    clearSchedulerResult(isFree);
                   }
                 }}
                 className="rounded border border-red-600 px-3 py-1.5 text-xs text-red-400 hover:bg-red-950"

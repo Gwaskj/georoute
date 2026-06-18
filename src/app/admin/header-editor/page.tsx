@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
+import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 import type { NavItem, BrandConfig } from "@/components/HeaderStructure";
 
 const SNAP = 5;
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 type Layout = {
   brand?: BrandConfig | null;
@@ -13,8 +15,18 @@ type Layout = {
 };
 
 export default function HeaderEditorPage() {
+  const isAdmin = useIsAdmin();
+
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [logoUploadError, setLogoUploadError] = useState<string | null>(null);
+  const [bannerUploadError, setBannerUploadError] = useState<string | null>(null);
+
+  const logoFileInputRef = useRef<HTMLInputElement | null>(null);
+  const bannerFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [logoX, setLogoX] = useState(0);
   const [logoY, setLogoY] = useState(0);
@@ -34,6 +46,8 @@ export default function HeaderEditorPage() {
   const [navItems, setNavItems] = useState<NavItem[]>([]);
 
   useEffect(() => {
+    if (isAdmin !== true) return;
+
     async function load() {
       const { data } = await supabase
         .from("site_header")
@@ -69,7 +83,6 @@ export default function HeaderEditorPage() {
         { id: "scheduler", text: "Scheduler", href: "/scheduler", align: "left" },
         { id: "settings", text: "Settings", href: "/settings", align: "left" },
         { id: "account", text: "Account", href: "/account", align: "left" },
-        { id: "billing", text: "Billing", href: "/account/billing", align: "left" },
         { id: "admin", text: "Admin", href: "#", align: "right", isAdmin: true },
       ];
 
@@ -77,6 +90,10 @@ export default function HeaderEditorPage() {
         layout.navItems && Array.isArray(layout.navItems)
           ? layout.navItems
           : defaultNav;
+
+      // The standalone Billing page was merged into /account — drop any
+      // stale nav item still pointing at the old route.
+      items = items.filter((n) => n.href !== "/account/billing");
 
       // Inject Settings if missing so the user can position and save it
       if (!items.some((n) => n.href === "/settings")) {
@@ -93,7 +110,67 @@ export default function HeaderEditorPage() {
     }
 
     load();
-  }, []);
+  }, [isAdmin]);
+
+  // Pull the storage object path back out of a public URL we generated,
+  // so a freshly-uploaded replacement can clean up the file it replaces.
+  // Returns null for anything that isn't one of our own site-assets URLs
+  // (e.g. a manually pasted external URL) — those are never deleted.
+  function extractSiteAssetPath(url: string | null): string | null {
+    if (!url) return null;
+    const marker = "/object/public/site-assets/";
+    const idx = url.indexOf(marker);
+    if (idx === -1) return null;
+    return url.slice(idx + marker.length);
+  }
+
+  async function handleFileUpload(file: File, kind: "logo" | "banner") {
+    const setUploading = kind === "logo" ? setLogoUploading : setBannerUploading;
+    const setUploadError = kind === "logo" ? setLogoUploadError : setBannerUploadError;
+    const setUrl = kind === "logo" ? setLogoUrl : setBannerUrl;
+    const previousUrl = kind === "logo" ? logoUrl : bannerUrl;
+
+    setUploadError(null);
+
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Please choose an image file.");
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setUploadError("Image must be 5MB or smaller.");
+      return;
+    }
+
+    setUploading(true);
+
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const path = `header/${kind}-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("site-assets")
+      .upload(path, file, { cacheControl: "3600", upsert: false });
+
+    if (uploadError) {
+      setUploadError(uploadError.message);
+      setUploading(false);
+      return;
+    }
+
+    const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
+    setUrl(data.publicUrl);
+    setUploading(false);
+
+    // Replace, don't accumulate: remove the file this upload superseded.
+    const previousPath = extractSiteAssetPath(previousUrl);
+    if (previousPath && previousPath !== path) {
+      const { error: removeError } = await supabase.storage
+        .from("site-assets")
+        .remove([previousPath]);
+      if (removeError) {
+        console.error(`Failed to clean up previous ${kind} image:`, removeError);
+      }
+    }
+  }
 
   function startDrag(e: React.MouseEvent<HTMLElement>, type: "logo" | "banner") {
     e.preventDefault();
@@ -250,9 +327,21 @@ export default function HeaderEditorPage() {
   const leftNav = navItems.filter((n) => n.align !== "right");
   const rightNav = navItems.filter((n) => n.align === "right");
 
+  if (isAdmin === null) return null;
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <p className="text-slate-300 text-sm">
+          You do not have permission to access this page.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-6 w-full">
-      <h1 className="text-2xl font-bold mb-2">Header Editor</h1>
+    <div className="min-h-screen w-full bg-slate-950 p-6 space-y-6 text-slate-100">
+      <h1 className="text-2xl font-bold mb-2 text-slate-50">Header Editor</h1>
 
       <div className="relative w-full bg-slate-950 border border-slate-800 overflow-hidden">
         {bannerUrl && (
@@ -365,24 +454,74 @@ export default function HeaderEditorPage() {
 
         <div>
           <label className="block text-sm font-medium mb-1 text-white">
-            Logo URL
+            Logo
           </label>
-          <input
-            className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-sm text-white placeholder-slate-400"
-            value={logoUrl || ""}
-            onChange={(e) => setLogoUrl(e.target.value)}
-          />
+          <div className="flex gap-2">
+            <input
+              className="flex-1 p-2 bg-slate-900 border border-slate-700 rounded text-sm text-white placeholder-slate-400"
+              placeholder="Image URL, or upload a file →"
+              value={logoUrl || ""}
+              onChange={(e) => setLogoUrl(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => logoFileInputRef.current?.click()}
+              disabled={logoUploading}
+              className="whitespace-nowrap px-3 py-2 text-sm bg-slate-800 text-white rounded border border-slate-700 hover:bg-slate-700 disabled:opacity-50"
+            >
+              {logoUploading ? "Uploading…" : "Upload image"}
+            </button>
+            <input
+              ref={logoFileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileUpload(file, "logo");
+                e.target.value = "";
+              }}
+            />
+          </div>
+          {logoUploadError && (
+            <p className="mt-1 text-xs text-red-400">{logoUploadError}</p>
+          )}
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1 text-white">
-            Banner URL
+            Banner
           </label>
-          <input
-            className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-sm text-white placeholder-slate-400"
-            value={bannerUrl || ""}
-            onChange={(e) => setBannerUrl(e.target.value)}
-          />
+          <div className="flex gap-2">
+            <input
+              className="flex-1 p-2 bg-slate-900 border border-slate-700 rounded text-sm text-white placeholder-slate-400"
+              placeholder="Image URL, or upload a file →"
+              value={bannerUrl || ""}
+              onChange={(e) => setBannerUrl(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => bannerFileInputRef.current?.click()}
+              disabled={bannerUploading}
+              className="whitespace-nowrap px-3 py-2 text-sm bg-slate-800 text-white rounded border border-slate-700 hover:bg-slate-700 disabled:opacity-50"
+            >
+              {bannerUploading ? "Uploading…" : "Upload image"}
+            </button>
+            <input
+              ref={bannerFileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileUpload(file, "banner");
+                e.target.value = "";
+              }}
+            />
+          </div>
+          {bannerUploadError && (
+            <p className="mt-1 text-xs text-red-400">{bannerUploadError}</p>
+          )}
         </div>
 
         <div className="space-y-2">

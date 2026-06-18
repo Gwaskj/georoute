@@ -44,11 +44,18 @@ serve(async (req: Request) => {
     const dynamicPriceId = pricing.stripe_price_id;
 
     // 2. Load user profile (customer ID + email)
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("stripe_customer_id, email")
-      .eq("id", user_id)
+      .eq("user_id", user_id)
       .single();
+
+    if (profileError) {
+      return new Response(
+        JSON.stringify({ error: `Could not load profile: ${profileError.message}` }),
+        { status: 400 }
+      );
+    }
 
     const stripe = new Stripe(
       // @ts-ignore: Deno global
@@ -70,7 +77,7 @@ serve(async (req: Request) => {
       await supabase
         .from("profiles")
         .update({ stripe_customer_id: customerId })
-        .eq("id", user_id);
+        .eq("user_id", user_id);
     }
 
     // 4. Create checkout session using the dynamic Stripe Price ID
@@ -78,8 +85,8 @@ serve(async (req: Request) => {
       mode: "subscription",
       customer: customerId,
       line_items: [{ price: dynamicPriceId, quantity: 1 }],
-      success_url: `${Deno.env.get("SITE_URL")!}/app?success=true`,
-      cancel_url: `${Deno.env.get("SITE_URL")!}/app?canceled=true`,
+      success_url: `${Deno.env.get("SITE_URL")!}/account?success=true`,
+      cancel_url: `${Deno.env.get("SITE_URL")!}/account?canceled=true`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {

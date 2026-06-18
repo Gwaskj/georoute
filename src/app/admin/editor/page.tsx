@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 import type {
@@ -74,6 +75,18 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   pricing_header: "Pricing Header",
   scheduler_header: "Page Header",
   section_intro: "Section Text",
+};
+
+// One-line explanation of what each block renders, used both as a button
+// tooltip and as a helper line above the block's edit form.
+const BLOCK_DESCRIPTIONS: Record<BlockType, string> = {
+  hero: "Large banner at the top of the page: title, subtitle, badge, and one or two buttons.",
+  features: "A 2-column grid of feature cards below an optional title/subtitle. Add one item per card — the gradient is just a visual accent and has no functional effect.",
+  map_preview: "A title/subtitle with a single preview image underneath (e.g. a screenshot of the map).",
+  cta: "A call-to-action banner with a title, subtitle, and one or two buttons — typically used near the bottom of a page.",
+  pricing_header: "The title/subtitle shown above the plan cards on the Pricing page. Plan prices, features, and Stripe sync are edited separately in Admin → Pricing, not here.",
+  scheduler_header: "The title and subtitle at the top of the Scheduler page. Free and Pro users can see different subtitle text.",
+  section_intro: "A simple title + description used as a section header (e.g. above 'Generate schedule' on the Scheduler page).",
 };
 
 // ─── Create new blocks ────────────────────────────────────────
@@ -277,16 +290,17 @@ function FeaturesEditForm({
               <select
                 className="flex-1 rounded-lg bg-slate-800 border border-slate-700 px-2 py-2 text-sm text-slate-100 focus:outline-none focus:border-teal-500"
                 value={item.gradient}
+                title="Card background color accent — visual only, no functional effect"
                 onChange={(e) =>
                   updateItem(idx, {
                     gradient: e.target.value as FeatureItem["gradient"],
                   })
                 }
               >
-                <option value="teal">Teal</option>
-                <option value="indigo">Indigo</option>
-                <option value="purple">Purple</option>
-                <option value="emerald">Emerald</option>
+                <option value="teal">Card color: Teal</option>
+                <option value="indigo">Card color: Indigo</option>
+                <option value="purple">Card color: Purple</option>
+                <option value="emerald">Card color: Emerald</option>
               </select>
               <button
                 onClick={() =>
@@ -721,6 +735,22 @@ export default function EditorPage() {
               </button>
             ))}
           </div>
+
+          {pageId === "pricing" && (
+            <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+              <p className="text-[11px] text-amber-200">
+                This only edits the header text/hero/CTA copy on the pricing
+                page. To change plan prices, features, or sync with Stripe,
+                use the dedicated pricing editor.
+              </p>
+              <Link
+                href="/admin/pricing"
+                className="mt-1.5 inline-block text-xs font-medium text-teal-400 hover:text-teal-300 underline"
+              >
+                Open plan &amp; Stripe editor →
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Single scrollable body — blocks + add buttons + edit form */}
@@ -813,6 +843,7 @@ export default function EditorPage() {
                   <button
                     key={type}
                     onClick={() => addBlock(type)}
+                    title={BLOCK_DESCRIPTIONS[type]}
                     className="text-xs px-2 py-1 rounded-md bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600 transition-colors"
                   >
                     + {BLOCK_LABELS[type]}
@@ -830,8 +861,11 @@ export default function EditorPage() {
             </p>
           ) : (
             <>
-              <p className="text-sm font-semibold text-slate-200 mb-4">
+              <p className="text-sm font-semibold text-slate-200 mb-1">
                 {BLOCK_LABELS[selectedBlock.type]}
+              </p>
+              <p className="text-xs text-slate-500 mb-4">
+                {BLOCK_DESCRIPTIONS[selectedBlock.type]}
               </p>
 
               {selectedBlock.type === "hero" && (

@@ -1,6 +1,8 @@
 "use client";
 
 import { useStaffStore } from "@/store/staffStore";
+import { useScheduleResultStore } from "@/store/scheduleResultStore";
+import { clearSchedulerResult } from "@/lib/scheduler/persist";
 import AddStaff from "./AddStaff";
 import StaffList from "./StaffList";
 
@@ -10,6 +12,7 @@ interface StaffSelectorProps {
 
 export default function StaffSelector({ isFree }: StaffSelectorProps) {
   const { staff, selectedStaffIds, clearAllStaff } = useStaffStore();
+  const clearScheduleResult = useScheduleResultStore((s) => s.clearResult);
 
   const visibleIds = staff.map((s) => s.id);
 
@@ -23,6 +26,8 @@ export default function StaffSelector({ isFree }: StaffSelectorProps) {
     if (staff.length === 0) return;
     if (window.confirm(`Remove all ${staff.length} staff member${staff.length !== 1 ? "s" : ""}?`)) {
       clearAllStaff();
+      clearScheduleResult();
+      clearSchedulerResult(isFree);
     }
   };
 
