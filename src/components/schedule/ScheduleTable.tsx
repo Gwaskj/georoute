@@ -1,7 +1,0 @@
-"use client";
-
-import ScheduleTableEngine from "@/components/engine/ScheduleTable";
-
-export default function ScheduleTable(props: any) {
-  return <ScheduleTableEngine {...props} />;
-}
