@@ -5,7 +5,6 @@ import { useStaffStore } from "@/store/staffStore";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import { useCallPurposeStore } from "@/store/callPurposeStore";
 import { useCustomWindowStore } from "@/store/customWindowStore";
-import { useOfficePostcodeStore } from "@/store/officePostcodeStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useScheduleResultStore } from "@/store/scheduleResultStore";
 
@@ -28,8 +27,8 @@ export default function GenerateSchedule({
   const { appointments } = useAppointmentStore();
   const { purposes } = useCallPurposeStore();
   const { windows } = useCustomWindowStore();
-  const { officePostcode } = useOfficePostcodeStore();
   const { settings, loaded: settingsLoaded, loadSettings } = useSettingsStore();
+  const officePostcode = settings.officePostcode;
 
   const { visits, warnings, hints, setResult } = useScheduleResultStore();
   const [isRunning, setIsRunning] = useState(false);

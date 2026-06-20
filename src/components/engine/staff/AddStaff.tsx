@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useStaffStore, Staff, Gender } from "@/store/staffStore";
 import { useSkillsStore, Skill } from "@/store/skillsStore";
-import { useOfficePostcodeStore } from "@/store/officePostcodeStore";
+import { useSettingsStore } from "@/store/settingsStore";
 
 // Simple cleaning now that postcode validation is removed
 function cleanPostcode(p: string) {
@@ -60,10 +60,7 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
 
   const { skills, addSkill } = useSkillsStore();
 
-  const {
-    officePostcode: globalOfficePostcode,
-    setOfficePostcode,
-  } = useOfficePostcodeStore();
+  const globalOfficePostcode = useSettingsStore((s) => s.settings.officePostcode);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState<StaffFormState>({
@@ -137,8 +134,6 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
     const normalisedOffice = form.officePostcode.trim()
       ? cleanPostcode(form.officePostcode)
       : globalOfficePostcode;
-
-    setOfficePostcode(normalisedOffice);
 
     if (isEditing && form.id) {
       updateStaff(form.id, {

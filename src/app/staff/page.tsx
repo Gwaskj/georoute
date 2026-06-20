@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useStaffStore, Staff, Gender } from "@/store/staffStore";
 import { useSkillsStore, Skill } from "@/store/skillsStore";
-import { useOfficePostcodeStore } from "@/store/officePostcodeStore";
+import { useSettingsStore } from "@/store/settingsStore";
 import { supabase } from "@/lib/supabase/client";
 
 function cleanPostcode(p: string) {
@@ -52,8 +52,8 @@ export default function StaffPage() {
   } = useStaffStore();
 
   const { skills, addSkill } = useSkillsStore();
-  const { officePostcode: globalOfficePostcode, setOfficePostcode } =
-    useOfficePostcodeStore();
+  const globalOfficePostcode = useSettingsStore((s) => s.settings.officePostcode);
+  const loadGlobalSettings = useSettingsStore((s) => s.loadSettings);
 
   const [isFree, setIsFree] = useState(true);
   const [authChecking, setAuthChecking] = useState(true);
@@ -78,6 +78,7 @@ export default function StaffPage() {
         .maybeSingle();
       setIsFree(!data?.is_pro);
       setAuthChecking(false);
+      loadGlobalSettings(!data?.is_pro);
 
       // If pro, load from Supabase
       if (data?.is_pro) {
@@ -85,7 +86,7 @@ export default function StaffPage() {
       }
     }
     check();
-  }, [loadFromSupabase]);
+  }, [loadFromSupabase, loadGlobalSettings]);
 
   const canAddMore = useMemo(() => {
     if (!isFree) return true;
@@ -119,8 +120,6 @@ export default function StaffPage() {
     const normalisedOffice = form.officePostcode.trim()
       ? cleanPostcode(form.officePostcode)
       : globalOfficePostcode;
-
-    setOfficePostcode(normalisedOffice);
 
     if (isEditing && form.id) {
       updateStaff(form.id, {
