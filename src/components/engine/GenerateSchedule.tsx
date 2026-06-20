@@ -11,7 +11,7 @@ import { useScheduleResultStore } from "@/store/scheduleResultStore";
 import { runScheduler } from "@/lib/scheduler/engine";
 import { saveSchedulerResult } from "@/lib/scheduler/persist";
 import { SchedulerContext } from "@/lib/scheduler/types";
-import { getRouteBatched, clearLocalCache } from "@/lib/routing";
+import { getRouteBatched, clearLocalCache, getRouteErrors } from "@/lib/routing";
 import AdBanner from "@/components/AdBanner";
 
 interface GenerateScheduleProps {
@@ -91,8 +91,18 @@ export default function GenerateSchedule({
     }
 
     if (failedPairs.length > 0) {
+      const errors = getRouteErrors();
+      const details = failedPairs
+        .map((pair) => {
+          const [from, to] = pair.split(" → ");
+          const reason = errors.get(
+            `${from.trim().toUpperCase()} → ${to.trim().toUpperCase()}`
+          );
+          return reason ? `${pair} (${reason})` : pair;
+        })
+        .join("; ");
       setRouteError(
-        "Could not fetch travel times from the routing service. Please ensure the route-optimizer Edge Function is deployed and your ORS API key is configured."
+        `Could not get travel times for: ${details}. Double-check these postcodes are valid — if they look correct, the routing service may be temporarily unavailable.`
       );
       setIsRunning(false);
       return;

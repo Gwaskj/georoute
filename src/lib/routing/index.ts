@@ -14,6 +14,17 @@ export interface RouteResult {
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
 /**
+ * Reasons the last failed lookup for a given postcode pair failed, e.g. a bad
+ * postcode the Edge Function couldn't geocode. Keyed by "ORIGIN → DEST".
+ * Lets callers show an actionable error instead of a generic one.
+ */
+const lastRouteErrors = new Map<string, string>();
+
+export function getRouteErrors(): Map<string, string> {
+  return lastRouteErrors;
+}
+
+/**
  * Get routing data between two postcodes.
  * Uses the Supabase Edge Function which checks the route_cache table first.
  */
@@ -36,23 +47,37 @@ export async function getRoute(
     };
   }
 
+  const pairKey = `${origin} → ${destination}`;
+
   try {
     const { data, error } = await supabase.functions.invoke("route-optimizer", {
       body: { originPostcode: origin, destinationPostcode: destination },
     });
 
     if (error) {
-      // Edge Function unavailable — caller uses 10-min fallback
+      let message = error.message;
+      try {
+        const body = await (error as { context?: Response }).context?.json();
+        if (body?.error) message = body.error;
+      } catch {
+        // context wasn't JSON — fall back to error.message
+      }
+      lastRouteErrors.set(pairKey, message ?? "Unknown routing error");
       return null;
     }
 
+    lastRouteErrors.delete(pairKey);
     return {
       distance_km: data.distance_km,
       duration_minutes: data.duration_minutes,
       polyline: data.polyline ?? null,
       cached: data.cached ?? false,
     };
-  } catch {
+  } catch (err) {
+    lastRouteErrors.set(
+      pairKey,
+      err instanceof Error ? err.message : "Network error"
+    );
     return null;
   }
 }
@@ -65,6 +90,7 @@ const localRouteCache = new Map<string, RouteResult>();
 
 export function clearLocalCache() {
   localRouteCache.clear();
+  lastRouteErrors.clear();
 }
 
 function cacheKey(from: string, to: string): string {
