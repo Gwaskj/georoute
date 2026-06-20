@@ -125,10 +125,20 @@ export default function AdminUsersPage() {
 
     setBusyId(user.user_id);
 
-    await supabase.from("profiles").delete().eq("user_id", user.user_id);
+    const res = await fetch("/api/admin/delete-user", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user.user_id }),
+    });
 
-    // Requires service-role on server in real life; here it's the intent:
-    await supabase.auth.admin.deleteUser(user.user_id);
+    if (!res.ok) {
+      const { error } = await res
+        .json()
+        .catch(() => ({ error: "Failed to delete user." }));
+      alert(error || "Failed to delete user.");
+      setBusyId(null);
+      return;
+    }
 
     await loadUsers(page, search);
     setBusyId(null);
