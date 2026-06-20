@@ -100,9 +100,16 @@ function MapInitializer({ zoom }: { zoom: number }) {
     map.setView([53.0, -2.2], zoom);
     map.zoomControl.remove();
     if (!(map as any)._tileLayer) {
+      // Light, low-clutter basemap (CartoDB Positron) so routes and markers
+      // stand out clearly, instead of the busier default OSM tile style.
       const tileLayer = L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        { attribution: "© OpenStreetMap contributors" }
+        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        {
+          attribution:
+            '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; OpenStreetMap contributors',
+          subdomains: "abcd",
+          maxZoom: 19,
+        }
       );
       tileLayer.addTo(map);
       (map as any)._tileLayer = tileLayer;
@@ -613,20 +620,38 @@ export default function MapVisualizerInner({
           officeGeo={officeGeo}
         />
 
-        {/* Route legs */}
+        {/* Route legs — a white casing under each colored line gives clean,
+            high-contrast routes that read clearly against the light basemap,
+            similar to standard turn-by-turn map apps. */}
         {visibleLegs.map((leg) => {
           const isHighlighted = highlightedRouteId === leg.id;
-          const weight = isHighlighted ? 7 : 4;
-          const opacity = isHighlighted ? 1 : 0.85;
+          const weight = isHighlighted ? 7 : 5;
 
-          return (
+          return [
+            <Polyline
+              key={`${leg.id}-casing`}
+              positions={leg.points}
+              pathOptions={{
+                color: "#ffffff",
+                weight: weight + 3,
+                opacity: 0.9,
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            />,
             <Polyline
               key={leg.id}
               positions={leg.points}
               eventHandlers={{ click: () => setHighlightedRoute(leg.id) }}
-              pathOptions={{ color: leg.color, weight, opacity }}
-            />
-          );
+              pathOptions={{
+                color: leg.color,
+                weight,
+                opacity: 1,
+                lineCap: "round",
+                lineJoin: "round",
+              }}
+            />,
+          ];
         })}
 
         {/* Office pin */}

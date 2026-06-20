@@ -235,8 +235,15 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
   /** Per-client gap tracking. Keyed by lowercase trimmed client name. */
   const clientScheduled = new Map<string, ClientVisitRecord[]>();
 
+  /** Staff already assigned to a given client today, for continuity preference. */
+  const clientStaffHistory = new Map<string, Set<string>>();
+
+  function clientKey(name: string): string {
+    return name.toLowerCase().trim();
+  }
+
   function getClientVisits(name: string): ClientVisitRecord[] {
-    return clientScheduled.get(name.toLowerCase().trim()) ?? [];
+    return clientScheduled.get(clientKey(name)) ?? [];
   }
 
   function recordClientVisit(
@@ -245,9 +252,28 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
     end: number,
     minGapToNext: number
   ) {
-    const key = name.toLowerCase().trim();
+    const key = clientKey(name);
     const existing = clientScheduled.get(key) ?? [];
     clientScheduled.set(key, [...existing, { start, end, minGapToNext }]);
+  }
+
+  function recordClientStaff(name: string, staffIds: string[]) {
+    const key = clientKey(name);
+    const set = clientStaffHistory.get(key) ?? new Set<string>();
+    staffIds.forEach((id) => set.add(id));
+    clientStaffHistory.set(key, set);
+  }
+
+  /**
+   * Reorder eligible staff so anyone who has already visited this client today
+   * comes first — prioritises continuity of carer wherever possible.
+   */
+  function orderForContinuity(list: Staff[], clientName: string): Staff[] {
+    const history = clientStaffHistory.get(clientKey(clientName));
+    if (!history || history.size === 0) return list;
+    const preferred = list.filter((s) => history.has(s.id));
+    const others = list.filter((s) => !history.has(s.id));
+    return [...preferred, ...others];
   }
 
   const today = new Date();
@@ -344,8 +370,11 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
     }
 
     const clientVisits = getClientVisits(appt.name);
-    const eligibleStaff = staff.filter(
-      (s) => staffHasRequiredSkills(s, appt) && staffMatchesGender(s, appt)
+    const eligibleStaff = orderForContinuity(
+      staff.filter(
+        (s) => staffHasRequiredSkills(s, appt) && staffMatchesGender(s, appt)
+      ),
+      appt.name
     );
 
     // ── STRICT + MULTI-STAFF: collect all candidates before committing ──
@@ -385,11 +414,13 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
       if (candidates.length >= appt.requiredStaff) {
         // All required staff available at the same strict time — commit
         let clientRecorded = false;
+        const assignedStaffIds: string[] = [];
         for (const { s, slot, minGapToNext } of candidates.slice(0, appt.requiredStaff)) {
           const timeline = staffTimelines.get(s.id) ?? [];
           timeline.push({ start: slot.start, end: slot.end, postcode: appt.postcode });
           staffTimelines.set(s.id, timeline);
           visits.push(makeISOVisit(baseDate, appt, s, slot.start, slot.end, visitWindowName));
+          assignedStaffIds.push(s.id);
 
           // Record client visit only once (all candidates share the same slot)
           if (!clientRecorded) {
@@ -397,6 +428,7 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
             clientRecorded = true;
           }
         }
+        recordClientStaff(appt.name, assignedStaffIds);
       } else {
         warnings.push(
           `Could not fully allocate "${appt.name}" at ${appt.strictStartTime} (${candidates.length}/${appt.requiredStaff} staff available).`
@@ -406,7 +438,84 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
       continue;
     }
 
-    // ── STANDARD ASSIGNMENT (single staff OR non-strict multi-staff) ──
+    // ── NON-STRICT MULTI-STAFF: find one common start time all required staff
+    //    can make, instead of letting each staff member land in their own
+    //    independently-found slot (which is what caused staff to arrive at
+    //    different times for the same visit). ──
+    if (strict === null && appt.requiredStaff > 1) {
+      let committed = false;
+
+      for (const w of windowsForAppt) {
+        const clientMinGap = Math.max(minGapBase, w.minGapToNext || 0);
+
+        // Candidate start times: each eligible staff member's own earliest
+        // free slot in this window, plus the window's own start. Trying each
+        // in ascending order finds the earliest time enough staff are free.
+        const candidateStarts = new Set<number>([w.start]);
+
+        for (const s of eligibleStaff) {
+          const staffDayStart = s.workStart ? Math.max(dayStartMin, toMinutes(s.workStart)) : dayStartMin;
+          const staffDayEnd = s.workEnd ? Math.min(dayEndMin, toMinutes(s.workEnd)) : dayEndMin;
+          const timeline = staffTimelines.get(s.id) ?? [];
+          const slot = findSlotForVisit(
+            s, timeline, duration, staffDayStart, staffDayEnd,
+            appt.postcode, null, { start: w.start, end: w.end },
+            0, officePostcode, travelMin, clientVisits, clientMinGap
+          );
+          if (slot) candidateStarts.add(slot.start);
+        }
+
+        const sortedCandidates = Array.from(candidateStarts).sort((a, b) => a - b);
+
+        for (const candidateStart of sortedCandidates) {
+          const candidateEnd = candidateStart + duration;
+          if (!clientGapOk(candidateStart, candidateEnd, clientVisits, clientMinGap)) {
+            continue;
+          }
+
+          // Which (continuity-ordered) staff can take this exact slot?
+          const available: Staff[] = [];
+          for (const s of eligibleStaff) {
+            if (available.length >= appt.requiredStaff) break;
+            const staffDayStart = s.workStart ? Math.max(dayStartMin, toMinutes(s.workStart)) : dayStartMin;
+            const staffDayEnd = s.workEnd ? Math.min(dayEndMin, toMinutes(s.workEnd)) : dayEndMin;
+            const timeline = staffTimelines.get(s.id) ?? [];
+            const slot = findSlotForVisit(
+              s, timeline, duration, staffDayStart, staffDayEnd,
+              appt.postcode, candidateStart, { start: w.start, end: w.end },
+              0, officePostcode, travelMin, clientVisits, clientMinGap
+            );
+            if (slot) available.push(s);
+          }
+
+          if (available.length >= appt.requiredStaff) {
+            const chosen = available.slice(0, appt.requiredStaff);
+            for (const s of chosen) {
+              const timeline = staffTimelines.get(s.id) ?? [];
+              timeline.push({ start: candidateStart, end: candidateEnd, postcode: appt.postcode });
+              staffTimelines.set(s.id, timeline);
+              visits.push(makeISOVisit(baseDate, appt, s, candidateStart, candidateEnd, visitWindowName));
+            }
+            recordClientVisit(appt.name, candidateStart, candidateEnd, clientMinGap);
+            recordClientStaff(appt.name, chosen.map((s) => s.id));
+            committed = true;
+            break;
+          }
+        }
+
+        if (committed) break;
+      }
+
+      if (!committed) {
+        warnings.push(
+          `Could not fully allocate "${appt.name}" (0/${appt.requiredStaff} staff available at a common time).`
+        );
+      }
+
+      continue;
+    }
+
+    // ── STANDARD ASSIGNMENT (single staff) ──
     let assigned = 0;
 
     for (const s of eligibleStaff) {
@@ -442,6 +551,7 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
       if (assigned === 0) {
         recordClientVisit(appt.name, slot.start, slot.end, usedMinGapToNext);
       }
+      recordClientStaff(appt.name, [s.id]);
 
       assigned++;
     }
