@@ -22,6 +22,9 @@ import { useScheduleResultStore } from "@/store/scheduleResultStore";
 import { loadFreeSchedulerData } from "@/lib/freeSession";
 import { loadProScheduledVisits } from "@/lib/scheduler/persist";
 
+// MAP / TRAVEL-TIME
+import { useStaffLegSchedule } from "@/lib/map/useStaffLegSchedule";
+
 type SchedulePageProps = {
   isFree: boolean;
   cmsBlocks?: AnyBlock[];
@@ -127,6 +130,12 @@ function ResultsView({ isFree }: { isFree: boolean }) {
   const { staff } = useStaffStore();
   const { settings, loadSettings } = useSettingsStore();
   const { visits, hasResult, setResult } = useScheduleResultStore();
+  const { legs: staffLegSchedule, loading: legScheduleLoading } = useStaffLegSchedule(
+    selectedStaffId,
+    visits,
+    staff,
+    settings.officePostcode
+  );
 
   useEffect(() => {
     loadSettings(isFree);
@@ -180,6 +189,8 @@ function ResultsView({ isFree }: { isFree: boolean }) {
             selectedVisitId={selectedVisitId}
             scheduledVisits={visits}
             staffList={staff}
+            staffLegSchedule={staffLegSchedule}
+            legScheduleLoading={legScheduleLoading}
           />
         </div>
 
@@ -202,6 +213,8 @@ function ResultsView({ isFree }: { isFree: boolean }) {
         onSelectStaff={handleSelectStaff}
         selectedVisitId={selectedVisitId}
         onSelectVisit={handleSelectVisit}
+        staffLegSchedule={staffLegSchedule}
+        legScheduleLoading={legScheduleLoading}
       />
     </div>
   );

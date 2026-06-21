@@ -4,6 +4,7 @@ import { Appointment } from "@/store/appointmentStore";
 import { Staff } from "@/store/staffStore";
 import { CallPurpose } from "@/store/callPurposeStore";
 import { CustomWindow } from "@/store/customWindowStore";
+import { getStaffOriginPostcode } from "./staffOrigin";
 
 function toMinutes(time: string): number {
   const [h, m] = time.split(":").map((v) => parseInt(v, 10));
@@ -169,7 +170,7 @@ function findSlotForVisit(
     current = Math.max(current, slot.end + minGapMinutes);
   }
 
-  const originPostcode = staff.officePostcode || officePostcode || "";
+  const originPostcode = getStaffOriginPostcode(staff, officePostcode);
   const travelFromOffice = travelMin(originPostcode, clientPostcode);
   const start = current + travelFromOffice;
   const end = start + visitDuration;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useStaffStore, Staff, Gender } from "@/store/staffStore";
+import { useStaffStore, Staff, Gender, StartLocation } from "@/store/staffStore";
 import { useSkillsStore, Skill } from "@/store/skillsStore";
 import { useSettingsStore } from "@/store/settingsStore";
 
@@ -20,6 +20,7 @@ interface StaffFormState {
   name: string;
   homePostcode: string;
   officePostcode: string;
+  startLocation: StartLocation;
   dateOfBirth: string;
   gender: Gender | "";
   skills: string[];
@@ -31,6 +32,7 @@ const emptyForm: StaffFormState = {
   name: "",
   homePostcode: "",
   officePostcode: "",
+  startLocation: "office",
   dateOfBirth: "",
   gender: "",
   skills: [],
@@ -84,6 +86,7 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
         name: s.name,
         homePostcode: s.homePostcode,
         officePostcode: s.officePostcode,
+        startLocation: s.startLocation ?? "office",
         dateOfBirth: s.dateOfBirth,
         gender: s.gender,
         skills: [...s.skills],
@@ -117,6 +120,7 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
       name: s.name,
       homePostcode: s.homePostcode,
       officePostcode: s.officePostcode,
+      startLocation: s.startLocation ?? "office",
       dateOfBirth: s.dateOfBirth,
       gender: s.gender,
       skills: [...s.skills],
@@ -140,6 +144,7 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
         name: form.name.trim(),
         homePostcode: normalisedHome,
         officePostcode: normalisedOffice,
+        startLocation: form.startLocation,
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
         skills: form.skills,
@@ -152,6 +157,7 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
         name: form.name.trim(),
         homePostcode: normalisedHome,
         officePostcode: normalisedOffice,
+        startLocation: form.startLocation,
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
         skills: form.skills,
@@ -398,6 +404,33 @@ function StaffForm({
         {errors.office && (
           <p className="text-xs text-red-400 mt-1">{errors.office}</p>
         )}
+      </div>
+
+      <div>
+        <label className="mb-1 block font-medium text-slate-200">Starts day from</label>
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-1.5 text-slate-300">
+            <input
+              type="radio"
+              name="startLocation"
+              checked={form.startLocation === "home"}
+              onChange={() => setForm((f: any) => ({ ...f, startLocation: "home" }))}
+            />
+            Home
+          </label>
+          <label className="flex items-center gap-1.5 text-slate-300">
+            <input
+              type="radio"
+              name="startLocation"
+              checked={form.startLocation !== "home"}
+              onChange={() => setForm((f: any) => ({ ...f, startLocation: "office" }))}
+            />
+            Office
+          </label>
+        </div>
+        <p className="mt-1 text-xs text-slate-400">
+          Used to work out their first/last travel leg of the day.
+        </p>
       </div>
 
       <div>

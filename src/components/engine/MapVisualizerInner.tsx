@@ -5,6 +5,7 @@ import {
   Marker,
   Popup,
   Polyline,
+  Tooltip,
   useMap,
   ZoomControl,
 } from "react-leaflet";
@@ -18,13 +19,23 @@ import { applyStaffColors } from "@/lib/map/staffColorMap";
 import { loadFreeSchedulerData } from "@/lib/freeSession";
 import { useUserTier } from "@/lib/hooks/useUserTier";
 import { geocodePostcodes } from "@/lib/geocode";
-import { getRoute } from "@/lib/routing";
 import { ScheduledVisit } from "@/lib/scheduler/types";
 import { Staff } from "@/store/staffStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { LEG_COLORS } from "@/lib/map/legColors";
+import { buildPinIcon } from "@/lib/map/pinIcons";
+import { StaffLeg } from "@/lib/map/useStaffLegSchedule";
+import { getStaffOriginPostcode } from "@/lib/scheduler/staffOrigin";
 
 import L from "leaflet";
+
+const GLOBAL_PIN_COLOR = "#2563eb";
+const ORIGIN_PIN_COLOR = "#1e293b";
+
+function fmtTime(d: Date | null): string {
+  if (!d) return "";
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
 
 const iconUrl =
   "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png";
@@ -64,6 +75,8 @@ type AppointmentMarker = {
   color: string;
   durationMins: number;
   coStaff: string[];
+  /** 1-based position in that staff member's day, used as the pin badge. */
+  seq: number;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -202,6 +215,44 @@ function FocusManager({
   return null;
 }
 
+// Shared rich popup body for a single appointment marker.
+function AppointmentPopup({ a }: { a: AppointmentMarker }) {
+  return (
+    <Popup>
+      <div style={{ fontSize: 12, lineHeight: 1.6, minWidth: 160 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 3 }}>
+          {a.clientName}
+        </div>
+        {a.windowName && (
+          <div style={{ color: "#2563eb", fontWeight: 600, marginBottom: 3 }}>
+            {a.windowName}
+          </div>
+        )}
+        {a.address && <div style={{ color: "#475569" }}>{a.address}</div>}
+        <div style={{ color: "#475569" }}>{a.postcode}</div>
+        <div style={{ color: "#475569" }}>
+          {a.time} · {a.durationMins} min
+        </div>
+        <div
+          style={{
+            marginTop: 5,
+            borderTop: "1px solid #e2e8f0",
+            paddingTop: 4,
+            color: "#64748b",
+          }}
+        >
+          <span style={{ fontWeight: 600 }}>Staff:</span> {a.staffName}
+        </div>
+        {a.coStaff.length > 0 && (
+          <div style={{ color: "#64748b" }}>
+            <span style={{ fontWeight: 600 }}>Also:</span> {a.coStaff.join(", ")}
+          </div>
+        )}
+      </div>
+    </Popup>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function MapVisualizerInner({
@@ -212,6 +263,8 @@ export default function MapVisualizerInner({
   selectedVisitId,
   scheduledVisits,
   staffList,
+  staffLegSchedule,
+  legScheduleLoading,
 }: {
   zoom?: number;
   showRoutes?: boolean;
@@ -221,6 +274,8 @@ export default function MapVisualizerInner({
   selectedVisitId?: string | null;
   scheduledVisits?: ScheduledVisit[];
   staffList?: Staff[];
+  staffLegSchedule?: StaffLeg[];
+  legScheduleLoading?: boolean;
 }) {
   const isFree = useUserTier();
 
@@ -235,12 +290,10 @@ export default function MapVisualizerInner({
 
   const [legs, setLegs] = useState<RouteLeg[]>([]);
   const [appointments, setAppointments] = useState<AppointmentMarker[]>([]);
-  const [routeLoading, setRouteLoading] = useState(false);
   const [officeGeo, setOfficeGeo] = useState<{ lat: number; lng: number } | null>(null);
 
   const geoMapRef = useRef<Map<string, { lat: number; lng: number }>>(new Map());
   const baseLegsRef = useRef<RouteLeg[]>([]);
-  const orsLegCacheRef = useRef<Map<string, [number, number][]>>(new Map());
 
   const [mapKey] = useState(() => crypto.randomUUID());
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -262,12 +315,12 @@ export default function MapVisualizerInner({
         ...scheduledVisits.map((v) => v.postcode).filter(Boolean),
         ...(officePost ? [officePost] : []),
         ...(staffList ?? []).map((s) => s.homePostcode).filter(Boolean),
+        ...(staffList ?? []).map((s) => s.officePostcode).filter(Boolean),
       ]),
     ];
 
     geocodePostcodes(allPostcodes).then((geoMap) => {
       geoMapRef.current = geoMap;
-      orsLegCacheRef.current = new Map();
       setOfficeGeo(officePost ? (geoMap.get(officePost.toUpperCase()) ?? null) : null);
 
       const fmt = (iso: string) =>
@@ -331,6 +384,7 @@ export default function MapVisualizerInner({
           color,
           durationMins,
           coStaff,
+          seq: legIdx + 1,
         };
       });
 
@@ -398,71 +452,7 @@ export default function MapVisualizerInner({
     });
   }, [scheduledVisits, staffList, officePost]);
 
-  // ── EFFECT 2: when a staff is selected, fetch ORS road routes per leg ───────
-  useEffect(() => {
-    if (scheduledVisits === undefined || !selectedStaffId) return;
-
-    const staffLegs = baseLegsRef.current.filter(
-      (l) => l.staffId === selectedStaffId
-    );
-    if (staffLegs.length === 0) return;
-
-    // Serve from cache if all legs already fetched
-    if (staffLegs.every((l) => orsLegCacheRef.current.has(l.id))) {
-      setLegs(
-        baseLegsRef.current.map((l) => {
-          const cached = orsLegCacheRef.current.get(l.id);
-          return cached ? { ...l, points: cached } : l;
-        })
-      );
-      return;
-    }
-
-    setLegs(baseLegsRef.current);
-    setRouteLoading(true);
-
-    Promise.all(
-      staffLegs.map(async (leg) => {
-        const cached = orsLegCacheRef.current.get(leg.id);
-        if (cached) return { id: leg.id, points: cached };
-
-        if (
-          !leg.fromPostcode ||
-          !leg.toPostcode ||
-          leg.fromPostcode === leg.toPostcode
-        ) {
-          orsLegCacheRef.current.set(leg.id, leg.points);
-          return { id: leg.id, points: leg.points };
-        }
-
-        try {
-          const result = await getRoute(leg.fromPostcode, leg.toPostcode);
-          if (result?.polyline && (result.polyline as any)?.coordinates) {
-            const pts: [number, number][] = (
-              (result.polyline as any).coordinates as number[][]
-            ).map(([lng, lat]) => [lat, lng]);
-            orsLegCacheRef.current.set(leg.id, pts);
-            return { id: leg.id, points: pts };
-          }
-        } catch {}
-
-        // Fallback to straight line
-        orsLegCacheRef.current.set(leg.id, leg.points);
-        return { id: leg.id, points: leg.points };
-      })
-    ).then((results) => {
-      const updates = new Map(results.map((r) => [r.id, r.points]));
-      setLegs(
-        baseLegsRef.current.map((l) => ({
-          ...l,
-          points: updates.get(l.id) ?? l.points,
-        }))
-      );
-      setRouteLoading(false);
-    });
-  }, [selectedStaffId, scheduledVisits]);
-
-  // ── EFFECT 3: legacy loading (when scheduledVisits not provided) ─────────────
+  // ── EFFECT 2: legacy loading (when scheduledVisits not provided) ─────────────
   useEffect(() => {
     if (scheduledVisits !== undefined) return;
 
@@ -504,6 +494,7 @@ export default function MapVisualizerInner({
           color: a.color ?? "#d00000",
           durationMins: 0,
           coStaff: [],
+          seq: 0,
         })
       );
 
@@ -549,6 +540,7 @@ export default function MapVisualizerInner({
             color: a.color ?? "#d00000",
             durationMins: 0,
             coStaff: [],
+            seq: 0,
           }))
         );
       }
@@ -582,30 +574,150 @@ export default function MapVisualizerInner({
     };
   }, [isFree]);
 
-  // ── Which legs to render ─────────────────────────────────────────────────────
-  // Visit selected → show only the leg arriving at + the leg departing from it.
-  // Staff selected  → show all legs for that staff.
-  // Nothing selected → show every leg (dim non-focused staff if applicable).
-  const visibleLegs = useMemo(() => {
+  // ── View mode ─────────────────────────────────────────────────────────────
+  // "legacy" → scheduledVisits not supplied (live-tracking admin pages): keep
+  //   the old always-show-everything behaviour, untouched.
+  // "global" → results page, nothing selected: pins only, no routes.
+  // "staff"  → results page, a staff member selected: their legs + pins.
+  // "visit"  → results page, one appointment selected: 2 legs + 3 pins.
+  const isResultsMode = scheduledVisits !== undefined;
+  const viewMode: "legacy" | "global" | "staff" | "visit" = !isResultsMode
+    ? "legacy"
+    : selectedVisitId
+    ? "visit"
+    : selectedStaffId
+    ? "staff"
+    : "global";
+
+  const coloredStaffLegs = useMemo(
+    () =>
+      (staffLegSchedule ?? []).map((l) => ({
+        ...l,
+        color: LEG_COLORS[l.legIndex % LEG_COLORS.length],
+      })),
+    [staffLegSchedule]
+  );
+
+  const renderLegs = useMemo(() => {
     if (!showRoutes) return [];
-    if (selectedVisitId) {
-      return legs.filter(
-        (l) =>
-          l.toVisitId === selectedVisitId || l.fromVisitId === selectedVisitId
+    if (viewMode === "legacy") return legs;
+    if (viewMode === "global") return [];
+    if (viewMode === "visit") {
+      return coloredStaffLegs.filter(
+        (l) => l.toVisitId === selectedVisitId || l.fromVisitId === selectedVisitId
       );
     }
-    if (selectedStaffId) {
-      return legs.filter((l) => l.staffId === selectedStaffId);
+    return coloredStaffLegs; // staff mode
+  }, [legs, coloredStaffLegs, viewMode, selectedVisitId, showRoutes]);
+
+  // One pin per unique appointment postcode, with a count badge when more
+  // than one appointment shares that location — keeps the no-selection
+  // overview readable instead of a wall of overlapping dots/routes.
+  const globalLocationGroups = useMemo(() => {
+    if (viewMode !== "global" || !scheduledVisits) return [];
+    const map = new Map<string, { lat: number; lng: number; visits: ScheduledVisit[] }>();
+    for (const v of scheduledVisits) {
+      const pc = v.postcode.toUpperCase();
+      const geo = geoMapRef.current.get(pc);
+      if (!geo) continue;
+      if (!map.has(pc)) map.set(pc, { lat: geo.lat, lng: geo.lng, visits: [] });
+      map.get(pc)!.visits.push(v);
     }
-    return legs;
-  }, [legs, selectedStaffId, selectedVisitId, showRoutes]);
+    return [...map.entries()].map(([postcode, g]) => ({ postcode, ...g }));
+  }, [viewMode, scheduledVisits, legs]);
+
+  // Distinct Home pin for the selected staff member, only when they're set
+  // to start their day from home (and it's a different spot from the office).
+  const homePinGeo = useMemo(() => {
+    if (viewMode !== "staff" && viewMode !== "visit") return null;
+    if (!selectedStaffId) return null;
+    const staffMember = staffList?.find((s) => s.id === selectedStaffId);
+    if (!staffMember || staffMember.startLocation !== "home") return null;
+    const homePost = getStaffOriginPostcode(staffMember, officePost).toUpperCase();
+    if (!homePost) return null;
+    const geo = geoMapRef.current.get(homePost);
+    if (!geo) return null;
+    return { ...geo, postcode: homePost };
+  }, [viewMode, selectedStaffId, staffList, officePost, legs]);
+
+  type BookendStop = {
+    key: string;
+    lat: number;
+    lng: number;
+    color: string;
+    highlighted?: boolean;
+    tooltipLabel?: string;
+    marker?: AppointmentMarker;
+    plainLabel?: string;
+  };
+
+  // For the visit view: previous stop ("Start"), the selected appointment,
+  // and next stop ("End") — every other pin for this staff is hidden.
+  const bookendStops = useMemo<BookendStop[]>(() => {
+    if (viewMode !== "visit" || !selectedVisitId) return [];
+
+    const resolveEndpoint = (
+      visitId: string | null,
+      postcode: string,
+      label: string
+    ): { lat: number; lng: number; color: string; marker?: AppointmentMarker; plainLabel?: string } => {
+      if (visitId) {
+        const m = appointments.find((a) => a.id === visitId);
+        if (m) return { lat: m.lat, lng: m.lng, color: m.color, marker: m };
+      }
+      const geo = geoMapRef.current.get(postcode.toUpperCase());
+      return {
+        lat: geo?.lat ?? 53.0,
+        lng: geo?.lng ?? -2.2,
+        color: ORIGIN_PIN_COLOR,
+        plainLabel: label,
+      };
+    };
+
+    const selectedMarker = appointments.find((a) => a.id === selectedVisitId);
+    if (!selectedMarker) return [];
+
+    const arrivalLeg = coloredStaffLegs.find((l) => l.toVisitId === selectedVisitId);
+    const departureLeg = coloredStaffLegs.find((l) => l.fromVisitId === selectedVisitId);
+
+    const stops: BookendStop[] = [];
+
+    if (arrivalLeg) {
+      const prev = resolveEndpoint(arrivalLeg.fromVisitId, arrivalLeg.fromPostcode, arrivalLeg.fromLabel);
+      stops.push({
+        key: "start",
+        ...prev,
+        tooltipLabel: `Start${arrivalLeg.departureTime ? " · " + fmtTime(arrivalLeg.departureTime) : ""}`,
+      });
+    }
+
+    stops.push({
+      key: "selected",
+      lat: selectedMarker.lat,
+      lng: selectedMarker.lng,
+      color: selectedMarker.color,
+      marker: selectedMarker,
+      highlighted: true,
+    });
+
+    if (departureLeg) {
+      const next = resolveEndpoint(departureLeg.toVisitId, departureLeg.toPostcode, departureLeg.toLabel);
+      stops.push({
+        key: "end",
+        ...next,
+        tooltipLabel: `End${departureLeg.arrivalTime ? " · " + fmtTime(departureLeg.arrivalTime) : ""}`,
+      });
+    }
+
+    return stops;
+  }, [viewMode, selectedVisitId, coloredStaffLegs, appointments]);
 
   return (
     <StableMapWrapper>
-      {routeLoading && (
+      {viewMode !== "legacy" && legScheduleLoading && (
         <div className="absolute inset-x-0 top-2 z-[1000] flex justify-center pointer-events-none">
           <span className="rounded-full bg-slate-900/90 px-3 py-1 text-xs text-slate-300 shadow">
-            Loading route…
+            Calculating travel times…
           </span>
         </div>
       )}
@@ -623,9 +735,10 @@ export default function MapVisualizerInner({
         {/* Route legs — a white casing under each colored line gives clean,
             high-contrast routes that read clearly against the light basemap,
             similar to standard turn-by-turn map apps. */}
-        {visibleLegs.map((leg) => {
+        {renderLegs.map((leg) => {
           const isHighlighted = highlightedRouteId === leg.id;
           const weight = isHighlighted ? 7 : 5;
+          const travelInfo = "travelMinutes" in leg ? (leg as (typeof coloredStaffLegs)[number]) : null;
 
           return [
             <Polyline
@@ -650,7 +763,27 @@ export default function MapVisualizerInner({
                 lineCap: "round",
                 lineJoin: "round",
               }}
-            />,
+            >
+              {travelInfo && (
+                <Popup>
+                  <div style={{ fontSize: 12, lineHeight: 1.6, minWidth: 140 }}>
+                    <div style={{ fontWeight: 700 }}>
+                      {travelInfo.fromLabel} → {travelInfo.toLabel}
+                    </div>
+                    <div style={{ color: "#475569" }}>
+                      {travelInfo.travelMinutes != null
+                        ? `${travelInfo.travelMinutes} min · ${travelInfo.distanceMiles} mi`
+                        : "Calculating…"}
+                    </div>
+                    {travelInfo.arrivalTime && (
+                      <div style={{ color: "#475569" }}>
+                        Arrives {fmtTime(travelInfo.arrivalTime)}
+                      </div>
+                    )}
+                  </div>
+                </Popup>
+              )}
+            </Polyline>,
           ];
         })}
 
@@ -688,75 +821,99 @@ export default function MapVisualizerInner({
           );
         })()}
 
-        {/* Appointment markers */}
-        {showAppointments &&
-          appointments
-            .filter((a) => !selectedStaffId || a.staffId === selectedStaffId)
-            .map((a) => {
-              const isHighlighted =
-                highlightedAppointmentId === a.id || selectedVisitId === a.id;
+        {/* Home pin (selected staff, only when they start their day from home) */}
+        {homePinGeo && (
+          <Marker
+            position={[homePinGeo.lat, homePinGeo.lng]}
+            {...({ icon: buildPinIcon({ color: ORIGIN_PIN_COLOR, glyph: "H" }) } as any)}
+          >
+            <Popup>
+              <div style={{ fontSize: 12, fontWeight: 600 }}>
+                Home — {homePinGeo.postcode}
+              </div>
+            </Popup>
+          </Marker>
+        )}
 
-              return (
-                <Marker
-                  key={a.id}
-                  position={[a.lat, a.lng]}
-                  eventHandlers={{
-                    click: () => setHighlightedAppointment(a.id),
-                  }}
-                  {...({
-                    icon: L.divIcon({
-                      className: "",
-                      html: `<div style="
-                        background:${a.color};
-                        width:${isHighlighted ? 20 : 14}px;
-                        height:${isHighlighted ? 20 : 14}px;
-                        border-radius:50%;
-                        border:2px solid white;
-                        box-shadow:0 0 ${isHighlighted ? 10 : 6}px rgba(0,0,0,0.5);
-                        transition:all 120ms ease;
-                      "></div>`,
-                      iconSize: [isHighlighted ? 20 : 14, isHighlighted ? 20 : 14],
-                    }),
-                  } as any)}
-                >
-                  <Popup>
-                    <div style={{ fontSize: 12, lineHeight: 1.6, minWidth: 160 }}>
-                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 3 }}>
-                        {a.clientName}
-                      </div>
-                      {a.windowName && (
-                        <div style={{ color: "#2563eb", fontWeight: 600, marginBottom: 3 }}>
-                          {a.windowName}
-                        </div>
-                      )}
-                      {a.address && (
-                        <div style={{ color: "#475569" }}>{a.address}</div>
-                      )}
-                      <div style={{ color: "#475569" }}>{a.postcode}</div>
-                      <div style={{ color: "#475569" }}>
-                        {a.time} · {a.durationMins} min
-                      </div>
-                      <div
-                        style={{
-                          marginTop: 5,
-                          borderTop: "1px solid #e2e8f0",
-                          paddingTop: 4,
-                          color: "#64748b",
-                        }}
-                      >
-                        <span style={{ fontWeight: 600 }}>Staff:</span> {a.staffName}
-                      </div>
-                      {a.coStaff.length > 0 && (
-                        <div style={{ color: "#64748b" }}>
-                          <span style={{ fontWeight: 600 }}>Also:</span>{" "}
-                          {a.coStaff.join(", ")}
-                        </div>
-                      )}
+        {/* Appointment markers — branch by view mode */}
+        {showAppointments && viewMode === "legacy" &&
+          appointments.map((a) => (
+            <Marker
+              key={a.id}
+              position={[a.lat, a.lng]}
+              {...({ icon: buildPinIcon({ color: a.color, highlighted: highlightedAppointmentId === a.id }) } as any)}
+              eventHandlers={{ click: () => setHighlightedAppointment(a.id) }}
+            >
+              <AppointmentPopup a={a} />
+            </Marker>
+          ))}
+
+        {showAppointments && viewMode === "global" &&
+          globalLocationGroups.map((g) => (
+            <Marker
+              key={g.postcode}
+              position={[g.lat, g.lng]}
+              {...({
+                icon: buildPinIcon({
+                  color: GLOBAL_PIN_COLOR,
+                  badge: g.visits.length > 1 ? g.visits.length : undefined,
+                }),
+              } as any)}
+            >
+              <Popup>
+                <div style={{ fontSize: 12, lineHeight: 1.6, minWidth: 160 }}>
+                  <div style={{ fontWeight: 700, marginBottom: 3 }}>{g.postcode}</div>
+                  {g.visits.map((v) => (
+                    <div key={v.id} style={{ color: "#475569" }}>
+                      {v.clientName} · {fmtTime(new Date(v.start))}–{fmtTime(new Date(v.end))} · {v.staffName}
                     </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
+                  ))}
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+
+        {showAppointments && viewMode === "staff" &&
+          appointments
+            .filter((a) => a.staffId === selectedStaffId)
+            .map((a) => (
+              <Marker
+                key={a.id}
+                position={[a.lat, a.lng]}
+                {...({
+                  icon: buildPinIcon({
+                    color: a.color,
+                    badge: a.seq,
+                    highlighted: highlightedAppointmentId === a.id,
+                  }),
+                } as any)}
+                eventHandlers={{ click: () => setHighlightedAppointment(a.id) }}
+              >
+                <AppointmentPopup a={a} />
+              </Marker>
+            ))}
+
+        {showAppointments && viewMode === "visit" &&
+          bookendStops.map((stop) => (
+            <Marker
+              key={stop.key}
+              position={[stop.lat, stop.lng]}
+              {...({ icon: buildPinIcon({ color: stop.color, highlighted: stop.highlighted }) } as any)}
+            >
+              {stop.tooltipLabel && (
+                <Tooltip {...({ permanent: true, direction: "top", offset: [0, -28] } as any)}>
+                  {stop.tooltipLabel}
+                </Tooltip>
+              )}
+              {stop.marker ? (
+                <AppointmentPopup a={stop.marker} />
+              ) : (
+                <Popup>
+                  <div style={{ fontSize: 12, fontWeight: 600 }}>{stop.plainLabel}</div>
+                </Popup>
+              )}
+            </Marker>
+          ))}
       </MapContainer>
     </StableMapWrapper>
   );

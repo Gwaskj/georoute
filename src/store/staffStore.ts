@@ -9,11 +9,14 @@ import {
 
 export type Gender = "Male" | "Female" | "Other";
 
+export type StartLocation = "home" | "office";
+
 export interface Staff {
   id: string;
   name: string;
   homePostcode: string;
   officePostcode: string;
+  startLocation: StartLocation;
   dateOfBirth: string;
   gender: Gender | "";
   skills: string[];
@@ -110,6 +113,7 @@ async function persistPro(staff: Staff[], selectedStaffIds: string[]) {
       colour: s.colour,
       work_start: s.workStart ?? null,
       work_end: s.workEnd ?? null,
+      start_location: s.startLocation,
       local_id: s.id,
     }))
   );
@@ -132,6 +136,7 @@ export const useStaffStore = create<StaffState>((set, get) => ({
     const newStaff: Staff = {
       id: crypto.randomUUID(),
       colour: generateColour(),
+      startLocation: "office",
       ...data,
       homePostcode: cleanPostcode(data.homePostcode),
       officePostcode: cleanPostcode(data.officePostcode),
@@ -222,6 +227,7 @@ export const useStaffStore = create<StaffState>((set, get) => ({
         name: row.name ?? "",
         homePostcode: row.home_postcode ?? "",
         officePostcode: row.office_postcode ?? "",
+        startLocation: row.start_location === "home" ? "home" : "office",
         dateOfBirth: row.date_of_birth ?? "",
         gender: row.gender ?? "",
         skills: row.skills ?? [],

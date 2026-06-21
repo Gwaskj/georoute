@@ -1,8 +1,10 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { ScheduledVisit } from "@/lib/scheduler/types";
 import { Staff } from "@/store/staffStore";
 import { LEG_COLORS } from "@/lib/map/legColors";
+import { StaffLeg } from "@/lib/map/useStaffLegSchedule";
 
 interface StaffResultsListProps {
   staff: Staff[];
@@ -13,6 +15,21 @@ interface StaffResultsListProps {
   onSelectStaff: (staffId: string | null) => void;
   selectedVisitId: string | null;
   onSelectVisit: (visitId: string | null) => void;
+  staffLegSchedule?: StaffLeg[];
+  legScheduleLoading?: boolean;
+}
+
+const fmtClock = (d: Date) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+function TravelRow({ leg }: { leg: StaffLeg }) {
+  return (
+    <div className="flex items-center justify-between px-2 py-0.5 text-[10px] text-slate-500">
+      <span>
+        🚗 {leg.travelMinutes != null ? `${leg.travelMinutes} min · ${leg.distanceMiles} mi` : "calculating…"} from {leg.fromLabel}
+      </span>
+      {leg.arrivalTime && <span>arrives {fmtClock(leg.arrivalTime)}</span>}
+    </div>
+  );
 }
 
 function toMinutes(time: string): number {
@@ -68,6 +85,8 @@ export default function StaffResultsList({
   onSelectStaff,
   selectedVisitId,
   onSelectVisit,
+  staffLegSchedule,
+  legScheduleLoading,
 }: StaffResultsListProps) {
   const visitsByStaff = staff.reduce<Record<string, ScheduledVisit[]>>(
     (acc, s) => {
@@ -150,14 +169,37 @@ export default function StaffResultsList({
 
                   {isSelected && count > 0 && (
                     <ul className="mt-2 space-y-1 border-t border-slate-700/60 pt-2">
-                      {[...staffVisits]
-                        .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
-                        .map((v, i) => {
+                      {legScheduleLoading && (
+                        <li className="px-2 text-[10px] text-slate-500">
+                          Calculating travel times…
+                        </li>
+                      )}
+                      {(() => {
+                        const sortedVisits = [...staffVisits].sort(
+                          (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+                        );
+                        const legs = staffLegSchedule ?? [];
+                        const items: ReactNode[] = [];
+
+                        sortedVisits.forEach((v, i) => {
                           const fmt = (d: Date) =>
                             d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
                           const isVisitSelected = selectedVisitId === v.id;
                           const legColor = LEG_COLORS[i % LEG_COLORS.length];
-                          return (
+                          const durationMins = Math.round(
+                            (new Date(v.end).getTime() - new Date(v.start).getTime()) / 60000
+                          );
+                          const arrivalLeg = legs.find((l) => l.toVisitId === v.id);
+
+                          if (arrivalLeg) {
+                            items.push(
+                              <li key={`${v.id}-travel`}>
+                                <TravelRow leg={arrivalLeg} />
+                              </li>
+                            );
+                          }
+
+                          items.push(
                             <li key={v.id}>
                               <button
                                 type="button"
@@ -176,13 +218,37 @@ export default function StaffResultsList({
                                 <div className="flex items-center gap-2 text-slate-400">
                                   <span>{v.postcode}</span>
                                   <span>
-                                    {fmt(new Date(v.start))}–{fmt(new Date(v.end))}
+                                    {fmt(new Date(v.start))}–{fmt(new Date(v.end))} ({durationMins} min)
                                   </span>
                                 </div>
                               </button>
                             </li>
                           );
-                        })}
+
+                          if (i === sortedVisits.length - 1) {
+                            const returnLeg = legs.find((l) => l.fromVisitId === v.id);
+                            if (returnLeg) {
+                              items.push(
+                                <li key={`${v.id}-return`}>
+                                  <div className="flex items-center justify-between px-2 py-0.5 text-[10px] text-slate-500">
+                                    <span>
+                                      🚗 {returnLeg.travelMinutes != null
+                                        ? `${returnLeg.travelMinutes} min · ${returnLeg.distanceMiles} mi`
+                                        : "calculating…"}{" "}
+                                      → return to {returnLeg.toLabel}
+                                    </span>
+                                    {returnLeg.arrivalTime && (
+                                      <span>arrives {fmtClock(returnLeg.arrivalTime)}</span>
+                                    )}
+                                  </div>
+                                </li>
+                              );
+                            }
+                          }
+                        });
+
+                        return items;
+                      })()}
                     </ul>
                   )}
                 </div>
