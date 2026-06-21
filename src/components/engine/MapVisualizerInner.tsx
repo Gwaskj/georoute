@@ -113,16 +113,9 @@ function MapInitializer({ zoom }: { zoom: number }) {
     map.setView([53.0, -2.2], zoom);
     map.zoomControl.remove();
     if (!(map as any)._tileLayer) {
-      // CartoDB Voyager basemap — still clean enough for routes/markers to
-      // stand out, but renders roads and labels clearly (unlike Positron).
       const tileLayer = L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-        {
-          attribution:
-            '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; OpenStreetMap contributors',
-          subdomains: "abcd",
-          maxZoom: 19,
-        }
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        { attribution: "&copy; OpenStreetMap contributors" }
       );
       tileLayer.addTo(map);
       (map as any)._tileLayer = tileLayer;
