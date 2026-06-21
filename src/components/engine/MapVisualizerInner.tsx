@@ -113,10 +113,10 @@ function MapInitializer({ zoom }: { zoom: number }) {
     map.setView([53.0, -2.2], zoom);
     map.zoomControl.remove();
     if (!(map as any)._tileLayer) {
-      // Light, low-clutter basemap (CartoDB Positron) so routes and markers
-      // stand out clearly, instead of the busier default OSM tile style.
+      // CartoDB Voyager basemap — still clean enough for routes/markers to
+      // stand out, but renders roads and labels clearly (unlike Positron).
       const tileLayer = L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
         {
           attribution:
             '&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; OpenStreetMap contributors',
