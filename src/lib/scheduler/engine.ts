@@ -11,6 +11,13 @@ function toMinutes(time: string): number {
   return h * 60 + m;
 }
 
+// Travel-derived (non-strict) appointment times are rounded up to the
+// nearest 5 minutes — e.g. an arrival computed at 7:46 becomes 7:50 — so
+// scheduled times read naturally rather than landing on odd minutes.
+function roundUpTo5(mins: number): number {
+  return Math.ceil(mins / 5) * 5;
+}
+
 // Fallback travel time used when no getTravelMinutes is provided
 function estimateTravelMinutes(
   _fromPostcode: string,
@@ -172,7 +179,7 @@ function findSlotForVisit(
 
   const originPostcode = getStaffOriginPostcode(staff, officePostcode);
   const travelFromOffice = travelMin(originPostcode, clientPostcode);
-  const start = current + travelFromOffice;
+  const start = roundUpTo5(current + travelFromOffice);
   const end = start + visitDuration;
 
   if (

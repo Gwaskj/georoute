@@ -700,7 +700,12 @@ export default function MapVisualizerInner({
 
     if (isReturn) {
       const end = resolveEndpoint(null, arrivalLeg.toPostcode, arrivalLeg.toLabel);
-      stops.push({ key: "selected", ...end, highlighted: true });
+      stops.push({
+        key: "selected",
+        ...end,
+        highlighted: true,
+        tooltipLabel: `End${arrivalLeg.arrivalTime ? " · " + fmtTime(arrivalLeg.arrivalTime) : ""}`,
+      });
       return stops;
     }
 
@@ -714,6 +719,7 @@ export default function MapVisualizerInner({
       color: selectedMarker.color,
       marker: selectedMarker,
       highlighted: true,
+      tooltipLabel: `End${arrivalLeg.arrivalTime ? " · " + fmtTime(arrivalLeg.arrivalTime) : ""}`,
     });
 
     return stops;
