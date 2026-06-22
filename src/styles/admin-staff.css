@@ -1,0 +1,50 @@
+/* -------------------------------------------------------
+   Admin Staff Page
+------------------------------------------------------- */
+
+.staff-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.staff-header h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.staff-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.staff-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: 0.2s ease;
+}
+
+.staff-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.staff-card .name {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.staff-card .role {
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.staff-card .actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.75rem;
+}

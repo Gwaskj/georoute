@@ -1,0 +1,302 @@
+/* ---------------------------------------
+   LAYOUT
+--------------------------------------- */
+
+.admin-users-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.admin-users-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.admin-users-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.admin-users-title {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.admin-users-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.admin-users-header-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+/* ---------------------------------------
+   SEARCH + ACTIONS
+--------------------------------------- */
+
+.admin-users-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.admin-users-search-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-users-search-input {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #f1f5f9;
+  width: 220px;
+}
+
+/* ---------------------------------------
+   ADD USER PANEL
+--------------------------------------- */
+
+.admin-users-add-panel {
+  background: #0f172a;
+  border: 1px solid #334155;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.admin-users-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-users-add-fields {
+  display: flex;
+  gap: 1rem;
+}
+
+.admin-users-add-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.admin-users-add-field label {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.admin-users-add-field input {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+.admin-users-add-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* ---------------------------------------
+   TABLE
+--------------------------------------- */
+
+.admin-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-users-table th,
+.admin-users-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #1e293b;
+}
+
+.admin-users-table th {
+  background: #1e293b;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.admin-users-row:hover {
+  background: #1e293b;
+  cursor: pointer;
+}
+
+.admin-users-empty {
+  text-align: center;
+  padding: 2rem;
+  opacity: 0.7;
+}
+
+/* ---------------------------------------
+   BADGES
+--------------------------------------- */
+
+.pro-badge {
+  background: #0ea5e9;
+  color: #0c0c0c;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.free-badge {
+  background: #475569;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.admin-badge {
+  background: #22c55e;
+  color: #0c0c0c;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.user-badge {
+  background: #64748b;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+/* ---------------------------------------
+   ROW ACTIONS
+--------------------------------------- */
+
+.admin-users-row-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.admin-users-row-actions .button {
+  border-radius: 6px !important;
+  border: 1px solid #334155 !important;
+  background-clip: padding-box;
+}
+
+/* ---------------------------------------
+   PAGINATION
+--------------------------------------- */
+
+.admin-users-footer {
+  display: flex;
+  justify-content: center;
+}
+
+.admin-users-pagination {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.admin-users-page-indicator {
+  opacity: 0.7;
+}
+
+/* ---------------------------------------
+   DRAWER
+--------------------------------------- */
+
+.admin-users-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: flex-end;
+  z-index: 50;
+}
+
+.admin-users-drawer {
+  width: 380px;
+  max-width: 100%;
+  background: #0f172a;
+  border-left: 1px solid #334155;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-users-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-users-drawer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ---------------------------------------
+   MANAGE PRO DRAWER
+--------------------------------------- */
+
+.admin-users-pro-drawer-body {
+  gap: 1rem;
+}
+
+.admin-users-pro-section {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #1e293b;
+}
+
+.admin-users-pro-section h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+}
+
+.admin-users-pro-inline {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.admin-users-pro-number-input,
+.admin-users-pro-datetime-input {
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #f1f5f9;
+  font-size: 0.85rem;
+}
+
+.admin-users-pro-number-input {
+  width: 90px;
+}
+
+.admin-users-pro-datetime-input {
+  width: 100%;
+}
+
+.admin-users-pro-hint {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-top: 0.25rem;
+}

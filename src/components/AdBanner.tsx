@@ -1,0 +1,36 @@
+"use client";
+
+import { useEffect } from "react";
+
+type AdBannerProps = {
+  className?: string;
+};
+
+declare global {
+  interface Window {
+    adsbygoogle?: unknown[];
+  }
+}
+
+export default function AdBanner({ className }: AdBannerProps) {
+  useEffect(() => {
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  return (
+    <div className={className}>
+      <ins
+        className="adsbygoogle block w-full"
+        style={{ display: "block" }}
+        data-ad-client="ca-pub-1904838490296389"
+        data-ad-slot="6104460687"
+        data-ad-format="auto"
+        data-full-width-responsive="true"
+      />
+    </div>
+  );
+}

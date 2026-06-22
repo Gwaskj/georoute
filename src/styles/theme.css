@@ -1,0 +1,90 @@
+:root {
+  /* ── Theme variables (overridden at runtime by ThemeProvider) ── */
+  --theme-primary: #4f46e5;
+  --theme-secondary: #06b6d4;
+  --theme-accent: #f97316;
+  --theme-bg: #0f172a;
+  --theme-bg-muted: #1e293b;
+  --theme-card: #1e293b;
+  --theme-text: #f1f5f9;
+  --theme-text-muted: #94a3b8;
+  --theme-border: #334155;
+  --theme-radius: 8px;
+  --theme-font-heading: system-ui, sans-serif;
+  --theme-font-body: system-ui, sans-serif;
+
+  /* BRAND COLORS (alias to theme vars) */
+  --color-primary: var(--theme-primary);
+  --color-primary-hover: color-mix(in srgb, var(--theme-primary) 80%, black);
+  --color-secondary: var(--theme-secondary);
+  --color-accent: var(--theme-accent);
+
+  /* GRAYS */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+
+  /* TEXT */
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-light: #ffffff;
+
+  /* BACKGROUND (alias to theme vars) */
+  --bg-body: var(--theme-bg);
+  --bg-muted: var(--theme-bg-muted);
+  --bg-card: var(--theme-card);
+
+  /* RADIUS */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* SHADOWS */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+
+  /* SPACING */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-2xl: 64px;
+
+  /* TRANSITIONS */
+  --transition: 0.2s ease;
+}
+
+/* DARK MODE */
+[data-theme="dark"] {
+  --bg-body: #0f0f11;
+  --bg-muted: #18181b;
+  --bg-card: #1f1f23;
+
+  --text-primary: #ffffff;
+  --text-secondary: #c7c7c7;
+
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+/* GLOBAL RESET */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--theme-font-body);
+  transition: background var(--transition), color var(--transition);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--theme-font-heading);
+}

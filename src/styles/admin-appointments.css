@@ -1,0 +1,60 @@
+/* -------------------------------------------------------
+   Admin Appointments Page
+------------------------------------------------------- */
+
+.appointments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.appointments-header h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.appointments-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.appointment-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+}
+
+.appointment-row:last-child {
+  border-bottom: none;
+}
+
+.appointment-row:hover {
+  background: var(--surface-hover);
+}
+
+.appointment-status {
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.status-upcoming {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.status-completed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
