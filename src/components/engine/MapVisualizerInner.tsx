@@ -81,15 +81,6 @@ type AppointmentMarker = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// Spread multiple markers sharing the same postcode into a small circle
-// so they are individually clickable rather than stacked.
-function spreadOffset(idx: number, total: number): { lat: number; lng: number } {
-  if (total <= 1) return { lat: 0, lng: 0 };
-  const angle = (2 * Math.PI * idx) / total;
-  const r = 0.0003;
-  return { lat: Math.sin(angle) * r, lng: Math.cos(angle) * r };
-}
-
 function normalizePoints(raw: any[]): [number, number][] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -337,19 +328,13 @@ export default function MapVisualizerInner({
         }
       }
 
-      // ── Markers: one per visit, spread when sharing a postcode ──
-      const pcCount = new Map<string, number>();
-      for (const v of scheduledVisits) {
-        const pc = v.postcode.toUpperCase();
-        pcCount.set(pc, (pcCount.get(pc) ?? 0) + 1);
-      }
-      const pcIndex = new Map<string, number>();
-
+      // ── Markers: one per visit ──
+      // Deliberately NOT offsetting markers that share a postcode: route
+      // polylines (built independently in useStaffLegSchedule) always
+      // terminate at the exact geocoded point, so any offset here would make
+      // pins visibly disconnect from the lines that lead to them.
       const markers: AppointmentMarker[] = scheduledVisits.map((v) => {
         const pc = v.postcode.toUpperCase();
-        const idx = pcIndex.get(pc) ?? 0;
-        pcIndex.set(pc, idx + 1);
-        const offset = spreadOffset(idx, pcCount.get(pc) ?? 1);
         const geo = geoMap.get(pc);
         const durationMins = Math.round(
           (new Date(v.end).getTime() - new Date(v.start).getTime()) / 60000
@@ -366,8 +351,8 @@ export default function MapVisualizerInner({
         return {
           id: v.id,
           staffId: v.staffId,
-          lat: (geo?.lat ?? 53.0) + offset.lat,
-          lng: (geo?.lng ?? -2.2) + offset.lng,
+          lat: geo?.lat ?? 53.0,
+          lng: geo?.lng ?? -2.2,
           clientName: v.clientName,
           postcode: v.postcode,
           address: v.address,
@@ -619,18 +604,31 @@ export default function MapVisualizerInner({
     return [...map.entries()].map(([postcode, g]) => ({ postcode, ...g }));
   }, [viewMode, scheduledVisits, legs]);
 
-  // Distinct Home pin for the selected staff member, only when they're set
-  // to start their day from home (and it's a different spot from the office).
-  const homePinGeo = useMemo(() => {
+  // Distinct pin for the selected staff member's actual day start/end point.
+  // The always-on "Office" pin only ever marks the *global* settings office
+  // postcode — but a staff member can have their own office-postcode
+  // override, or be set to start from home, in which case their real origin
+  // is somewhere else entirely. Without this, the route line would correctly
+  // terminate at their real origin while no pin there reflected it. Skipped
+  // only when the resolved origin is the same spot as the global office pin
+  // (already shown), to avoid drawing two pins on top of each other.
+  const originPinGeo = useMemo(() => {
     if (viewMode !== "staff" && viewMode !== "visit") return null;
     if (!selectedStaffId) return null;
     const staffMember = staffList?.find((s) => s.id === selectedStaffId);
-    if (!staffMember || staffMember.startLocation !== "home") return null;
-    const homePost = getStaffOriginPostcode(staffMember, officePost).toUpperCase();
-    if (!homePost) return null;
-    const geo = geoMapRef.current.get(homePost);
+    if (!staffMember) return null;
+    const originPost = getStaffOriginPostcode(staffMember, officePost).toUpperCase();
+    if (!originPost) return null;
+    if (originPost === officePost?.toUpperCase()) return null;
+    const geo = geoMapRef.current.get(originPost);
     if (!geo) return null;
-    return { ...geo, postcode: homePost };
+    const isHome = staffMember.startLocation === "home";
+    return {
+      ...geo,
+      postcode: originPost,
+      label: isHome ? "Home" : "Office",
+      glyph: isHome ? "H" : "O",
+    };
   }, [viewMode, selectedStaffId, staffList, officePost, legs]);
 
   type BookendStop = {
@@ -814,15 +812,16 @@ export default function MapVisualizerInner({
           );
         })()}
 
-        {/* Home pin (selected staff, only when they start their day from home) */}
-        {homePinGeo && (
+        {/* Distinct pin for the selected staff's real day start/end point,
+            when it differs from the global office pin shown above. */}
+        {originPinGeo && (
           <Marker
-            position={[homePinGeo.lat, homePinGeo.lng]}
-            {...({ icon: buildPinIcon({ color: ORIGIN_PIN_COLOR, glyph: "H" }) } as any)}
+            position={[originPinGeo.lat, originPinGeo.lng]}
+            {...({ icon: buildPinIcon({ color: ORIGIN_PIN_COLOR, glyph: originPinGeo.glyph }) } as any)}
           >
             <Popup>
               <div style={{ fontSize: 12, fontWeight: 600 }}>
-                Home — {homePinGeo.postcode}
+                {originPinGeo.label} — {originPinGeo.postcode}
               </div>
             </Popup>
           </Marker>
