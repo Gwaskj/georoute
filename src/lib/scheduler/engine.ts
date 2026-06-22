@@ -572,9 +572,12 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
 
   function minsToTimeStr(mins: number): string {
     // Travel-time arithmetic can leave tiny floating-point drift (e.g.
-    // 464.98000000000002) — round to the nearest whole minute before
-    // formatting, otherwise it leaks into the displayed time string.
-    const total = Math.round(mins);
+    // 464.98000000000002 instead of 465). Truncate rather than round —
+    // ScheduledVisit times go through Date objects and are displayed via
+    // toLocaleTimeString elsewhere, which truncates seconds rather than
+    // rounding into the next minute. Rounding here would make a visit
+    // that *displays* as ending at 09:00 show its gap starting at 09:01.
+    const total = Math.floor(mins);
     const h = Math.floor(total / 60);
     const m = total % 60;
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;

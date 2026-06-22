@@ -79,7 +79,12 @@ export default function GenerateSchedule({
             if (route === null) {
               failedPairs.push(`${from} → ${to}`);
             } else {
-              travelLookup.set(`${from}→${to}`, route.duration_minutes);
+              // Round to a whole minute at the source — the scheduler builds
+              // every visit's start/end time by adding these travel minutes
+              // together, so a raw fractional ORS duration (e.g. 30.63...)
+              // would otherwise leave sub-minute drift in every appointment
+              // time downstream.
+              travelLookup.set(`${from}→${to}`, Math.round(route.duration_minutes));
             }
           })
         );

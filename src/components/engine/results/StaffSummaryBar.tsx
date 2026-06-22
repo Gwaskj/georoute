@@ -77,9 +77,13 @@ export default function StaffSummaryBar({
     idleMinutes += dayEndMin - lastEndMin;
   }
 
-  const roundedIdleMinutes = Math.round(idleMinutes);
-  const hours = Math.floor(roundedIdleMinutes / 60);
-  const mins = roundedIdleMinutes % 60;
+  // Truncate rather than round, for the same reason as engine.ts's
+  // minsToTimeStr: gap boundaries are computed from the same fractional
+  // travel-time minutes that ScheduledVisit times are built from, and
+  // those are displayed elsewhere via Date truncation, not rounding.
+  const flooredIdleMinutes = Math.floor(idleMinutes);
+  const hours = Math.floor(flooredIdleMinutes / 60);
+  const mins = flooredIdleMinutes % 60;
   const idleLabel = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 
   const hasBigGap = idleMinutes >= 30;
