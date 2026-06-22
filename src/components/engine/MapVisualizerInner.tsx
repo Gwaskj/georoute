@@ -171,9 +171,8 @@ function FocusManager({
   // Selection focus: visit or staff
   useEffect(() => {
     if (selectedVisitId) {
-      const surroundingLegs = legs.filter(
-        (l) => l.toVisitId === selectedVisitId || l.fromVisitId === selectedVisitId
-      );
+      // Only the arrival leg is rendered in visit view now, so only fit to that.
+      const surroundingLegs = legs.filter((l) => l.toVisitId === selectedVisitId);
       const pts = surroundingLegs.flatMap((l) =>
         l.points.map((p) => L.latLng(p[0], p[1]))
       );
@@ -384,7 +383,9 @@ export default function MapVisualizerInner({
           geo: { lat: number; lng: number } | null;
         };
 
-        const homePost = staffMember?.homePostcode?.toUpperCase() || officePost?.toUpperCase() || "";
+        const homePost = staffMember
+          ? getStaffOriginPostcode(staffMember, officePost).toUpperCase()
+          : officePost?.toUpperCase() || "";
         const homeGeo = homePost ? (geoMap.get(homePost) ?? null) : null;
 
         const homeStop: SeqStop = {
@@ -581,9 +582,9 @@ export default function MapVisualizerInner({
     if (viewMode === "legacy") return legs;
     if (viewMode === "global") return [];
     if (viewMode === "visit") {
-      return coloredStaffLegs.filter(
-        (l) => l.toVisitId === selectedVisitId || l.fromVisitId === selectedVisitId
-      );
+      // Only the leg arriving at the selected appointment — from wherever
+      // the staff member travels from (home/office or the previous visit).
+      return coloredStaffLegs.filter((l) => l.toVisitId === selectedVisitId);
     }
     return coloredStaffLegs; // staff mode
   }, [legs, coloredStaffLegs, viewMode, selectedVisitId, showRoutes]);
@@ -642,8 +643,8 @@ export default function MapVisualizerInner({
     plainLabel?: string;
   };
 
-  // For the visit view: previous stop ("Start"), the selected appointment,
-  // and next stop ("End") — every other pin for this staff is hidden.
+  // For the visit view: only the previous stop ("Start" — home/office or the
+  // previous visit) and the selected appointment itself. No departure leg/pin.
   const bookendStops = useMemo<BookendStop[]>(() => {
     if (viewMode !== "visit" || !selectedVisitId) return [];
 
@@ -669,7 +670,6 @@ export default function MapVisualizerInner({
     if (!selectedMarker) return [];
 
     const arrivalLeg = coloredStaffLegs.find((l) => l.toVisitId === selectedVisitId);
-    const departureLeg = coloredStaffLegs.find((l) => l.fromVisitId === selectedVisitId);
 
     const stops: BookendStop[] = [];
 
@@ -690,15 +690,6 @@ export default function MapVisualizerInner({
       marker: selectedMarker,
       highlighted: true,
     });
-
-    if (departureLeg) {
-      const next = resolveEndpoint(departureLeg.toVisitId, departureLeg.toPostcode, departureLeg.toLabel);
-      stops.push({
-        key: "end",
-        ...next,
-        tooltipLabel: `End${departureLeg.arrivalTime ? " · " + fmtTime(departureLeg.arrivalTime) : ""}`,
-      });
-    }
 
     return stops;
   }, [viewMode, selectedVisitId, coloredStaffLegs, appointments]);

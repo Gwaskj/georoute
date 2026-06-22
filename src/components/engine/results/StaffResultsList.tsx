@@ -167,90 +167,103 @@ export default function StaffResultsList({
                     </p>
                   )}
 
-                  {isSelected && count > 0 && (
-                    <ul className="mt-2 space-y-1 border-t border-slate-700/60 pt-2">
-                      {legScheduleLoading && (
-                        <li className="px-2 text-[10px] text-slate-500">
-                          Calculating travel times…
-                        </li>
-                      )}
-                      {(() => {
-                        const sortedVisits = [...staffVisits].sort(
-                          (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
-                        );
-                        const legs = staffLegSchedule ?? [];
-                        const items: ReactNode[] = [];
-
-                        sortedVisits.forEach((v, i) => {
-                          const fmt = (d: Date) =>
-                            d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                          const isVisitSelected = selectedVisitId === v.id;
-                          const legColor = LEG_COLORS[i % LEG_COLORS.length];
-                          const durationMins = Math.round(
-                            (new Date(v.end).getTime() - new Date(v.start).getTime()) / 60000
-                          );
-                          const arrivalLeg = legs.find((l) => l.toVisitId === v.id);
-
-                          if (arrivalLeg) {
-                            items.push(
-                              <li key={`${v.id}-travel`}>
-                                <TravelRow leg={arrivalLeg} />
-                              </li>
-                            );
-                          }
-
-                          items.push(
-                            <li key={v.id}>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onSelectVisit(isVisitSelected ? null : v.id);
-                                }}
-                                style={{ borderLeftColor: legColor }}
-                                className={`flex w-full items-center justify-between rounded border-l-[3px] px-2 py-1 text-[11px] text-left transition-colors ${
-                                  isVisitSelected
-                                    ? "bg-sky-500/20 ring-1 ring-sky-500/50"
-                                    : "bg-slate-800/60 hover:bg-slate-700/60"
-                                }`}
-                              >
-                                <span className="font-medium text-slate-100">{v.clientName}</span>
-                                <div className="flex items-center gap-2 text-slate-400">
-                                  <span>{v.postcode}</span>
-                                  <span>
-                                    {fmt(new Date(v.start))}–{fmt(new Date(v.end))} ({durationMins} min)
-                                  </span>
-                                </div>
-                              </button>
+                  {isSelected && count > 0 && (() => {
+                    const staffLegs = staffLegSchedule ?? [];
+                    const firstLeg = staffLegs[0];
+                    const lastLeg = staffLegs[staffLegs.length - 1];
+                    return (
+                      <>
+                        {(firstLeg || lastLeg) && (
+                          <p className="mt-2 border-t border-slate-700/60 pt-2 text-[11px] text-slate-400">
+                            Starts at <span className="font-medium text-slate-200">{firstLeg?.fromLabel ?? "…"}</span>
+                            {" · "}
+                            Finishes at <span className="font-medium text-slate-200">{lastLeg?.toLabel ?? "…"}</span>
+                          </p>
+                        )}
+                        <ul className="mt-2 space-y-1">
+                          {legScheduleLoading && (
+                            <li className="px-2 text-[10px] text-slate-500">
+                              Calculating travel times…
                             </li>
-                          );
+                          )}
+                          {(() => {
+                            const sortedVisits = [...staffVisits].sort(
+                              (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+                            );
+                            const items: ReactNode[] = [];
 
-                          if (i === sortedVisits.length - 1) {
-                            const returnLeg = legs.find((l) => l.fromVisitId === v.id);
-                            if (returnLeg) {
+                            sortedVisits.forEach((v, i) => {
+                              const fmt = (d: Date) =>
+                                d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                              const isVisitSelected = selectedVisitId === v.id;
+                              const legColor = LEG_COLORS[i % LEG_COLORS.length];
+                              const durationMins = Math.round(
+                                (new Date(v.end).getTime() - new Date(v.start).getTime()) / 60000
+                              );
+                              const arrivalLeg = staffLegs.find((l) => l.toVisitId === v.id);
+
+                              if (arrivalLeg) {
+                                items.push(
+                                  <li key={`${v.id}-travel`}>
+                                    <TravelRow leg={arrivalLeg} />
+                                  </li>
+                                );
+                              }
+
                               items.push(
-                                <li key={`${v.id}-return`}>
-                                  <div className="flex items-center justify-between px-2 py-0.5 text-[10px] text-slate-500">
-                                    <span>
-                                      🚗 {returnLeg.travelMinutes != null
-                                        ? `${returnLeg.travelMinutes} min · ${returnLeg.distanceMiles} mi`
-                                        : "calculating…"}{" "}
-                                      → return to {returnLeg.toLabel}
-                                    </span>
-                                    {returnLeg.arrivalTime && (
-                                      <span>arrives {fmtClock(returnLeg.arrivalTime)}</span>
-                                    )}
-                                  </div>
+                                <li key={v.id}>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onSelectVisit(isVisitSelected ? null : v.id);
+                                    }}
+                                    style={{ borderLeftColor: legColor }}
+                                    className={`flex w-full items-center justify-between rounded border-l-[3px] px-2 py-1 text-[11px] text-left transition-colors ${
+                                      isVisitSelected
+                                        ? "bg-sky-500/20 ring-1 ring-sky-500/50"
+                                        : "bg-slate-800/60 hover:bg-slate-700/60"
+                                    }`}
+                                  >
+                                    <span className="font-medium text-slate-100">{v.clientName}</span>
+                                    <div className="flex items-center gap-2 text-slate-400">
+                                      <span>{v.postcode}</span>
+                                      <span>
+                                        {fmt(new Date(v.start))}–{fmt(new Date(v.end))} ({durationMins} min)
+                                      </span>
+                                    </div>
+                                  </button>
                                 </li>
                               );
-                            }
-                          }
-                        });
 
-                        return items;
-                      })()}
-                    </ul>
-                  )}
+                              if (i === sortedVisits.length - 1) {
+                                const returnLeg = staffLegs.find((l) => l.fromVisitId === v.id);
+                                if (returnLeg) {
+                                  items.push(
+                                    <li key={`${v.id}-return`}>
+                                      <div className="flex items-center justify-between px-2 py-0.5 text-[10px] text-slate-500">
+                                        <span>
+                                          🚗 {returnLeg.travelMinutes != null
+                                            ? `${returnLeg.travelMinutes} min · ${returnLeg.distanceMiles} mi`
+                                            : "calculating…"}{" "}
+                                          → return to {returnLeg.toLabel}
+                                        </span>
+                                        {returnLeg.arrivalTime && (
+                                          <span>arrives {fmtClock(returnLeg.arrivalTime)}</span>
+                                        )}
+                                      </div>
+                                    </li>
+                                  );
+                                }
+                              }
+                            });
+
+                            return items;
+                          })()}
+                        </ul>
+                      </>
+                    );
+                  })()}
                 </div>
               </li>
             );
