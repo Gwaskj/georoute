@@ -77,8 +77,9 @@ export default function StaffSummaryBar({
     idleMinutes += dayEndMin - lastEndMin;
   }
 
-  const hours = Math.floor(idleMinutes / 60);
-  const mins = idleMinutes % 60;
+  const roundedIdleMinutes = Math.round(idleMinutes);
+  const hours = Math.floor(roundedIdleMinutes / 60);
+  const mins = roundedIdleMinutes % 60;
   const idleLabel = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 
   const hasBigGap = idleMinutes >= 30;

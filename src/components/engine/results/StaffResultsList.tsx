@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { ScheduledVisit } from "@/lib/scheduler/types";
 import { Staff } from "@/store/staffStore";
 import { LEG_COLORS } from "@/lib/map/legColors";
-import { StaffLeg } from "@/lib/map/useStaffLegSchedule";
+import { StaffLeg, RETURN_TO_BASE_ID } from "@/lib/map/useStaffLegSchedule";
 
 interface StaffResultsListProps {
   staff: Staff[];
@@ -171,16 +171,28 @@ export default function StaffResultsList({
                     const staffLegs = staffLegSchedule ?? [];
                     const firstLeg = staffLegs[0];
                     const lastLeg = staffLegs[staffLegs.length - 1];
+                    const isReturnSelected = selectedVisitId === RETURN_TO_BASE_ID;
                     return (
                       <>
-                        {(firstLeg || lastLeg) && (
-                          <p className="mt-2 border-t border-slate-700/60 pt-2 text-[11px] text-slate-400">
-                            Starts at <span className="font-medium text-slate-200">{firstLeg?.fromLabel ?? "…"}</span>
-                            {" · "}
-                            Finishes at <span className="font-medium text-slate-200">{lastLeg?.toLabel ?? "…"}</span>
-                          </p>
-                        )}
-                        <ul className="mt-2 space-y-1">
+                        <ul className="mt-2 space-y-1 border-t border-slate-700/60 pt-2">
+                          {/* Start: where the staff member's day begins. Not
+                              clickable — there's no "route to the start". */}
+                          <li>
+                            <div
+                              style={{ borderLeftColor: "#9ca3af" }}
+                              className="flex w-full items-center justify-between rounded border-l-[3px] bg-slate-800/40 px-2 py-1 text-left text-[11px]"
+                            >
+                              <span className="font-medium text-slate-100">
+                                Start — {firstLeg?.fromLabel ?? "…"}
+                              </span>
+                              <div className="flex items-center gap-2 text-slate-400">
+                                {firstLeg?.fromPostcode && <span>{firstLeg.fromPostcode}</span>}
+                                {firstLeg?.departureTime && (
+                                  <span>departs {fmtClock(firstLeg.departureTime)}</span>
+                                )}
+                              </div>
+                            </div>
+                          </li>
                           {legScheduleLoading && (
                             <li className="px-2 text-[10px] text-slate-500">
                               Calculating travel times…
@@ -241,17 +253,7 @@ export default function StaffResultsList({
                                 if (returnLeg) {
                                   items.push(
                                     <li key={`${v.id}-return`}>
-                                      <div className="flex items-center justify-between px-2 py-0.5 text-[10px] text-slate-500">
-                                        <span>
-                                          🚗 {returnLeg.travelMinutes != null
-                                            ? `${returnLeg.travelMinutes} min · ${returnLeg.distanceMiles} mi`
-                                            : "calculating…"}{" "}
-                                          → return to {returnLeg.toLabel}
-                                        </span>
-                                        {returnLeg.arrivalTime && (
-                                          <span>arrives {fmtClock(returnLeg.arrivalTime)}</span>
-                                        )}
-                                      </div>
+                                      <TravelRow leg={returnLeg} />
                                     </li>
                                   );
                                 }
@@ -260,6 +262,35 @@ export default function StaffResultsList({
 
                             return items;
                           })()}
+                          {/* Finish: where the staff member's day ends. Clickable —
+                              selects the final leg, last appointment to home/office. */}
+                          {lastLeg && (
+                            <li>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onSelectVisit(isReturnSelected ? null : RETURN_TO_BASE_ID);
+                                }}
+                                style={{ borderLeftColor: LEG_COLORS[staffVisits.length % LEG_COLORS.length] }}
+                                className={`flex w-full items-center justify-between rounded border-l-[3px] px-2 py-1 text-left text-[11px] transition-colors ${
+                                  isReturnSelected
+                                    ? "bg-sky-500/20 ring-1 ring-sky-500/50"
+                                    : "bg-slate-800/60 hover:bg-slate-700/60"
+                                }`}
+                              >
+                                <span className="font-medium text-slate-100">
+                                  Finish — {lastLeg.toLabel}
+                                </span>
+                                <div className="flex items-center gap-2 text-slate-400">
+                                  {lastLeg.toPostcode && <span>{lastLeg.toPostcode}</span>}
+                                  {lastLeg.arrivalTime && (
+                                    <span>arrives {fmtClock(lastLeg.arrivalTime)}</span>
+                                  )}
+                                </div>
+                              </button>
+                            </li>
+                          )}
                         </ul>
                       </>
                     );

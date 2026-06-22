@@ -5,6 +5,11 @@ import { getStaffOriginPostcode } from "@/lib/scheduler/staffOrigin";
 import { geocodePostcodes } from "@/lib/geocode";
 import { getRouteBatched } from "@/lib/routing";
 
+/** Sentinel passed as a "selectedVisitId" to mean: show the final leg
+ *  returning from the last appointment back to home/office, rather than a
+ *  leg arriving at a real appointment. */
+export const RETURN_TO_BASE_ID = "__return-to-base__";
+
 export interface StaffLeg {
   id: string;
   legIndex: number;

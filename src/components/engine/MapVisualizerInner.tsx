@@ -24,7 +24,7 @@ import { Staff } from "@/store/staffStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { LEG_COLORS } from "@/lib/map/legColors";
 import { buildPinIcon } from "@/lib/map/pinIcons";
-import { StaffLeg } from "@/lib/map/useStaffLegSchedule";
+import { StaffLeg, RETURN_TO_BASE_ID } from "@/lib/map/useStaffLegSchedule";
 import { getStaffOriginPostcode } from "@/lib/scheduler/staffOrigin";
 
 import L from "leaflet";
@@ -172,12 +172,20 @@ function FocusManager({
   useEffect(() => {
     if (selectedVisitId) {
       // Only the arrival leg is rendered in visit view now, so only fit to that.
-      const surroundingLegs = legs.filter((l) => l.toVisitId === selectedVisitId);
+      // RETURN_TO_BASE_ID selects the final leg back to home/office instead.
+      const isReturn = selectedVisitId === RETURN_TO_BASE_ID;
+      const surroundingLegs = legs.filter((l) =>
+        isReturn
+          ? l.toVisitId === null && l.staffId === selectedStaffId
+          : l.toVisitId === selectedVisitId
+      );
       const pts = surroundingLegs.flatMap((l) =>
         l.points.map((p) => L.latLng(p[0], p[1]))
       );
-      const marker = markers.find((m) => m.id === selectedVisitId);
-      if (marker) pts.push(L.latLng(marker.lat, marker.lng));
+      if (!isReturn) {
+        const marker = markers.find((m) => m.id === selectedVisitId);
+        if (marker) pts.push(L.latLng(marker.lat, marker.lng));
+      }
       if (pts.length > 0)
         map.fitBounds(L.latLngBounds(pts), { padding: [60, 60] });
       return;
@@ -584,6 +592,11 @@ export default function MapVisualizerInner({
     if (viewMode === "visit") {
       // Only the leg arriving at the selected appointment — from wherever
       // the staff member travels from (home/office or the previous visit).
+      // The RETURN_TO_BASE_ID sentinel selects the final leg instead, back
+      // from the last appointment to home/office.
+      if (selectedVisitId === RETURN_TO_BASE_ID) {
+        return coloredStaffLegs.filter((l) => l.toVisitId === null);
+      }
       return coloredStaffLegs.filter((l) => l.toVisitId === selectedVisitId);
     }
     return coloredStaffLegs; // staff mode
@@ -614,7 +627,10 @@ export default function MapVisualizerInner({
   // only when the resolved origin is the same spot as the global office pin
   // (already shown), to avoid drawing two pins on top of each other.
   const originPinGeo = useMemo(() => {
-    if (viewMode !== "staff" && viewMode !== "visit") return null;
+    // Only in staff-overview mode — visit mode already shows a properly
+    // labeled/tooltipped bookend pin when the route touches home/office,
+    // so this would otherwise draw an exact duplicate on top of it.
+    if (viewMode !== "staff") return null;
     if (!selectedStaffId) return null;
     const staffMember = staffList?.find((s) => s.id === selectedStaffId);
     if (!staffMember) return null;
@@ -666,21 +682,30 @@ export default function MapVisualizerInner({
       };
     };
 
-    const selectedMarker = appointments.find((a) => a.id === selectedVisitId);
-    if (!selectedMarker) return [];
+    const isReturn = selectedVisitId === RETURN_TO_BASE_ID;
 
-    const arrivalLeg = coloredStaffLegs.find((l) => l.toVisitId === selectedVisitId);
+    const arrivalLeg = isReturn
+      ? coloredStaffLegs.find((l) => l.toVisitId === null)
+      : coloredStaffLegs.find((l) => l.toVisitId === selectedVisitId);
+    if (!arrivalLeg) return [];
 
     const stops: BookendStop[] = [];
 
-    if (arrivalLeg) {
-      const prev = resolveEndpoint(arrivalLeg.fromVisitId, arrivalLeg.fromPostcode, arrivalLeg.fromLabel);
-      stops.push({
-        key: "start",
-        ...prev,
-        tooltipLabel: `Start${arrivalLeg.departureTime ? " · " + fmtTime(arrivalLeg.departureTime) : ""}`,
-      });
+    const prev = resolveEndpoint(arrivalLeg.fromVisitId, arrivalLeg.fromPostcode, arrivalLeg.fromLabel);
+    stops.push({
+      key: "start",
+      ...prev,
+      tooltipLabel: `Start${arrivalLeg.departureTime ? " · " + fmtTime(arrivalLeg.departureTime) : ""}`,
+    });
+
+    if (isReturn) {
+      const end = resolveEndpoint(null, arrivalLeg.toPostcode, arrivalLeg.toLabel);
+      stops.push({ key: "selected", ...end, highlighted: true });
+      return stops;
     }
+
+    const selectedMarker = appointments.find((a) => a.id === selectedVisitId);
+    if (!selectedMarker) return [];
 
     stops.push({
       key: "selected",

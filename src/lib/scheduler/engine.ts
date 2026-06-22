@@ -571,8 +571,12 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
   const MIN_GAP_HINT = 30; // minutes — smallest meaningful visit duration
 
   function minsToTimeStr(mins: number): string {
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
+    // Travel-time arithmetic can leave tiny floating-point drift (e.g.
+    // 464.98000000000002) — round to the nearest whole minute before
+    // formatting, otherwise it leaks into the displayed time string.
+    const total = Math.round(mins);
+    const h = Math.floor(total / 60);
+    const m = total % 60;
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   }
 
