@@ -35,6 +35,10 @@ const ACTION_OPTIONS: { value: string; label: string }[] = [
   { value: "appointment_deleted", label: "Appointment deleted" },
   { value: "route_generated_cached", label: "Route (cached)" },
   { value: "route_generated_ors", label: "Route (ORS)" },
+  { value: "schedule_generated", label: "Schedule generated" },
+  { value: "schedule_generation_failed", label: "Schedule generation failed" },
+  { value: "routing_error", label: "Routing error" },
+  { value: "pro_data_purged", label: "Pro data purged (expired)" },
   { value: "unauthorized_data_access_attempt", label: "Unauthorized access" },
   { value: "admin_reset_password", label: "Admin reset password" },
   { value: "admin_delete_user", label: "Admin delete user" },
@@ -46,6 +50,15 @@ const ACTION_OPTIONS: { value: string; label: string }[] = [
 
 type ViewMode = "table" | "timeline";
 type UserFilter = "all" | "pro" | "free";
+
+const ORS_DAILY_QUOTA = 2000;
+
+interface SchedulerStats {
+  orsToday: number;
+  scheduleRuns7d: number;
+  scheduleFailures7d: number;
+  routingErrors7d: number;
+}
 
 function formatDateTime(value: string) {
   const d = new Date(value);
@@ -100,6 +113,31 @@ export default function AdminLogsPage() {
   });
 
   const [selectedLog, setSelectedLog] = useState<AdminLogRow | null>(null);
+  const [stats, setStats] = useState<SchedulerStats | null>(null);
+
+  async function loadStats() {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const countSince = async (action: string, since: Date) => {
+      const { count } = await supabase
+        .from("admin_activity_logs")
+        .select("*", { count: "exact", head: true })
+        .eq("action", action)
+        .gte("created_at", since.toISOString());
+      return count ?? 0;
+    };
+
+    const [orsToday, scheduleRuns7d, scheduleFailures7d, routingErrors7d] = await Promise.all([
+      countSince("route_generated_ors", startOfToday),
+      countSince("schedule_generated", sevenDaysAgo),
+      countSince("schedule_generation_failed", sevenDaysAgo),
+      countSince("routing_error", sevenDaysAgo),
+    ]);
+
+    setStats({ orsToday, scheduleRuns7d, scheduleFailures7d, routingErrors7d });
+  }
 
   async function loadLogs(pageIndex: number) {
     setLoading(true);
@@ -159,6 +197,12 @@ export default function AdminLogsPage() {
       loadLogs(0);
     }
   }, [isAdmin, actionFilter, userFilter, fromDate, toDate, search]);
+
+  useEffect(() => {
+    if (isAdmin === true) {
+      loadStats();
+    }
+  }, [isAdmin]);
 
   if (isAdmin === null) {
     return (
@@ -221,6 +265,45 @@ export default function AdminLogsPage() {
           </div>
         </div>
       </div>
+
+      {stats && (
+        <div className="admin-logs-stats">
+          <div className="admin-logs-stat-card">
+            <span className="admin-logs-stat-label">ORS calls today</span>
+            <span
+              className={`admin-logs-stat-value ${
+                stats.orsToday >= ORS_DAILY_QUOTA * 0.8 ? "admin-logs-stat-warning" : ""
+              }`}
+            >
+              {stats.orsToday} / {ORS_DAILY_QUOTA}
+            </span>
+          </div>
+          <div className="admin-logs-stat-card">
+            <span className="admin-logs-stat-label">Schedules generated (7d)</span>
+            <span className="admin-logs-stat-value">{stats.scheduleRuns7d}</span>
+          </div>
+          <div className="admin-logs-stat-card">
+            <span className="admin-logs-stat-label">Schedule failures (7d)</span>
+            <span
+              className={`admin-logs-stat-value ${
+                stats.scheduleFailures7d > 0 ? "admin-logs-stat-warning" : ""
+              }`}
+            >
+              {stats.scheduleFailures7d}
+            </span>
+          </div>
+          <div className="admin-logs-stat-card">
+            <span className="admin-logs-stat-label">Routing errors (7d)</span>
+            <span
+              className={`admin-logs-stat-value ${
+                stats.routingErrors7d > 0 ? "admin-logs-stat-warning" : ""
+              }`}
+            >
+              {stats.routingErrors7d}
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="admin-logs-filters">
         <form

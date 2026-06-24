@@ -41,6 +41,40 @@
   gap: 0.5rem;
 }
 
+/* STATS */
+
+.admin-logs-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.admin-logs-stat-card {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.admin-logs-stat-label {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.admin-logs-stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.admin-logs-stat-warning {
+  color: #f59e0b;
+}
+
 /* FILTERS */
 
 .admin-logs-filters {

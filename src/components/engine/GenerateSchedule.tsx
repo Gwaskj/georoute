@@ -12,6 +12,7 @@ import { runScheduler } from "@/lib/scheduler/engine";
 import { saveSchedulerResult } from "@/lib/scheduler/persist";
 import { SchedulerContext } from "@/lib/scheduler/types";
 import { getRouteBatched, clearLocalCache, getRouteErrors } from "@/lib/routing";
+import { logActivity } from "@/lib/logsClient";
 import AdBanner from "@/components/AdBanner";
 
 interface GenerateScheduleProps {
@@ -48,6 +49,7 @@ export default function GenerateSchedule({
     setIsRunning(true);
     setRouteError(null);
     clearLocalCache();
+    const startedAt = Date.now();
 
     // Pre-fetch all relevant postcode pairs to build a travel-time lookup
     const uniquePostcodes = new Set<string>();
@@ -109,6 +111,11 @@ export default function GenerateSchedule({
       setRouteError(
         `Could not get travel times for: ${details}. Double-check these postcodes are valid — if they look correct, the routing service may be temporarily unavailable.`
       );
+      logActivity("routing_error", null, {
+        isFree,
+        failedPairs: failedPairs.length,
+        details,
+      });
       setIsRunning(false);
       return;
     }
@@ -136,15 +143,37 @@ export default function GenerateSchedule({
       getTravelMinutes,
     };
 
-    const result = runScheduler(ctx);
+    try {
+      const result = runScheduler(ctx);
 
-    setResult(result.visits, result.warnings, result.hints);
+      setResult(result.visits, result.warnings, result.hints);
 
-    await saveSchedulerResult({
-      isFree,
-      ctx,
-      result,
-    });
+      await saveSchedulerResult({
+        isFree,
+        ctx,
+        result,
+      });
+
+      logActivity("schedule_generated", null, {
+        isFree,
+        staffCount: staff.length,
+        appointmentCount: appointments.length,
+        visitCount: result.visits.length,
+        warningCount: result.warnings.length,
+        hintCount: result.hints.length,
+        durationMs: Date.now() - startedAt,
+      });
+    } catch (err) {
+      logActivity("schedule_generation_failed", null, {
+        isFree,
+        staffCount: staff.length,
+        appointmentCount: appointments.length,
+        message: err instanceof Error ? err.message : String(err),
+      });
+      setRouteError(
+        "Schedule generation failed unexpectedly. This has been logged for investigation."
+      );
+    }
 
     setIsRunning(false);
   };

@@ -5,6 +5,7 @@ import {
   saveFreeSchedulerData,
 } from "@/lib/freeSession";
 import { supabase } from "@/lib/supabase/client";
+import { logActivity } from "@/lib/logsClient";
 
 export interface Appointment {
   id: string;
@@ -156,6 +157,9 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     const appointments = [...get().appointments, appointment];
     persistFree(appointments);
     scheduleSyncPro(appointments);
+    isPro().then((pro) => {
+      if (pro) logActivity("appointment_created", null, { appointmentId: appointment.id, name: appointment.name });
+    });
     set({ appointments });
     return appointment;
   },
@@ -174,13 +178,20 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
 
     persistFree(appointments);
     scheduleSyncPro(appointments);
+    isPro().then((pro) => {
+      if (pro) logActivity("appointment_updated", null, { appointmentId: id, updates });
+    });
     set({ appointments });
   },
 
   deleteAppointment: (id) => {
+    const removed = get().appointments.find((a) => a.id === id);
     const appointments = get().appointments.filter((a) => a.id !== id);
     persistFree(appointments);
     scheduleSyncPro(appointments);
+    isPro().then((pro) => {
+      if (pro) logActivity("appointment_deleted", null, { appointmentId: id, name: removed?.name });
+    });
     set({ appointments });
   },
 

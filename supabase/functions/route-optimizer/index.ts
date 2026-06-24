@@ -111,11 +111,30 @@ serve(async (req: Request) => {
     ]);
 
     if (!originCoords || !destCoords) {
-      throw new Error(`Could not geocode one or both postcodes: ${origin}, ${destination}`);
+      const message = `Could not geocode one or both postcodes: ${origin}, ${destination}`;
+      await logRoutingEvent(supabase, "routing_error", { origin, destination, stage: "geocode", message });
+      throw new Error(message);
     }
 
     // ---- STEP 3: Call ORS routing API ----
-    const routeResult = await callOrsRouting(originCoords, destCoords, orsKey);
+    // Every call past this point hits the external ORS API (counts against
+    // the 2,000 requests/day quota) — logged so usage can be tracked in the
+    // admin Logs page.
+    let routeResult;
+    try {
+      routeResult = await callOrsRouting(originCoords, destCoords, orsKey);
+    } catch (orsErr) {
+      const message = orsErr instanceof Error ? orsErr.message : String(orsErr);
+      await logRoutingEvent(supabase, "routing_error", { origin, destination, stage: "ors", message });
+      throw orsErr;
+    }
+
+    await logRoutingEvent(supabase, "route_generated_ors", {
+      origin,
+      destination,
+      distance_km: routeResult.distance_km,
+      duration_minutes: routeResult.duration_minutes,
+    });
 
     // ---- STEP 4: Store in cache ----
     const cachePayload = {
@@ -160,6 +179,23 @@ serve(async (req: Request) => {
     );
   }
 });
+
+// ── Record routing activity for the admin Logs page (service role, bypasses RLS) ──
+async function logRoutingEvent(
+  supabase: ReturnType<typeof createClient>,
+  action: "route_generated_ors" | "routing_error",
+  details: Record<string, unknown>
+) {
+  const { error } = await supabase.from("activity_logs").insert({
+    actor_id: null,
+    target_user_id: null,
+    action,
+    details,
+  });
+  if (error) {
+    console.error(`Failed to log "${action}":`, error);
+  }
+}
 
 // ── Geocode a UK postcode to [lng, lat] using postcodes.io ──
 async function geocodePostcode(postcode: string): Promise<[number, number] | null> {

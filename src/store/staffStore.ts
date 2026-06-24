@@ -6,6 +6,7 @@ import {
   saveFreeSchedulerData,
   FreeSchedulerData,
 } from "@/lib/freeSession";
+import { logActivity } from "@/lib/logsClient";
 
 export type Gender = "Male" | "Female" | "Other";
 
@@ -146,7 +147,10 @@ export const useStaffStore = create<StaffState>((set, get) => ({
     persistFree(staff, get().selectedStaffIds);
     // Also persist to Supabase if pro
     isPro().then((pro) => {
-      if (pro) persistPro(staff, get().selectedStaffIds);
+      if (pro) {
+        persistPro(staff, get().selectedStaffIds);
+        logActivity("staff_added", null, { staffId: newStaff.id, name: newStaff.name });
+      }
     });
     set({ staff });
     return newStaff;
@@ -171,18 +175,25 @@ export const useStaffStore = create<StaffState>((set, get) => ({
 
     persistFree(staff, get().selectedStaffIds);
     isPro().then((pro) => {
-      if (pro) persistPro(staff, get().selectedStaffIds);
+      if (pro) {
+        persistPro(staff, get().selectedStaffIds);
+        logActivity("staff_updated", null, { staffId: id, updates });
+      }
     });
     set({ staff });
   },
 
   deleteStaff: (id) => {
+    const removed = get().staff.find((s) => s.id === id);
     const staff = get().staff.filter((s) => s.id !== id);
     const selectedStaffIds = get().selectedStaffIds.filter((x) => x !== id);
 
     persistFree(staff, selectedStaffIds);
     isPro().then((pro) => {
-      if (pro) persistPro(staff, selectedStaffIds);
+      if (pro) {
+        persistPro(staff, selectedStaffIds);
+        logActivity("staff_removed", null, { staffId: id, name: removed?.name });
+      }
     });
     set({ staff, selectedStaffIds });
   },
