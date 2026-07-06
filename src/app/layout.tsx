@@ -15,15 +15,59 @@ import Link from "next/link";
 import HeaderLoader from "@/components/HeaderLoader";
 import ThemeProvider from "@/components/ThemeProvider";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://georoutes.vercel.app";
+
 export const metadata: Metadata = {
-  title: "GeoRoute – Smarter Route Planning",
-  description: "Smarter route planning for teams that don’t slow down.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "GeoRoute – Smarter Route Planning",
+    template: "%s – GeoRoute",
+  },
+  description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start.",
+  openGraph: {
+    type: "website",
+    siteName: "GeoRoute",
+    title: "GeoRoute – Smarter Route Planning",
+    description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start.",
+    url: SITE_URL,
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "GeoRoute – Smarter Route Planning" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GeoRoute – Smarter Route Planning",
+    description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start.",
+    images: ["/opengraph-image.png"],
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="h-full">
       <body className="min-h-full">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "GeoRoute",
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web",
+              url: SITE_URL,
+              description: "Route-optimised scheduling tool for field teams. Plan schedules, assign staff, and generate optimised routes using real road distances.",
+              offers: { "@type": "Offer", price: "0", priceCurrency: "GBP", name: "Free plan" },
+              featureList: [
+                "Route-optimised schedule generation",
+                "Real road distance calculations",
+                "Staff and appointment management",
+                "Custom working windows",
+                "UK postcode geocoding",
+              ],
+              inLanguage: "en-GB",
+            }),
+          }}
+        />
+
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1904838490296389"

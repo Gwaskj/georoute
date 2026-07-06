@@ -1,9 +1,20 @@
+import type { Metadata } from "next";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import PageRenderer from "@/components/cms/PageRenderer";
 import FreeTierAdSlot from "@/components/ads/FreeTierAdSlot";
 import type { AnyBlock } from "@/lib/types/cms";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "GeoRoute – Smarter Route Planning",
+  description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start, no account required.",
+  openGraph: {
+    title: "GeoRoute – Smarter Route Planning",
+    description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start, no account required.",
+    url: "/",
+  },
+};
 
 const FALLBACK_BLOCKS: AnyBlock[] = [
   {
