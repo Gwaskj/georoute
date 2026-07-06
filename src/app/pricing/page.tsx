@@ -114,6 +114,9 @@ export default function PricingPage() {
 
         {!user || (user && profile && !profile.is_pro) ? (
           <div className="mt-10">
+            <p className="mb-1 text-center text-[10px] uppercase tracking-widest text-slate-600">
+              Advertisement
+            </p>
             <AdBanner />
           </div>
         ) : null}

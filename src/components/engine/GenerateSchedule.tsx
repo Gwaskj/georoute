@@ -13,7 +13,7 @@ import { saveSchedulerResult } from "@/lib/scheduler/persist";
 import { SchedulerContext } from "@/lib/scheduler/types";
 import { getRouteBatched, clearLocalCache, getRouteErrors } from "@/lib/routing";
 import { logActivity } from "@/lib/logsClient";
-import AdBanner from "@/components/AdBanner";
+import FreeTierAdSlot from "@/components/ads/FreeTierAdSlot";
 
 interface GenerateScheduleProps {
   algorithm: "default";
@@ -34,7 +34,6 @@ export default function GenerateSchedule({
   const { visits, warnings, hints, setResult } = useScheduleResultStore();
   const [isRunning, setIsRunning] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
-  const [showAdGate, setShowAdGate] = useState(false);
 
   // Load settings on mount
   useEffect(() => {
@@ -178,62 +177,17 @@ export default function GenerateSchedule({
     setIsRunning(false);
   };
 
-  function handleGenerateClick() {
-    if (isFree) {
-      setShowAdGate(true);
-      return;
-    }
-    handleRun();
-  }
-
-  function handleAdGateContinue() {
-    setShowAdGate(false);
-    handleRun();
-  }
 
   return (
     <div className="space-y-3 text-xs text-slate-200">
       <button
         type="button"
-        onClick={handleGenerateClick}
+        onClick={handleRun}
         disabled={isRunning}
         className="w-full rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-700"
       >
         {isRunning ? "Generating..." : "Generate schedule"}
       </button>
-
-      {showAdGate && (
-        <div className="modal-overlay">
-          <div className="modal-container">
-            <div className="modal-header flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-100">
-                Generating your schedule…
-              </h3>
-              <button
-                onClick={() => setShowAdGate(false)}
-                className="text-slate-400 hover:text-white text-xl"
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <AdBanner />
-            </div>
-
-            <div className="modal-footer">
-              <button
-                type="button"
-                onClick={handleAdGateContinue}
-                className="rounded bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {routeError && (
         <div className="rounded border border-red-700 bg-red-950/40 p-2 text-[11px] text-red-300">
@@ -310,6 +264,15 @@ export default function GenerateSchedule({
           No schedule generated yet. Configure staff, appointments, purposes, and
           windows, then click Generate.
         </p>
+      )}
+
+      {visits.length > 0 && (
+        <div className="mt-2">
+          <p className="mb-1 text-center text-[10px] uppercase tracking-widest text-slate-600">
+            Advertisement
+          </p>
+          <FreeTierAdSlot />
+        </div>
       )}
     </div>
   );

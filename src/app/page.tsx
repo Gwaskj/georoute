@@ -120,6 +120,9 @@ export default async function HomePage() {
       <PageRenderer blocks={blocks} />
 
       <div className="mx-auto max-w-6xl px-4 pb-16">
+        <p className="mb-1 text-center text-[10px] uppercase tracking-widest text-slate-600">
+          Advertisement
+        </p>
         <FreeTierAdSlot />
       </div>
     </div>

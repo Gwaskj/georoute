@@ -45,6 +45,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <span>© {new Date().getFullYear()} GeoRoute. All rights reserved.</span>
                 <div className="flex items-center gap-4">
                   <span className="hidden sm:inline">Smarter route planning for teams that don’t slow down.</span>
+                  <Link href="/how-it-works" className="hover:text-slate-200">How It Works</Link>
                   <Link href="/privacy" className="hover:text-slate-200">Privacy Policy</Link>
                   <Link href="/terms" className="hover:text-slate-200">Terms of Service</Link>
                 </div>
