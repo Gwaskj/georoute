@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy Policy – GeoRoute",
   description: "How GeoRoute collects, uses, and protects your information.",
+  alternates: { canonical: "/privacy" },
 };
 
 const CONTACT_EMAIL = "support@georoute.app";

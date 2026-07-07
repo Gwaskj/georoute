@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Terms of Service – GeoRoute",
   description: "The terms that govern use of the GeoRoute service.",
+  alternates: { canonical: "/terms" },
 };
 
 const CONTACT_EMAIL = "support@georoute.app";

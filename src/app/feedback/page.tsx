@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Feedback – GeoRoute",
   description: "Share feedback, bug reports, or feature requests for GeoRoute.",
+  alternates: { canonical: "/feedback" },
 };
 
 const FORM_URL =

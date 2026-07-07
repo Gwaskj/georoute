@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "How It Works – GeoRoute",
   description:
     "Learn how GeoRoute helps field teams plan smarter schedules, assign staff efficiently, and generate optimised routes — all in one tool.",
+  alternates: { canonical: "/how-it-works" },
 };
 
 const steps = [
