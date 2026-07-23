@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service – GeoRoute",
-  description: "The terms that govern use of the GeoRoute service.",
+  title: "Terms of Service – GeoRoutes",
+  description: "The terms that govern use of the GeoRoutes service.",
   alternates: { canonical: "/terms" },
 };
 
-const CONTACT_EMAIL = "support@georoute.app";
+const CONTACT_EMAIL = "support@georoutes.co.uk";
 const LAST_UPDATED = "18 June 2026";
 
 function Section({
@@ -40,7 +40,7 @@ export default function TermsPage() {
         <div className="mt-10">
           <Section title="Agreement to terms">
             <p>
-              By creating an account or using GeoRoute (&quot;the
+              By creating an account or using GeoRoutes (&quot;the
               Service&quot;), you agree to these Terms of Service. If you do
               not agree, please do not use the Service.
             </p>
@@ -48,7 +48,7 @@ export default function TermsPage() {
 
           <Section title="The service">
             <p>
-              GeoRoute helps teams plan staff schedules and routes. We offer
+              GeoRoutes helps teams plan staff schedules and routes. We offer
               a free tier with limited features and storage, and a paid Pro
               tier with expanded limits and cloud storage. We may change or
               discontinue features at any time, and will make reasonable
@@ -111,7 +111,7 @@ export default function TermsPage() {
               The Service is provided &quot;as is&quot; without warranties of
               any kind. Route and schedule suggestions are generated
               automatically and should be reviewed before relying on them
-              operationally. To the maximum extent permitted by law, GeoRoute
+              operationally. To the maximum extent permitted by law, GeoRoutes
               is not liable for indirect, incidental, or consequential
               damages arising from use of the Service.
             </p>

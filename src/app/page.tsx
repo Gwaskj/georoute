@@ -7,11 +7,11 @@ import type { AnyBlock } from "@/lib/types/cms";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "GeoRoute – Smarter Route Planning",
+  title: "GeoRoutes – Smarter Route Planning",
   description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start, no account required.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "GeoRoute – Smarter Route Planning",
+    title: "GeoRoutes – Smarter Route Planning",
     description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start, no account required.",
     url: "/",
   },

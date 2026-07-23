@@ -632,7 +632,7 @@ function DoodleTab({
       {/* Preview */}
       <div className="rounded border border-slate-700 bg-slate-800 p-6 flex items-center justify-center">
         <LogoPreview
-          brandText="GeoRoute"
+          brandText="GeoRoutes"
           doodle={draft.logoDoodle}
           doodleColor={draft.logoDoodleColor}
           primaryColor={draft.colorPrimary}
@@ -775,7 +775,7 @@ function ThemePreview({ config, draftName }: { config: ThemeConfig; draftName: s
       >
         <div className="flex items-center gap-1.5">
           <LogoPreview
-            brandText="GeoRoute"
+            brandText="GeoRoutes"
             doodle={config.logoDoodle}
             doodleColor={config.logoDoodleColor}
             primaryColor={config.colorPrimary}

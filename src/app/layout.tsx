@@ -15,26 +15,26 @@ import Link from "next/link";
 import HeaderLoader from "@/components/HeaderLoader";
 import ThemeProvider from "@/components/ThemeProvider";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://georoutes.vercel.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://georoutes.co.uk";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "GeoRoute – Smarter Route Planning",
-    template: "%s – GeoRoute",
+    default: "GeoRoutes – Smarter Route Planning",
+    template: "%s – GeoRoutes",
   },
   description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start.",
   openGraph: {
     type: "website",
-    siteName: "GeoRoute",
-    title: "GeoRoute – Smarter Route Planning",
+    siteName: "GeoRoutes",
+    title: "GeoRoutes – Smarter Route Planning",
     description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start.",
     url: SITE_URL,
-    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "GeoRoute – Smarter Route Planning" }],
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "GeoRoutes – Smarter Route Planning" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "GeoRoute – Smarter Route Planning",
+    title: "GeoRoutes – Smarter Route Planning",
     description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start.",
     images: ["/opengraph-image.png"],
   },
@@ -50,7 +50,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              name: "GeoRoute",
+              name: "GeoRoutes",
               applicationCategory: "BusinessApplication",
               operatingSystem: "Web",
               url: SITE_URL,
@@ -86,7 +86,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
             <footer className="border-t border-slate-800 bg-slate-950/80">
               <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-                <span>© {new Date().getFullYear()} GeoRoute. All rights reserved.</span>
+                <span>© {new Date().getFullYear()} GeoRoutes. All rights reserved.</span>
                 <div className="flex items-center gap-4">
                   <span className="hidden sm:inline">Smarter route planning for teams that don’t slow down.</span>
                   <Link href="/how-it-works" className="hover:text-slate-200">How It Works</Link>

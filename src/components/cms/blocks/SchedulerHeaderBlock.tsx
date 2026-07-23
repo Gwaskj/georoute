@@ -9,7 +9,7 @@ export default function SchedulerHeaderBlock({
 }) {
   const subtitle =
     isFree === false
-      ? (data.proSubtitle ?? "Pro mode — data stored in your GeoRoute workspace.")
+      ? (data.proSubtitle ?? "Pro mode — data stored in your GeoRoutes workspace.")
       : (data.freeSubtitle ?? "Free mode — data stored in this browser session only.");
 
   return (

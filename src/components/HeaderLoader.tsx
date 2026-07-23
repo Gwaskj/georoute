@@ -24,7 +24,7 @@ export default async function HeaderLoader() {
 
   const brand: BrandConfig = layout.brand ?? {
     enabled: true,
-    text: "GeoRoute",
+    text: "GeoRoutes",
   };
 
   const rawNavItems: NavItem[] =

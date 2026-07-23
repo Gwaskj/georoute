@@ -40,7 +40,7 @@ export default function HeaderEditorPage() {
 
   const [brand, setBrand] = useState<BrandConfig>({
     enabled: true,
-    text: "GeoRoute",
+    text: "GeoRoutes",
   });
 
   const [navItems, setNavItems] = useState<NavItem[]>([]);
@@ -75,7 +75,7 @@ export default function HeaderEditorPage() {
       setBrand(
         layout.brand ?? {
           enabled: true,
-          text: "GeoRoute",
+          text: "GeoRoutes",
         }
       );
 

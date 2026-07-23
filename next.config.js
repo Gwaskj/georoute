@@ -15,7 +15,7 @@ const nextConfig = {
       {
         source: "/:path*",
         has: [{ type: "host", value: "georoute-bice.vercel.app" }],
-        destination: "https://georoutes.vercel.app/:path*",
+        destination: "https://georoutes.co.uk/:path*",
         permanent: true,
       },
     ];

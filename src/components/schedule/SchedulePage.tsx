@@ -37,10 +37,10 @@ export default function SchedulePage({ isFree, cmsBlocks = [] }: SchedulePagePro
 
   const headerBlock = cmsBlocks.find((b) => b.type === "scheduler_header");
   const headerData = (headerBlock?.data ?? {}) as Partial<SchedulerHeaderData>;
-  const pageTitle = headerData.title ?? "GeoRoute Scheduler";
+  const pageTitle = headerData.title ?? "GeoRoutes Scheduler";
   const pageSubtitle = isFree
     ? (headerData.freeSubtitle ?? "Free mode — data stored in this browser session only.")
-    : (headerData.proSubtitle ?? "Pro mode — data stored in your GeoRoute workspace.");
+    : (headerData.proSubtitle ?? "Pro mode — data stored in your GeoRoutes workspace.");
 
   const sectionIntros = cmsBlocks.filter((b) => b.type === "section_intro");
 

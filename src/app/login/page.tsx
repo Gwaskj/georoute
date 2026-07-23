@@ -36,7 +36,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-xl">
         <h1 className="text-2xl font-semibold text-slate-50 text-center">
-          Log in to GeoRoute
+          Log in to GeoRoutes
         </h1>
         <p className="mt-2 text-sm text-slate-400 text-center">
           Access your routes, staff schedules, and planning dashboard.

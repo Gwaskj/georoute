@@ -3,9 +3,9 @@ import Link from "next/link";
 import FreeTierAdSlot from "@/components/ads/FreeTierAdSlot";
 
 export const metadata: Metadata = {
-  title: "How It Works – GeoRoute",
+  title: "How It Works – GeoRoutes",
   description:
-    "Learn how GeoRoute helps field teams plan smarter schedules, assign staff efficiently, and generate optimised routes — all in one tool.",
+    "Learn how GeoRoutes helps field teams plan smarter schedules, assign staff efficiently, and generate optimised routes — all in one tool.",
   alternates: { canonical: "/how-it-works" },
 };
 
@@ -13,12 +13,12 @@ const steps = [
   {
     number: "01",
     title: "Add your staff",
-    body: "Enter each team member's name, home or office postcode, and working hours. GeoRoute uses this information to assign appointments fairly and calculate realistic travel times between locations.",
+    body: "Enter each team member's name, home or office postcode, and working hours. GeoRoutes uses this information to assign appointments fairly and calculate realistic travel times between locations.",
   },
   {
     number: "02",
     title: "Enter your appointments",
-    body: "Add every client visit or appointment with their name, postcode, and estimated duration. You can also set call purposes (for example, assessment, routine review, or emergency) so GeoRoute can apply different scheduling rules to different types of visit.",
+    body: "Add every client visit or appointment with their name, postcode, and estimated duration. You can also set call purposes (for example, assessment, routine review, or emergency) so GeoRoutes can apply different scheduling rules to different types of visit.",
   },
   {
     number: "03",
@@ -28,7 +28,7 @@ const steps = [
   {
     number: "04",
     title: "Generate an optimised schedule",
-    body: "Click Generate and GeoRoute's scheduling engine assigns every appointment to the most appropriate staff member, minimising travel time and maximising the number of appointments completed within the working day. Real road-distance data powers the routing, not straight-line estimates.",
+    body: "Click Generate and GeoRoutes' scheduling engine assigns every appointment to the most appropriate staff member, minimising travel time and maximising the number of appointments completed within the working day. Real road-distance data powers the routing, not straight-line estimates.",
   },
   {
     number: "05",
@@ -40,15 +40,15 @@ const steps = [
 const faqs = [
   {
     q: "Do I need to create an account?",
-    a: "No. You can use GeoRoute in free mode without registering — your data is stored only in your browser session. Creating an account (Pro) saves your staff, appointments, and schedule history to the cloud so you can access it from any device.",
+    a: "No. You can use GeoRoutes in free mode without registering — your data is stored only in your browser session. Creating an account (Pro) saves your staff, appointments, and schedule history to the cloud so you can access it from any device.",
   },
   {
-    q: "How does GeoRoute calculate travel times?",
-    a: "GeoRoute uses the OpenRouteService routing API, which calculates real driving distances and times based on live road network data. UK postcodes are geocoded automatically, so you never need to enter coordinates manually.",
+    q: "How does GeoRoutes calculate travel times?",
+    a: "GeoRoutes uses the OpenRouteService routing API, which calculates real driving distances and times based on live road network data. UK postcodes are geocoded automatically, so you never need to enter coordinates manually.",
   },
   {
     q: "How many appointments can I schedule?",
-    a: "Free mode supports a limited number of staff and appointments per session. Pro users have higher limits and cloud persistence, making GeoRoute suitable for teams with large daily caseloads.",
+    a: "Free mode supports a limited number of staff and appointments per session. Pro users have higher limits and cloud persistence, making GeoRoutes suitable for teams with large daily caseloads.",
   },
   {
     q: "Is my data secure?",
@@ -71,10 +71,10 @@ export default function HowItWorksPage() {
 
         <div className="mb-12 text-center">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            How GeoRoute Works
+            How GeoRoutes Works
           </h1>
           <p className="mt-4 text-slate-300 text-sm sm:text-base leading-relaxed">
-            GeoRoute is a route-optimised scheduling tool for field teams. It
+            GeoRoutes is a route-optimised scheduling tool for field teams. It
             takes your staff, your appointments, and your working rules — and
             produces an efficient daily schedule in seconds.
           </p>
@@ -106,14 +106,14 @@ export default function HowItWorksPage() {
 
         {/* Key benefits */}
         <section className="mb-16 rounded-2xl border border-slate-800 bg-slate-900/60 px-6 py-8">
-          <h2 className="mb-6 text-xl font-semibold">Why teams use GeoRoute</h2>
+          <h2 className="mb-6 text-xl font-semibold">Why teams use GeoRoutes</h2>
           <ul className="space-y-4 text-sm text-slate-300">
             <li className="flex gap-3">
               <span className="text-teal-400 font-bold">→</span>
               <span>
                 <strong className="text-slate-100">Save hours each week.</strong>{" "}
                 Manual scheduling on paper or in spreadsheets can take an hour
-                or more. GeoRoute produces an optimised schedule in seconds.
+                or more. GeoRoutes produces an optimised schedule in seconds.
               </span>
             </li>
             <li className="flex gap-3">
@@ -136,7 +136,7 @@ export default function HowItWorksPage() {
               <span className="text-teal-400 font-bold">→</span>
               <span>
                 <strong className="text-slate-100">Start free, scale as you grow.</strong>{" "}
-                No credit card needed to try GeoRoute. Upgrade to Pro when you
+                No credit card needed to try GeoRoutes. Upgrade to Pro when you
                 need cloud storage and higher appointment limits.
               </span>
             </li>
@@ -164,7 +164,7 @@ export default function HowItWorksPage() {
         <div className="rounded-2xl border border-teal-500/40 bg-gradient-to-br from-teal-900/30 to-slate-900/60 p-8 text-center">
           <h2 className="mb-2 text-xl font-semibold">Ready to get started?</h2>
           <p className="mb-6 text-sm text-slate-300">
-            Try GeoRoute free — no account required.
+            Try GeoRoutes free — no account required.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link

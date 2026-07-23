@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy – GeoRoute",
-  description: "How GeoRoute collects, uses, and protects your information.",
+  title: "Privacy Policy – GeoRoutes",
+  description: "How GeoRoutes collects, uses, and protects your information.",
   alternates: { canonical: "/privacy" },
 };
 
-const CONTACT_EMAIL = "support@georoute.app";
+const CONTACT_EMAIL = "support@georoutes.co.uk";
 const LAST_UPDATED = "18 June 2026";
 
 function Section({
@@ -40,9 +40,9 @@ export default function PrivacyPolicyPage() {
         <div className="mt-10">
           <Section title="Overview">
             <p>
-              GeoRoute (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) provides
+              GeoRoutes (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) provides
               route planning and scheduling software. This policy explains
-              what information we collect when you use georoute.app, how we
+              what information we collect when you use georoutes.co.uk, how we
               use it, and the choices available to you.
             </p>
           </Section>
@@ -88,7 +88,7 @@ export default function PrivacyPolicyPage() {
 
           <Section title="Advertising">
             <p>
-              GeoRoute uses Google AdSense to show advertising to users on
+              GeoRoutes uses Google AdSense to show advertising to users on
               our free plan. Google, as a third-party vendor, uses cookies
               (including the DoubleClick DART cookie) to serve ads based on
               your visits to this and other websites.
@@ -147,7 +147,7 @@ export default function PrivacyPolicyPage() {
 
           <Section title="Children's privacy">
             <p>
-              GeoRoute is a business scheduling tool and is not directed at
+              GeoRoutes is a business scheduling tool and is not directed at
               children. We do not knowingly collect information from anyone
               under 16.
             </p>

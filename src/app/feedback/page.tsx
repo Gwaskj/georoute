@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Feedback – GeoRoute",
-  description: "Share feedback, bug reports, or feature requests for GeoRoute.",
+  title: "Feedback – GeoRoutes",
+  description: "Share feedback, bug reports, or feature requests for GeoRoutes.",
   alternates: { canonical: "/feedback" },
 };
 
@@ -17,13 +17,13 @@ export default function FeedbackPage() {
           Feedback
         </h1>
         <p className="mt-2 text-sm text-slate-400">
-          Found a bug, or have an idea for GeoRoute? Let us know below.
+          Found a bug, or have an idea for GeoRoutes? Let us know below.
         </p>
 
         <div className="mt-8 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60">
           <iframe
             src={FORM_URL}
-            title="GeoRoute feedback form"
+            title="GeoRoutes feedback form"
             width="100%"
             height="900"
             style={{ display: "block", border: 0 }}

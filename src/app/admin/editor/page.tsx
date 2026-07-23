@@ -162,9 +162,9 @@ function createBlock(type: BlockType): AnyBlock {
         type,
         visible: true,
         data: {
-          title: "GeoRoute Scheduler",
+          title: "GeoRoutes Scheduler",
           freeSubtitle: "Free mode — data stored in this browser session only.",
-          proSubtitle: "Pro mode — data stored in your GeoRoute workspace.",
+          proSubtitle: "Pro mode — data stored in your GeoRoutes workspace.",
         },
       };
     case "section_intro":
