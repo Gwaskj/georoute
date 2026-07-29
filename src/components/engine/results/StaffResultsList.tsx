@@ -1,10 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ScheduledVisit } from "@/lib/scheduler/types";
+import { ScheduledVisit, ScheduledBreak } from "@/lib/scheduler/types";
 import { Staff } from "@/store/staffStore";
 import { LEG_COLORS } from "@/lib/map/legColors";
 import { StaffLeg, RETURN_TO_BASE_ID } from "@/lib/map/useStaffLegSchedule";
+import RouteLinks from "./RouteLinks";
+import { wazeUrl, type NavStop } from "@/lib/navigation/mapLinks";
 
 interface StaffResultsListProps {
   staff: Staff[];
@@ -17,6 +19,7 @@ interface StaffResultsListProps {
   onSelectVisit: (visitId: string | null) => void;
   staffLegSchedule?: StaffLeg[];
   legScheduleLoading?: boolean;
+  breaks?: ScheduledBreak[];
 }
 
 const fmtClock = (d: Date) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -87,6 +90,7 @@ export default function StaffResultsList({
   onSelectVisit,
   staffLegSchedule,
   legScheduleLoading,
+  breaks = [],
 }: StaffResultsListProps) {
   const visitsByStaff = staff.reduce<Record<string, ScheduledVisit[]>>(
     (acc, s) => {
@@ -172,6 +176,26 @@ export default function StaffResultsList({
                     const firstLeg = staffLegs[0];
                     const lastLeg = staffLegs[staffLegs.length - 1];
                     const isReturnSelected = selectedVisitId === RETURN_TO_BASE_ID;
+
+                    const sortedVisits = [...staffVisits].sort(
+                      (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+                    );
+
+                    const staffBreaks = breaks
+                      .filter((b) => b.staffId === s.id)
+                      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+                    // Start and finish come from the leg schedule, which is what
+                    // knows whether this person began at home or the office.
+                    const navOrigin: NavStop | null = firstLeg?.fromPostcode
+                      ? { label: firstLeg.fromLabel, postcode: firstLeg.fromPostcode }
+                      : null;
+                    const navDestination: NavStop | null = lastLeg?.toPostcode
+                      ? { label: lastLeg.toLabel, postcode: lastLeg.toPostcode }
+                      : null;
+                    const navStops: NavStop[] = sortedVisits
+                      .filter((v) => v.postcode)
+                      .map((v) => ({ label: v.clientName, postcode: v.postcode }));
                     return (
                       <>
                         <ul className="mt-2 space-y-1 border-t border-slate-700/60 pt-2">
@@ -199,12 +223,39 @@ export default function StaffResultsList({
                             </li>
                           )}
                           {(() => {
-                            const sortedVisits = [...staffVisits].sort(
-                              (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
-                            );
                             const items: ReactNode[] = [];
+                            const fmtT = (d: Date) =>
+                              d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+                            // Breaks are interleaved by start time so the list
+                            // reads as the day actually runs.
+                            let breakIdx = 0;
+                            const flushBreaksBefore = (limit: number) => {
+                              while (
+                                breakIdx < staffBreaks.length &&
+                                new Date(staffBreaks[breakIdx].start).getTime() <= limit
+                              ) {
+                                const br = staffBreaks[breakIdx++];
+                                const mins = Math.round(
+                                  (new Date(br.end).getTime() - new Date(br.start).getTime()) / 60000
+                                );
+                                items.push(
+                                  <li key={br.id}>
+                                    <div className="flex w-full items-center justify-between rounded border-l-[3px] border-l-amber-500/70 bg-amber-500/10 px-2 py-1 text-[11px]">
+                                      <span className="font-medium text-amber-200">Break</span>
+                                      <div className="flex items-center gap-2 text-amber-200/70">
+                                        <span>
+                                          {fmtT(new Date(br.start))}–{fmtT(new Date(br.end))} ({mins} min)
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </li>
+                                );
+                              }
+                            };
 
                             sortedVisits.forEach((v, i) => {
+                              flushBreaksBefore(new Date(v.start).getTime());
                               const fmt = (d: Date) =>
                                 d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
                               const isVisitSelected = selectedVisitId === v.id;
@@ -223,7 +274,10 @@ export default function StaffResultsList({
                               }
 
                               items.push(
-                                <li key={v.id}>
+                                // The Waze link sits beside the row rather than
+                                // inside it -- an <a> nested in a <button> is
+                                // invalid and breaks keyboard activation.
+                                <li key={v.id} className="flex items-stretch gap-1">
                                   <button
                                     type="button"
                                     onClick={(e) => {
@@ -231,20 +285,32 @@ export default function StaffResultsList({
                                       onSelectVisit(isVisitSelected ? null : v.id);
                                     }}
                                     style={{ borderLeftColor: legColor }}
-                                    className={`flex w-full items-center justify-between rounded border-l-[3px] px-2 py-1 text-[11px] text-left transition-colors ${
+                                    className={`flex min-w-0 flex-1 items-center justify-between rounded border-l-[3px] px-2 py-1 text-[11px] text-left transition-colors ${
                                       isVisitSelected
                                         ? "bg-sky-500/20 ring-1 ring-sky-500/50"
                                         : "bg-slate-800/60 hover:bg-slate-700/60"
                                     }`}
                                   >
-                                    <span className="font-medium text-slate-100">{v.clientName}</span>
-                                    <div className="flex items-center gap-2 text-slate-400">
+                                    <span className="truncate font-medium text-slate-100">{v.clientName}</span>
+                                    <div className="flex flex-shrink-0 items-center gap-2 text-slate-400">
                                       <span>{v.postcode}</span>
                                       <span>
                                         {fmt(new Date(v.start))}–{fmt(new Date(v.end))} ({durationMins} min)
                                       </span>
                                     </div>
                                   </button>
+                                  {v.postcode && (
+                                    <a
+                                      href={wazeUrl({ label: v.clientName, postcode: v.postcode })}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      title={`Navigate to ${v.clientName} in Waze`}
+                                      className="flex flex-shrink-0 items-center rounded border border-slate-700 bg-slate-800 px-1.5 text-[10px] text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-700 hover:text-slate-100"
+                                    >
+                                      Waze
+                                    </a>
+                                  )}
                                 </li>
                               );
 
@@ -259,6 +325,9 @@ export default function StaffResultsList({
                                 }
                               }
                             });
+
+                            // Any break falling after the last visit.
+                            flushBreaksBefore(Infinity);
 
                             return items;
                           })()}
@@ -292,6 +361,12 @@ export default function StaffResultsList({
                             </li>
                           )}
                         </ul>
+
+                        <RouteLinks
+                          origin={navOrigin}
+                          stops={navStops}
+                          destination={navDestination}
+                        />
                       </>
                     );
                   })()}
