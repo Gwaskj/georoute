@@ -5,6 +5,7 @@ import { useStaffStore, Staff, Gender, StartLocation } from "@/store/staffStore"
 import { useSkillsStore, Skill } from "@/store/skillsStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { supabase } from "@/lib/supabase/client";
+import StaffLoginManager from "@/components/engine/staff/StaffLoginManager";
 
 function cleanPostcode(p: string) {
   return p.trim().toUpperCase();
@@ -260,8 +261,9 @@ export default function StaffPage() {
               return (
                 <div
                   key={s.id}
-                  className="flex items-center justify-between rounded border border-slate-800 bg-slate-900 px-4 py-3"
+                  className="rounded border border-slate-800 bg-slate-900 px-4 py-3"
                 >
+                  <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <span
                       className="inline-block h-4 w-4 rounded-full"
@@ -303,6 +305,16 @@ export default function StaffPage() {
                     >
                       Delete
                     </button>
+                  </div>
+                  </div>
+
+                  <div className="mt-2 border-t border-slate-800 pt-2">
+                    <StaffLoginManager
+                      staffLocalId={s.id}
+                      staffName={s.name}
+                      hasLogin={!!s.authUserId}
+                      onChanged={loadFromSupabase}
+                    />
                   </div>
                 </div>
               );

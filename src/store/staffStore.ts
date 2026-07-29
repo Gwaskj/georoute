@@ -44,6 +44,12 @@ export interface Staff {
   workEnd?: string;
   /** Unpaid breaks. Empty or omitted means none. */
   breaks?: StaffBreak[];
+  /**
+   * The auth user reading this staff member's rounds, if a login has been
+   * created. Read-only here -- it is managed by /api/staff-accounts and is
+   * deliberately not written back by persistPro.
+   */
+  authUserId?: string | null;
 }
 
 interface StaffState {
@@ -289,6 +295,7 @@ export const useStaffStore = create<StaffState>((set, get) => ({
         colour: row.colour ?? generateColour(),
         workStart: row.work_start ?? undefined,
         breaks: row.breaks ?? [],
+        authUserId: row.auth_user_id ?? null,
         workEnd: row.work_end ?? undefined,
       }));
 

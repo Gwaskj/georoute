@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SharedSchedulePayload } from "@/lib/share/types";
+import Link from "next/link";
 import ShareRouteLinks from "@/components/share/ShareRouteLinks";
+import SignOutLink from "@/components/share/SignOutLink";
 
 export const dynamic = "force-dynamic";
 
@@ -124,6 +126,18 @@ export default async function MyRoundPage() {
             </span>
           </li>
         </ol>
+
+        <div className="mt-8 flex items-center justify-center gap-4 border-t border-slate-800 pt-6 text-xs">
+          <Link href="/update-password" className="text-slate-400 hover:text-slate-200">
+            Change password
+          </Link>
+          <span className="text-slate-700">·</span>
+          <SignOutLink />
+        </div>
+
+        <p className="mt-4 text-center text-[11px] leading-relaxed text-slate-600">
+          This page contains personal information about the people you visit.
+        </p>
       </div>
     </div>
   );

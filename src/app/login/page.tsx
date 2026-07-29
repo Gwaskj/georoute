@@ -15,7 +15,7 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMsg("");
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -26,9 +26,22 @@ export default function LoginPage() {
       return;
     }
 
+    // Staff accounts get their round rather than the planning app, which they
+    // have no access to anyway. owner_user_id being set is what marks one.
+    let destination = "/";
+    if (data.user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("owner_user_id")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+
+      if (profile?.owner_user_id) destination = "/my-round";
+    }
+
     // Give Supabase time to write the cookie
     setTimeout(() => {
-      window.location.href = "/";
+      window.location.href = destination;
     }, 200);
   }
 
