@@ -129,7 +129,7 @@ function ResultsView({ isFree }: { isFree: boolean }) {
   const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
   const { staff } = useStaffStore();
   const { settings, loadSettings } = useSettingsStore();
-  const { visits, hasResult, setResult } = useScheduleResultStore();
+  const { visits, breaks, hasResult, setResult } = useScheduleResultStore();
   const { legs: staffLegSchedule, loading: legScheduleLoading } = useStaffLegSchedule(
     selectedStaffId,
     visits,
@@ -215,6 +215,7 @@ function ResultsView({ isFree }: { isFree: boolean }) {
         onSelectVisit={handleSelectVisit}
         staffLegSchedule={staffLegSchedule}
         legScheduleLoading={legScheduleLoading}
+        breaks={breaks}
       />
     </div>
   );

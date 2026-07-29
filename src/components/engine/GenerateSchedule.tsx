@@ -145,7 +145,7 @@ export default function GenerateSchedule({
     try {
       const result = runScheduler(ctx);
 
-      setResult(result.visits, result.warnings, result.hints);
+      setResult(result.visits, result.warnings, result.hints, result.breaks);
 
       await saveSchedulerResult({
         isFree,

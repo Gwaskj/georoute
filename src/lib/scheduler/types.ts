@@ -31,8 +31,20 @@ export interface SchedulerContext {
   getTravelMinutes?: (fromPostcode: string, toPostcode: string) => number;
 }
 
+/** A break the scheduler reserved in a staff member's day. */
+export interface ScheduledBreak {
+  id: string;
+  breakId: string;
+  staffId: string;
+  staffName: string;
+  start: string; // ISO datetime
+  end: string;   // ISO datetime
+}
+
 export interface SchedulerResult {
   visits: ScheduledVisit[];
+  /** Breaks that were reserved. Empty when no staff member has one. */
+  breaks: ScheduledBreak[];
   warnings: string[];
   hints: string[];
 }

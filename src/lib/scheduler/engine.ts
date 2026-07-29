@@ -1,5 +1,5 @@
 // src/lib/scheduler/engine.ts
-import { SchedulerContext, SchedulerResult, ScheduledVisit } from "./types";
+import { SchedulerContext, SchedulerResult, ScheduledVisit, ScheduledBreak } from "./types";
 import { Appointment } from "@/store/appointmentStore";
 import { Staff } from "@/store/staffStore";
 import { CallPurpose } from "@/store/callPurposeStore";
@@ -59,6 +59,13 @@ interface StaffTimelineSlot {
   start: number;
   end: number;
   postcode: string;
+  /**
+   * A break rather than a visit. Breaks occupy time but do not move anyone, so
+   * travel to and from them is zero -- the person takes their break wherever
+   * they happen to be, then carries on. Travel between the visits either side
+   * is still enforced by those visits' own pairwise checks.
+   */
+  isBreak?: boolean;
 }
 
 /** A visit recorded against a client for per-client gap enforcement. */
@@ -131,8 +138,9 @@ function findSlotForVisit(
     if (desiredStart < baseStart || desiredEnd > baseEnd) return null;
 
     for (const slot of existing) {
-      const travelBefore = travelMin(slot.postcode, clientPostcode);
-      const travelAfter = travelMin(clientPostcode, slot.postcode);
+      // A break does not move anyone, so it costs no travel.
+      const travelBefore = slot.isBreak ? 0 : travelMin(slot.postcode, clientPostcode);
+      const travelAfter = slot.isBreak ? 0 : travelMin(clientPostcode, slot.postcode);
 
       const slotBufferedStart = slot.start - travelBefore - minGapMinutes;
       const slotBufferedEnd = slot.end + travelAfter + minGapMinutes;
@@ -155,8 +163,8 @@ function findSlotForVisit(
   let current = baseStart;
 
   for (const slot of sorted) {
-    const travelBefore = travelMin(slot.postcode, clientPostcode);
-    const travelAfter = travelMin(clientPostcode, slot.postcode);
+    const travelBefore = slot.isBreak ? 0 : travelMin(slot.postcode, clientPostcode);
+    const travelAfter = slot.isBreak ? 0 : travelMin(clientPostcode, slot.postcode);
 
     const earliestStart = current;
     const latestEnd = earliestStart + visitDuration;
@@ -217,7 +225,17 @@ function makeISOVisit(
   };
 }
 
-export function runScheduler(ctx: SchedulerContext): SchedulerResult {
+interface BreakPlacement {
+  breakId: string;
+  start: number;
+  end: number;
+}
+
+/** One scheduling pass with break positions already decided. */
+function schedulePass(
+  ctx: SchedulerContext,
+  breakPlacements: Map<string, BreakPlacement[]>
+): SchedulerResult {
   const {
     staff,
     appointments,
@@ -238,7 +256,41 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
   const dayEndMin = toMinutes(dayEnd);
 
   const staffTimelines = new Map<string, StaffTimelineSlot[]>();
-  staff.forEach((s) => staffTimelines.set(s.id, []));
+
+  /** Break placements, recorded as they are reserved, for the result. */
+  const placedBreaks: Array<{
+    staffId: string;
+    staffName: string;
+    breakId: string;
+    start: number;
+    end: number;
+  }> = [];
+
+  // Breaks are reserved before any visit is placed, so the rest of the
+  // scheduler simply sees time that is not available -- findSlotForVisit
+  // already refuses to overlap an existing slot, and treats a break as costing
+  // no travel. Visits are then built around the breaks rather than the breaks
+  // being squeezed into whatever the visits happen to leave.
+  //
+  // Where each break goes is decided by the caller (see runScheduler), which
+  // probes the day without breaks first so it can drop them into existing idle
+  // time rather than at a fixed point in the window.
+  staff.forEach((s) => {
+    const slots: StaffTimelineSlot[] = [];
+
+    (breakPlacements.get(s.id) ?? []).forEach((p) => {
+      slots.push({ start: p.start, end: p.end, postcode: "", isBreak: true });
+      placedBreaks.push({
+        staffId: s.id,
+        staffName: s.name,
+        breakId: p.breakId,
+        start: p.start,
+        end: p.end,
+      });
+    });
+
+    staffTimelines.set(s.id, slots);
+  });
 
   /** Per-client gap tracking. Keyed by lowercase trimmed client name. */
   const clientScheduled = new Map<string, ClientVisitRecord[]>();
@@ -623,5 +675,197 @@ export function runScheduler(ctx: SchedulerContext): SchedulerResult {
     }
   }
 
-  return { visits, warnings, hints };
+  const breaks: ScheduledBreak[] = placedBreaks.map((b) => ({
+    id: crypto.randomUUID(),
+    breakId: b.breakId,
+    staffId: b.staffId,
+    staffName: b.staffName,
+    start: new Date(baseDate.getTime() + b.start * 60 * 1000).toISOString(),
+    end: new Date(baseDate.getTime() + b.end * 60 * 1000).toISOString(),
+  }));
+
+  return { visits, breaks, warnings, hints };
+}
+
+/** Local clock minutes for an ISO time produced by this engine, whose times
+ *  are built from local midnight. */
+function isoToMinutes(iso: string): number {
+  const d = new Date(iso);
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+interface Interval {
+  start: number;
+  end: number;
+}
+
+/** Remove [s, e] from a set of intervals, splitting any it lands inside. */
+function subtractInterval(intervals: Interval[], s: number, e: number): Interval[] {
+  const out: Interval[] = [];
+  for (const iv of intervals) {
+    if (e <= iv.start || s >= iv.end) {
+      out.push(iv);
+      continue;
+    }
+    if (iv.start < s) out.push({ start: iv.start, end: s });
+    if (e < iv.end) out.push({ start: e, end: iv.end });
+  }
+  return out;
+}
+
+/**
+ * Decide where each break should go, given a schedule built without them.
+ *
+ * The aim is to disturb the round as little as possible: a break dropped into
+ * time the person was already idle costs nothing, whereas one dropped at a
+ * fixed point in its window pushes every later visit back. So we work out the
+ * genuinely idle stretches -- gaps between visits minus the travel needed to
+ * cross them -- and prefer the largest one inside the break's window.
+ *
+ * If nothing is big enough, the break is still placed (people must get their
+ * break); it just lands at the earliest point in the window and the second
+ * pass reshapes the day around it.
+ */
+function planBreaks(
+  ctx: SchedulerContext,
+  probeVisits: ScheduledVisit[]
+): { placements: Map<string, BreakPlacement[]>; warnings: string[] } {
+  const { staff, dayStart, dayEnd, officePostcode, getTravelMinutes } = ctx;
+  const travelMin = getTravelMinutes ?? estimateTravelMinutes;
+
+  const dayStartMin = toMinutes(dayStart);
+  const dayEndMin = toMinutes(dayEnd);
+
+  const placements = new Map<string, BreakPlacement[]>();
+  const warnings: string[] = [];
+
+  for (const s of staff) {
+    const breaks = (s.breaks ?? []).filter((b) => (b?.minutes ?? 0) > 0);
+    if (breaks.length === 0) continue;
+
+    const staffDayStart = s.workStart
+      ? Math.max(dayStartMin, toMinutes(s.workStart))
+      : dayStartMin;
+    const staffDayEnd = s.workEnd
+      ? Math.min(dayEndMin, toMinutes(s.workEnd))
+      : dayEndMin;
+
+    const visits = probeVisits
+      .filter((v) => v.staffId === s.id)
+      .map((v) => ({
+        start: isoToMinutes(v.start),
+        end: isoToMinutes(v.end),
+        postcode: v.postcode,
+      }))
+      .sort((a, b) => a.start - b.start);
+
+    const origin = getStaffOriginPostcode(s, officePostcode);
+
+    // Stretches where this person is neither visiting nor travelling.
+    let idle: Interval[] = [];
+    if (visits.length === 0) {
+      idle.push({ start: staffDayStart, end: staffDayEnd });
+    } else {
+      const first = visits[0];
+      idle.push({
+        start: staffDayStart,
+        end: first.start - travelMin(origin, first.postcode),
+      });
+
+      for (let i = 0; i < visits.length - 1; i++) {
+        const a = visits[i];
+        const b = visits[i + 1];
+        idle.push({
+          start: a.end,
+          end: b.start - travelMin(a.postcode, b.postcode),
+        });
+      }
+
+      const last = visits[visits.length - 1];
+      idle.push({
+        start: last.end,
+        end: staffDayEnd - travelMin(last.postcode, origin),
+      });
+    }
+    idle = idle.filter((iv) => iv.end > iv.start);
+
+    // Earliest window first, so two breaks are considered in clock order.
+    const ordered = [...breaks].sort(
+      (a, b) =>
+        (a.windowStart ? toMinutes(a.windowStart) : staffDayStart) -
+        (b.windowStart ? toMinutes(b.windowStart) : staffDayStart)
+    );
+
+    const chosen: BreakPlacement[] = [];
+    // Keeps two breaks from being placed on top of one another.
+    let earliestNext = staffDayStart;
+
+    for (const b of ordered) {
+      const windowLow = Math.max(
+        staffDayStart,
+        b.windowStart ? toMinutes(b.windowStart) : staffDayStart
+      );
+      const windowHigh = Math.min(
+        staffDayEnd,
+        b.windowEnd ? toMinutes(b.windowEnd) : staffDayEnd
+      );
+
+      const describe =
+        b.windowStart || b.windowEnd
+          ? ` (${b.windowStart || "start of day"}–${b.windowEnd || "end of day"})`
+          : "";
+
+      if (windowHigh - Math.max(windowLow, earliestNext) < b.minutes) {
+        warnings.push(
+          `${s.name}: ${b.minutes} min break${describe} does not fit inside that window and their working hours, so it was not reserved.`
+        );
+        continue;
+      }
+
+      // Largest idle stretch that overlaps the window and is long enough.
+      let best: { start: number; length: number } | null = null;
+      for (const iv of idle) {
+        const lo = Math.max(iv.start, windowLow, earliestNext);
+        const hi = Math.min(iv.end, windowHigh);
+        const length = hi - lo;
+        if (length >= b.minutes && (!best || length > best.length)) {
+          best = { start: lo, length };
+        }
+      }
+
+      // Fall back to the earliest legal point: the break still happens, the
+      // second pass just has to build the day around it.
+      const start = best ? best.start : Math.max(windowLow, earliestNext);
+      const end = start + b.minutes;
+
+      chosen.push({ breakId: b.id, start, end });
+      idle = subtractInterval(idle, start, end);
+      earliestNext = end;
+    }
+
+    if (chosen.length > 0) placements.set(s.id, chosen);
+  }
+
+  return { placements, warnings };
+}
+
+export function runScheduler(ctx: SchedulerContext): SchedulerResult {
+  const hasBreaks = ctx.staff.some((s) =>
+    (s.breaks ?? []).some((b) => (b?.minutes ?? 0) > 0)
+  );
+
+  if (!hasBreaks) return schedulePass(ctx, new Map());
+
+  // Probe the day with no breaks to find where each person is already idle,
+  // then place breaks into that slack. Two passes total, regardless of how
+  // many staff or breaks there are.
+  const probe = schedulePass(
+    { ...ctx, staff: ctx.staff.map((s) => ({ ...s, breaks: [] })) },
+    new Map()
+  );
+
+  const { placements, warnings } = planBreaks(ctx, probe.visits);
+  const result = schedulePass(ctx, placements);
+
+  return { ...result, warnings: [...warnings, ...result.warnings] };
 }

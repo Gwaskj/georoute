@@ -12,6 +12,24 @@ export type Gender = "Male" | "Female" | "Other";
 
 export type StartLocation = "home" | "office";
 
+/**
+ * An unpaid break within a staff member's day, such as lunch.
+ *
+ * The break floats: the scheduler places it wherever it fits rather than at a
+ * fixed clock time, which is what lets a round absorb it without pushing every
+ * later visit back. A window constrains where it may land; with no window it
+ * can go anywhere in the person's working day.
+ */
+export interface StaffBreak {
+  id: string;
+  /** Length in minutes. */
+  minutes: number;
+  /** Optional earliest start, "HH:MM". Defaults to the start of their day. */
+  windowStart?: string;
+  /** Optional latest end, "HH:MM". Defaults to the end of their day. */
+  windowEnd?: string;
+}
+
 export interface Staff {
   id: string;
   name: string;
@@ -24,6 +42,8 @@ export interface Staff {
   colour: string;
   workStart?: string;
   workEnd?: string;
+  /** Unpaid breaks. Empty or omitted means none. */
+  breaks?: StaffBreak[];
 }
 
 interface StaffState {
@@ -114,6 +134,7 @@ async function persistPro(staff: Staff[], selectedStaffIds: string[]) {
       colour: s.colour,
       work_start: s.workStart ?? null,
       work_end: s.workEnd ?? null,
+      breaks: s.breaks ?? [],
       start_location: s.startLocation,
       local_id: s.id,
     }))
@@ -244,6 +265,7 @@ export const useStaffStore = create<StaffState>((set, get) => ({
         skills: row.skills ?? [],
         colour: row.colour ?? generateColour(),
         workStart: row.work_start ?? undefined,
+        breaks: row.breaks ?? [],
         workEnd: row.work_end ?? undefined,
       }));
 

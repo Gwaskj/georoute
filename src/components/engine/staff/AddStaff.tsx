@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useStaffStore, Staff, Gender, StartLocation } from "@/store/staffStore";
+import { useStaffStore, Staff, Gender, StartLocation, StaffBreak } from "@/store/staffStore";
 import { useSkillsStore, Skill } from "@/store/skillsStore";
 import { useSettingsStore } from "@/store/settingsStore";
 
@@ -15,6 +15,15 @@ interface AddStaffProps {
   triggerOnly?: boolean;
 }
 
+/** Break row while being edited. Times and length stay as strings so the
+ *  inputs can be cleared without collapsing to 0. */
+interface BreakFormRow {
+  id: string;
+  minutes: string;
+  windowStart: string;
+  windowEnd: string;
+}
+
 interface StaffFormState {
   id?: string;
   name: string;
@@ -26,6 +35,7 @@ interface StaffFormState {
   skills: string[];
   workStart: string;
   workEnd: string;
+  breaks: BreakFormRow[];
 }
 
 const emptyForm: StaffFormState = {
@@ -38,7 +48,17 @@ const emptyForm: StaffFormState = {
   skills: [],
   workStart: "",
   workEnd: "",
+  breaks: [],
 };
+
+function toBreakRow(b: StaffBreak): BreakFormRow {
+  return {
+    id: b.id,
+    minutes: String(b.minutes),
+    windowStart: b.windowStart ?? "",
+    windowEnd: b.windowEnd ?? "",
+  };
+}
 
 function calculateAge(dob: string): number | null {
   if (!dob) return null;
@@ -92,6 +112,7 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
         skills: [...s.skills],
         workStart: s.workStart ?? "",
         workEnd: s.workEnd ?? "",
+        breaks: (s.breaks ?? []).map(toBreakRow),
       });
       setErrors({});
       setIsModalOpen(true);
@@ -126,6 +147,7 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
       skills: [...s.skills],
       workStart: s.workStart ?? "",
       workEnd: s.workEnd ?? "",
+      breaks: (s.breaks ?? []).map(toBreakRow),
     });
     setErrors({});
     setIsModalOpen(true);
@@ -139,6 +161,17 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
       ? cleanPostcode(form.officePostcode)
       : globalOfficePostcode;
 
+    // Rows with no usable length are dropped rather than stored as zero-minute
+    // breaks the scheduler would silently ignore.
+    const breaksValue: StaffBreak[] = form.breaks
+      .map((row) => ({
+        id: row.id,
+        minutes: parseInt(row.minutes, 10),
+        windowStart: row.windowStart || undefined,
+        windowEnd: row.windowEnd || undefined,
+      }))
+      .filter((b) => Number.isFinite(b.minutes) && b.minutes > 0);
+
     if (isEditing && form.id) {
       updateStaff(form.id, {
         name: form.name.trim(),
@@ -150,6 +183,7 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
         skills: form.skills,
         workStart: form.workStart || undefined,
         workEnd: form.workEnd || undefined,
+        breaks: breaksValue,
       });
     } else {
       if (!canAddMore) return;
@@ -163,6 +197,7 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
         skills: form.skills,
         workStart: form.workStart || undefined,
         workEnd: form.workEnd || undefined,
+        breaks: breaksValue,
       });
     }
 
@@ -482,6 +517,91 @@ function StaffForm({
             className="flex-1 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
           />
         </div>
+      </div>
+
+      <div>
+        <label className="mb-1 block font-medium text-slate-200">Breaks</label>
+        <p className="mb-2 text-xs text-slate-400">
+          Unpaid breaks such as lunch. Nothing is scheduled during them. Leave
+          the window blank to let a break fall anywhere in the working day.
+        </p>
+
+        <div className="space-y-2">
+          {form.breaks.map((row: BreakFormRow, i: number) => {
+            const update = (patch: Partial<BreakFormRow>) =>
+              setForm((f: any) => ({
+                ...f,
+                breaks: f.breaks.map((r: BreakFormRow) =>
+                  r.id === row.id ? { ...r, ...patch } : r
+                ),
+              }));
+
+            return (
+              <div
+                key={row.id}
+                className="rounded border border-slate-700 bg-slate-900/60 px-2 py-2"
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={5}
+                    step={5}
+                    aria-label={`Break ${i + 1} length in minutes`}
+                    placeholder="30"
+                    value={row.minutes}
+                    onChange={(e) => update({ minutes: e.target.value })}
+                    className="w-20 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
+                  />
+                  <span className="text-xs text-slate-400">min, between</span>
+                  <input
+                    type="time"
+                    aria-label={`Break ${i + 1} earliest start`}
+                    value={row.windowStart}
+                    onChange={(e) => update({ windowStart: e.target.value })}
+                    className="flex-1 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
+                  />
+                  <span className="text-xs text-slate-400">and</span>
+                  <input
+                    type="time"
+                    aria-label={`Break ${i + 1} latest end`}
+                    value={row.windowEnd}
+                    onChange={(e) => update({ windowEnd: e.target.value })}
+                    className="flex-1 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
+                  />
+                  <button
+                    type="button"
+                    aria-label={`Remove break ${i + 1}`}
+                    onClick={() =>
+                      setForm((f: any) => ({
+                        ...f,
+                        breaks: f.breaks.filter((r: BreakFormRow) => r.id !== row.id),
+                      }))
+                    }
+                    className="rounded border border-slate-700 px-2 py-1 text-xs text-slate-400 hover:border-red-500/60 hover:text-red-300"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={() =>
+            setForm((f: any) => ({
+              ...f,
+              breaks: [
+                ...f.breaks,
+                { id: crypto.randomUUID(), minutes: "30", windowStart: "", windowEnd: "" },
+              ],
+            }))
+          }
+          className="mt-2 rounded border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
+        >
+          + Add break
+        </button>
       </div>
 
       <div>
