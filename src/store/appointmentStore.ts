@@ -6,6 +6,7 @@ import {
 } from "@/lib/freeSession";
 import { supabase } from "@/lib/supabase/client";
 import { logActivity } from "@/lib/logsClient";
+import type { RecurFreq } from "@/lib/recurrence/occurrences";
 
 export interface Appointment {
   id: string;
@@ -30,6 +31,16 @@ export interface Appointment {
   requiredSkills: string[];
 
   requiredWindows: string[];
+
+  /** First date this visit is due, "YYYY-MM-DD". */
+  startsOn?: string | null;
+  /** Last date, or null for open ended. */
+  endsOn?: string | null;
+  recurFreq: RecurFreq;
+  /** Every N days or weeks. */
+  recurInterval: number;
+  /** ISO weekdays, 1 = Monday .. 7 = Sunday. Weekly only. */
+  recurWeekdays: number[];
 
   archived: boolean;
 }
@@ -97,20 +108,11 @@ async function persistPro(appointments: Appointment[]) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  const { error: delError } = await supabase
-    .from("appointments")
-    .delete()
-    .eq("user_id", user.id);
-
-  if (delError) {
-    console.error("Failed to clear pro appointments:", delError);
-    return;
-  }
-
-  if (appointments.length === 0) return;
-
-  const { error: insError } = await supabase.from("appointments").insert(
-    appointments.map((a) => ({
+  // Write first, prune second -- see the same change in staffStore. Deleting
+  // before inserting means any failure in between loses the entire list, and
+  // adding columns to the insert (as the recurrence work does) is exactly when
+  // that failure becomes likely.
+  const rows = appointments.map((a) => ({
       user_id: user.id,
       local_id: a.id,
       name: a.name,
@@ -127,12 +129,45 @@ async function persistPro(appointments: Appointment[]) {
       staff_gender: a.staffGender ?? null,
       required_skills: a.requiredSkills,
       required_windows: a.requiredWindows,
+      starts_on: a.startsOn ?? null,
+      ends_on: a.endsOn ?? null,
+      recur_freq: a.recurFreq ?? "once",
+      recur_interval: a.recurInterval ?? 1,
+      recur_weekdays: a.recurWeekdays ?? [],
       archived: a.archived,
-    }))
-  );
+  }));
 
-  if (insError) {
-    console.error("Failed to insert pro appointments:", insError);
+  if (rows.length > 0) {
+    const { error: upsertError } = await supabase
+      .from("appointments")
+      .upsert(rows, { onConflict: "user_id,local_id" });
+
+    if (upsertError) {
+      console.error("Failed to save pro appointments:", upsertError);
+      return;
+    }
+  }
+
+  // Remove rows for appointments since deleted, by primary key rather than a
+  // filter expression so an encoding slip cannot widen the delete.
+  const { data: existing, error: readError } = await supabase
+    .from("appointments")
+    .select("id, local_id")
+    .eq("user_id", user.id);
+
+  if (readError) {
+    console.error("Failed to read back pro appointments:", readError);
+    return;
+  }
+
+  const keep = new Set(appointments.map((a) => a.id));
+  const stale = (existing ?? [])
+    .filter((row: { local_id: string | null }) => !row.local_id || !keep.has(row.local_id))
+    .map((row: { id: number }) => row.id);
+
+  if (stale.length > 0) {
+    const { error: delError } = await supabase.from("appointments").delete().in("id", stale);
+    if (delError) console.error("Failed to prune removed pro appointments:", delError);
   }
 }
 
@@ -268,6 +303,11 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       staffGender: row.staff_gender ?? null,
       requiredSkills: row.required_skills ?? [],
       requiredWindows: row.required_windows ?? [],
+      startsOn: row.starts_on ?? null,
+      endsOn: row.ends_on ?? null,
+      recurFreq: (row.recur_freq ?? "once") as RecurFreq,
+      recurInterval: row.recur_interval ?? 1,
+      recurWeekdays: row.recur_weekdays ?? [],
       archived: row.archived ?? false,
     }));
 

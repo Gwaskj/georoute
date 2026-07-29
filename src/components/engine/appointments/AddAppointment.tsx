@@ -9,6 +9,7 @@ import {
 } from "@/store/appointmentStore";
 
 import { useSkillsStore, Skill } from "@/store/skillsStore";
+import type { RecurFreq } from "@/lib/recurrence/occurrences";
 import { useCustomWindowStore } from "@/store/customWindowStore";   // ⭐ FIXED
 import { useScheduleResultStore } from "@/store/scheduleResultStore";
 import { clearSchedulerResult } from "@/lib/scheduler/persist";
@@ -38,6 +39,11 @@ interface AppointmentFormState {
   requiredSkills: string[];
 
   requiredWindows: string[];   // ⭐ NEW
+  startsOn: string;
+  endsOn: string;
+  recurFreq: RecurFreq;
+  recurInterval: string;
+  recurWeekdays: number[];
 }
 
 const emptyForm: AppointmentFormState = {
@@ -56,6 +62,13 @@ const emptyForm: AppointmentFormState = {
   requiredSkills: [],
 
   requiredWindows: [],   // ⭐ NEW
+  // Defaults to a one-off today, which is what the scheduler did before dates
+  // existed -- so an untouched form behaves exactly as it used to.
+  startsOn: new Date().toLocaleDateString("en-CA"),
+  endsOn: "",
+  recurFreq: "once",
+  recurInterval: "1",
+  recurWeekdays: [],
 };
 
 export default function AddAppointment({ isFree }: AddAppointmentProps) {
@@ -98,6 +111,11 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
       requiredSkills: a.requiredSkills ?? [],
 
       requiredWindows: a.requiredWindows ?? [],   // ⭐ NEW
+      startsOn: a.startsOn ?? new Date().toLocaleDateString("en-CA"),
+      endsOn: a.endsOn ?? "",
+      recurFreq: a.recurFreq ?? "once",
+      recurInterval: String(a.recurInterval ?? 1),
+      recurWeekdays: a.recurWeekdays ?? [],
     });
     setIsModalOpen(true);
   };
@@ -161,6 +179,14 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
       requiredSkills: form.requiredSkills,
 
       requiredWindows: form.requiredWindows,   // ⭐ NEW
+
+      startsOn: form.startsOn || null,
+      endsOn: form.endsOn || null,
+      recurFreq: form.recurFreq,
+      recurInterval: Math.max(1, parseInt(form.recurInterval || "1", 10) || 1),
+      // Only meaningful for weekly; kept off other patterns so a leftover
+      // selection cannot quietly affect a daily or one-off visit.
+      recurWeekdays: form.recurFreq === "weekly" ? form.recurWeekdays : [],
     };
 
     if (isEditing && form.id) {
@@ -389,6 +415,118 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                     rows={3}
                   />
                 </div>
+              </div>
+
+              {/* WHEN IT IS DUE */}
+              <div className="rounded border border-slate-700 p-3">
+                <h4 className="mb-2 text-sm font-semibold">When it is due</h4>
+
+                <div className="flex flex-wrap items-end gap-3 text-xs">
+                  <div>
+                    <label className="mb-1 block">Repeats</label>
+                    <select
+                      value={form.recurFreq}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          recurFreq: e.target.value as RecurFreq,
+                        }))
+                      }
+                      className="rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                    >
+                      <option value="once">Once</option>
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                    </select>
+                  </div>
+
+                  {form.recurFreq !== "once" && (
+                    <div>
+                      <label className="mb-1 block">
+                        Every {form.recurFreq === "daily" ? "N days" : "N weeks"}
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={form.recurInterval}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, recurInterval: e.target.value }))
+                        }
+                        className="w-16 rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="mb-1 block">
+                      {form.recurFreq === "once" ? "Date" : "First date"}
+                    </label>
+                    <input
+                      type="date"
+                      value={form.startsOn}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, startsOn: e.target.value }))
+                      }
+                      className="rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                    />
+                  </div>
+
+                  {form.recurFreq !== "once" && (
+                    <div>
+                      <label className="mb-1 block">Until (optional)</label>
+                      <input
+                        type="date"
+                        value={form.endsOn}
+                        onChange={(e) =>
+                          setForm((f) => ({ ...f, endsOn: e.target.value }))
+                        }
+                        className="rounded border border-slate-700 bg-slate-900 px-2 py-1"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {form.recurFreq === "weekly" && (
+                  <div className="mt-3">
+                    <label className="mb-1 block text-xs">On these days</label>
+                    <div className="flex flex-wrap gap-1">
+                      {/* ISO weekdays: 1 = Monday .. 7 = Sunday. */}
+                      {[
+                        [1, "Mon"], [2, "Tue"], [3, "Wed"], [4, "Thu"],
+                        [5, "Fri"], [6, "Sat"], [7, "Sun"],
+                      ].map(([day, label]) => {
+                        const on = form.recurWeekdays.includes(day as number);
+                        return (
+                          <button
+                            key={day as number}
+                            type="button"
+                            onClick={() =>
+                              setForm((f) => ({
+                                ...f,
+                                recurWeekdays: on
+                                  ? f.recurWeekdays.filter((d) => d !== day)
+                                  : [...f.recurWeekdays, day as number].sort(),
+                              }))
+                            }
+                            className={`rounded border px-2 py-1 text-xs transition-colors ${
+                              on
+                                ? "border-teal-500 bg-teal-500/20 text-teal-200"
+                                : "border-slate-700 text-slate-400 hover:bg-slate-800"
+                            }`}
+                          >
+                            {label as string}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {form.recurWeekdays.length === 0 && (
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        No days chosen — it will repeat on the same weekday as
+                        the first date.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* STAFF REQUIREMENTS */}

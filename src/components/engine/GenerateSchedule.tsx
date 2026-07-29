@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStaffStore } from "@/store/staffStore";
 import { useAppointmentStore } from "@/store/appointmentStore";
 import { useCallPurposeStore } from "@/store/callPurposeStore";
@@ -9,6 +9,7 @@ import { useSettingsStore } from "@/store/settingsStore";
 import { useScheduleResultStore } from "@/store/scheduleResultStore";
 
 import { runScheduler } from "@/lib/scheduler/engine";
+import { occursOn } from "@/lib/recurrence/occurrences";
 import { saveSchedulerResult } from "@/lib/scheduler/persist";
 import { SchedulerContext } from "@/lib/scheduler/types";
 import { getRouteBatched, clearLocalCache, getRouteErrors } from "@/lib/routing";
@@ -26,6 +27,35 @@ export default function GenerateSchedule({
 }: GenerateScheduleProps) {
   const { staff } = useStaffStore();
   const { appointments } = useAppointmentStore();
+
+  // Which day is being planned. Defaults to today, matching the behaviour from
+  // before appointments had dates at all.
+  const [scheduleDate, setScheduleDate] = useState(() =>
+    new Date().toLocaleDateString("en-CA")
+  );
+
+  // Only the visits actually due on that date. An appointment with no start
+  // date is treated as due -- older records predate recurrence, and dropping
+  // them silently would look like data loss.
+  const dueAppointments = useMemo(
+    () =>
+      appointments.filter((a) => {
+        if (a.archived) return false;
+        if (!a.startsOn) return true;
+        return occursOn(
+          {
+            freq: a.recurFreq ?? "once",
+            interval: a.recurInterval ?? 1,
+            weekdays: a.recurWeekdays ?? [],
+            startsOn: a.startsOn,
+            endsOn: a.endsOn ?? null,
+          },
+          [],
+          scheduleDate
+        );
+      }),
+    [appointments, scheduleDate]
+  );
   const { purposes } = useCallPurposeStore();
   const { windows } = useCustomWindowStore();
   const { settings, loaded: settingsLoaded, loadSettings } = useSettingsStore();
@@ -59,7 +89,7 @@ export default function GenerateSchedule({
       if (s.officePostcode) uniquePostcodes.add(s.officePostcode);
     }
     const effectiveOffice = officePostcode || "";
-    for (const a of appointments) {
+    for (const a of dueAppointments) {
       if (a.postcode) uniquePostcodes.add(a.postcode);
     }
 
@@ -133,7 +163,7 @@ export default function GenerateSchedule({
 
     const ctx: SchedulerContext = {
       staff,
-      appointments,
+      appointments: dueAppointments,
       purposes,
       windows,
       officePostcode,
@@ -156,7 +186,8 @@ export default function GenerateSchedule({
       logActivity("schedule_generated", null, {
         isFree,
         staffCount: staff.length,
-        appointmentCount: appointments.length,
+        scheduleDate,
+        appointmentCount: dueAppointments.length,
         visitCount: result.visits.length,
         warningCount: result.warnings.length,
         hintCount: result.hints.length,
@@ -180,6 +211,23 @@ export default function GenerateSchedule({
 
   return (
     <div className="space-y-3 text-xs text-slate-200">
+      <div className="rounded border border-slate-700 bg-slate-900/60 px-2 py-2">
+        <label htmlFor="schedule-date" className="mb-1 block text-[11px] text-slate-400">
+          Planning day
+        </label>
+        <input
+          id="schedule-date"
+          type="date"
+          value={scheduleDate}
+          onChange={(e) => setScheduleDate(e.target.value)}
+          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
+        />
+        <p className="mt-1 text-[11px] text-slate-500">
+          {dueAppointments.length} appointment
+          {dueAppointments.length === 1 ? "" : "s"} due
+        </p>
+      </div>
+
       <button
         type="button"
         onClick={handleRun}
