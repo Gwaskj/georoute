@@ -15,6 +15,7 @@ import { saveSchedulerResult } from "@/lib/scheduler/persist";
 import { SchedulerContext } from "@/lib/scheduler/types";
 import { getRouteBatched, clearLocalCache, getRouteErrors } from "@/lib/routing";
 import { logActivity } from "@/lib/logsClient";
+import Link from "next/link";
 import FreeTierAdSlot from "@/components/ads/FreeTierAdSlot";
 
 interface GenerateScheduleProps {
@@ -226,10 +227,19 @@ export default function GenerateSchedule({
           onChange={(e) => setScheduleDate(e.target.value)}
           className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
         />
-        <p className="mt-1 text-[11px] text-slate-500">
-          {dueAppointments.length} appointment
-          {dueAppointments.length === 1 ? "" : "s"} due
-        </p>
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <p className="text-[11px] text-slate-500">
+            {dueAppointments.length} appointment
+            {dueAppointments.length === 1 ? "" : "s"} due
+          </p>
+          {/* Pro-only page; free users get an explanation rather than the grid. */}
+          <Link
+            href="/calendar"
+            className="text-[11px] text-teal-400 hover:text-teal-300"
+          >
+            Open calendar →
+          </Link>
+        </div>
       </div>
 
       <button

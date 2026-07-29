@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth";
+import { getSubscriptionStatus } from "@/lib/subscription";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import CalendarView from "@/components/calendar/CalendarView";
 
 export const dynamic = "force-dynamic";
@@ -14,9 +17,81 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+function Gate({
+  title,
+  body,
+  cta,
+}: {
+  title: string;
+  body: string;
+  cta: { href: string; label: string }[];
+}) {
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="mx-auto max-w-lg px-4 py-24 text-center">
+        <h1 className="mb-3 text-2xl font-semibold tracking-tight">{title}</h1>
+        <p className="mb-8 text-sm leading-relaxed text-slate-400">{body}</p>
+        <div className="flex flex-wrap justify-center gap-3">
+          {cta.map((c, i) => (
+            <Link
+              key={c.href}
+              href={c.href}
+              className={
+                i === 0
+                  ? "inline-flex items-center rounded-full bg-teal-500 px-6 py-2 text-sm font-semibold text-slate-950 transition hover:bg-teal-400"
+                  : "inline-flex items-center rounded-full border border-slate-600 px-6 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-800"
+              }
+            >
+              {c.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default async function CalendarPage() {
   const user = await getUser();
-  const isFree = !user;
+
+  if (!user) {
+    return (
+      <Gate
+        title="Calendar is a Pro feature"
+        body="Planning visits across future dates needs somewhere to keep them, so the calendar requires an account. Free mode holds your data in the browser session only, which cannot carry a round from one day to the next."
+        cta={[
+          { href: "/signup", label: "Create an account" },
+          { href: "/pricing", label: "See pricing" },
+        ]}
+      />
+    );
+  }
+
+  // Staff accounts are read-only and have their own page; showing them an
+  // upgrade prompt would be misleading, since upgrading is not theirs to do.
+  const supabase = await createSupabaseServerClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("owner_user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (profile?.owner_user_id) redirect("/my-round");
+
+  const status = await getSubscriptionStatus(user.id);
+
+  if (status !== "pro") {
+    return (
+      <Gate
+        title="Calendar is a Pro feature"
+        body="Upgrade to Pro to schedule visits on future dates, set up recurring rounds, and skip or move a single occurrence without disturbing the rest of the series."
+        cta={[
+          { href: "/pricing", label: "Upgrade to Pro" },
+          { href: "/scheduler", label: "Back to scheduler" },
+        ]}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -27,19 +102,11 @@ export default async function CalendarPage() {
             Which visits are due on which day. Select a date to skip or move a
             single occurrence, or to plan that day.
           </p>
-          {isFree && (
-            <p className="mt-2 rounded border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-slate-400">
-              You are in free mode, so this only shows the appointments in this
-              browser session.{" "}
-              <Link href="/signup" className="text-teal-400 hover:text-teal-300">
-                Create an account
-              </Link>{" "}
-              to keep them.
-            </p>
-          )}
         </header>
 
-        <CalendarView isFree={isFree} />
+        {/* isFree is false here by construction -- the gate above returns for
+            everyone else, so the view always reads from the cloud. */}
+        <CalendarView isFree={false} />
       </div>
     </div>
   );
