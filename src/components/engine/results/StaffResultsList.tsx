@@ -6,6 +6,7 @@ import { Staff } from "@/store/staffStore";
 import { LEG_COLORS } from "@/lib/map/legColors";
 import { StaffLeg, RETURN_TO_BASE_ID } from "@/lib/map/useStaffLegSchedule";
 import RouteLinks from "./RouteLinks";
+import ShareRoundButton from "./ShareRoundButton";
 import { wazeUrl, type NavStop } from "@/lib/navigation/mapLinks";
 
 interface StaffResultsListProps {
@@ -366,6 +367,15 @@ export default function StaffResultsList({
                           origin={navOrigin}
                           stops={navStops}
                           destination={navDestination}
+                        />
+
+                        <ShareRoundButton
+                          staffId={s.id}
+                          staffName={s.name}
+                          origin={navOrigin}
+                          destination={navDestination}
+                          visits={sortedVisits}
+                          breaks={staffBreaks}
                         />
                       </>
                     );

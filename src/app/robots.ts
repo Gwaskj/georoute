@@ -19,6 +19,10 @@ export default function robots(): MetadataRoute.Robots {
           "/account",
           "/settings",
           "/staff",
+          // Shared rounds contain client names and addresses. The pages are
+          // also noindex, but keeping crawlers out entirely is the stronger
+          // guarantee since links get pasted into chat apps that pre-fetch.
+          "/r/",
         ],
       },
     ],
