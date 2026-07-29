@@ -15,7 +15,7 @@ import Link from "next/link";
 import HeaderLoader from "@/components/HeaderLoader";
 import ThemeProvider from "@/components/ThemeProvider";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://georoutes.co.uk";
+import { SITE_URL } from "@/lib/siteUrl";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
