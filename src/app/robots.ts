@@ -23,6 +23,7 @@ export default function robots(): MetadataRoute.Robots {
           // also noindex, but keeping crawlers out entirely is the stronger
           // guarantee since links get pasted into chat apps that pre-fetch.
           "/r/",
+          "/my-round",
         ],
       },
     ],
