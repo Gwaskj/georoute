@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service – GeoRoutes",
+  title: "Terms of Service",
   description: "The terms that govern use of the GeoRoutes service.",
   alternates: { canonical: "/terms" },
 };

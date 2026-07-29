@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Feedback – GeoRoutes",
+  title: "Feedback",
   description: "Share feedback, bug reports, or feature requests for GeoRoutes.",
   alternates: { canonical: "/feedback" },
 };

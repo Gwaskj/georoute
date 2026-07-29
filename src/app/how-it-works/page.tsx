@@ -3,7 +3,7 @@ import Link from "next/link";
 import FreeTierAdSlot from "@/components/ads/FreeTierAdSlot";
 
 export const metadata: Metadata = {
-  title: "How It Works – GeoRoutes",
+  title: "How It Works",
   description:
     "Learn how GeoRoutes helps field teams plan smarter schedules, assign staff efficiently, and generate optimised routes — all in one tool.",
   alternates: { canonical: "/how-it-works" },
