@@ -108,22 +108,14 @@ async function persistPro(staff: Staff[], selectedStaffIds: string[]) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  // Upsert all staff (replace user's staff)
-  // First delete all existing staff for this user, then insert
-  const { error: delError } = await supabase
-    .from("staff")
-    .delete()
-    .eq("user_id", user.id);
-
-  if (delError) {
-    console.error("Failed to clear pro staff:", delError);
-    return;
-  }
-
-  if (staff.length === 0) return;
-
-  const { error: insError } = await supabase.from("staff").insert(
-    staff.map((s) => ({
+  // Write first, prune second.
+  //
+  // This used to delete every row for the user and then re-insert. Any failure
+  // in between -- a missing column, a constraint, a dropped connection -- left
+  // them with no staff at all. Upserting first means a failed save leaves the
+  // previous list untouched; the worst case is a stale row surviving, which
+  // the prune below fixes on the next successful save.
+  const rows = staff.map((s) => ({
       user_id: user.id,
       name: s.name,
       home_postcode: s.homePostcode,
@@ -135,13 +127,44 @@ async function persistPro(staff: Staff[], selectedStaffIds: string[]) {
       work_start: s.workStart ?? null,
       work_end: s.workEnd ?? null,
       breaks: s.breaks ?? [],
-      start_location: s.startLocation,
-      local_id: s.id,
-    }))
-  );
+    start_location: s.startLocation,
+    local_id: s.id,
+  }));
 
-  if (insError) {
-    console.error("Failed to insert pro staff:", insError);
+  if (rows.length > 0) {
+    const { error: upsertError } = await supabase
+      .from("staff")
+      .upsert(rows, { onConflict: "user_id,local_id" });
+
+    if (upsertError) {
+      console.error("Failed to save pro staff:", upsertError);
+      // Bail out before pruning -- deleting against a failed write is exactly
+      // how the old version lost data.
+      return;
+    }
+  }
+
+  // Remove rows for staff the user has since deleted. Done by primary key
+  // rather than a filter expression so an encoding slip cannot widen the
+  // delete beyond the rows we identified.
+  const { data: existing, error: readError } = await supabase
+    .from("staff")
+    .select("id, local_id")
+    .eq("user_id", user.id);
+
+  if (readError) {
+    console.error("Failed to read back pro staff:", readError);
+    return;
+  }
+
+  const keep = new Set(staff.map((s) => s.id));
+  const stale = (existing ?? [])
+    .filter((row: { local_id: string | null }) => !row.local_id || !keep.has(row.local_id))
+    .map((row: { id: number }) => row.id);
+
+  if (stale.length > 0) {
+    const { error: delError } = await supabase.from("staff").delete().in("id", stale);
+    if (delError) console.error("Failed to prune removed pro staff:", delError);
   }
 }
 
