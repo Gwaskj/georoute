@@ -14,6 +14,11 @@ export default function robots(): MetadataRoute.Robots {
           "/api/",
           "/update-password",
           "/reset-password",
+          // Signed-in pages. Crawling these only ever yields a logged-out
+          // shell, which reads as thin or duplicate content in Search Console.
+          "/account",
+          "/settings",
+          "/staff",
         ],
       },
     ],
