@@ -10,6 +10,7 @@ import { useScheduleResultStore } from "@/store/scheduleResultStore";
 
 import { runScheduler } from "@/lib/scheduler/engine";
 import { occursOn } from "@/lib/recurrence/occurrences";
+import { useExceptionStore } from "@/store/exceptionStore";
 import { saveSchedulerResult } from "@/lib/scheduler/persist";
 import { SchedulerContext } from "@/lib/scheduler/types";
 import { getRouteBatched, clearLocalCache, getRouteErrors } from "@/lib/routing";
@@ -27,6 +28,7 @@ export default function GenerateSchedule({
 }: GenerateScheduleProps) {
   const { staff } = useStaffStore();
   const { appointments } = useAppointmentStore();
+  const { forAppointment, load: loadExceptions } = useExceptionStore();
 
   // Which day is being planned. Defaults to today, matching the behaviour from
   // before appointments had dates at all.
@@ -50,11 +52,11 @@ export default function GenerateSchedule({
             startsOn: a.startsOn,
             endsOn: a.endsOn ?? null,
           },
-          [],
+          forAppointment(a.id),
           scheduleDate
         );
       }),
-    [appointments, scheduleDate]
+    [appointments, scheduleDate, forAppointment]
   );
   const { purposes } = useCallPurposeStore();
   const { windows } = useCustomWindowStore();
@@ -70,7 +72,9 @@ export default function GenerateSchedule({
     if (!settingsLoaded) {
       loadSettings(isFree);
     }
-  }, [isFree, settingsLoaded, loadSettings]);
+    // Skipped and moved occurrences must be known before filtering by date.
+    loadExceptions(isFree);
+  }, [isFree, settingsLoaded, loadSettings, loadExceptions]);
 
   const handleRun = async () => {
     if (algorithm !== "default") return;

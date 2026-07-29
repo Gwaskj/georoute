@@ -24,6 +24,7 @@ export default function robots(): MetadataRoute.Robots {
           // guarantee since links get pasted into chat apps that pre-fetch.
           "/r/",
           "/my-round",
+          "/calendar",
         ],
       },
     ],

@@ -9,6 +9,8 @@ export type FreeSchedulerData = {
   officePostcode?: string;
   selectedStaffIds?: string[];
   visits?: any[];
+  /** Skipped or moved occurrences of recurring appointments. */
+  exceptions?: any[];
 };
 
 const STORAGE_KEY = "free_scheduler_data";
@@ -40,6 +42,7 @@ export async function loadFreeSchedulerData(): Promise<FreeSchedulerData | null>
       officePostcode: parsed.officePostcode ?? "",
       selectedStaffIds: parsed.selectedStaffIds ?? [],
       visits: parsed.visits ?? [],
+      exceptions: parsed.exceptions ?? [],
     };
   } catch {
     return {
@@ -68,6 +71,7 @@ export async function saveFreeSchedulerData(payload: FreeSchedulerData): Promise
         officePostcode: payload.officePostcode ?? "",
         selectedStaffIds: payload.selectedStaffIds ?? [],
         visits: payload.visits ?? [],
+        exceptions: payload.exceptions ?? [],
       })
     );
   } catch {}
