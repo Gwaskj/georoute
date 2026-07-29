@@ -51,11 +51,23 @@ export default function ShareRoundButton({
     };
 
     try {
+      // Local date, matching how the engine builds times from local midnight.
+      // Using the ISO string's date part would be a day early in BST evenings.
+      const first = visits[0] ? new Date(visits[0].start) : null;
+      const scheduleOn = first
+        ? [
+            first.getFullYear(),
+            String(first.getMonth() + 1).padStart(2, "0"),
+            String(first.getDate()).padStart(2, "0"),
+          ].join("-")
+        : undefined;
+
       const res = await fetch("/api/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           staffLocalId: staffId,
+          scheduleOn,
           scheduleDate: visits[0]
             ? new Date(visits[0].start).toLocaleDateString("en-GB", {
                 weekday: "long",

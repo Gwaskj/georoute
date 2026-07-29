@@ -39,6 +39,8 @@ export async function POST(req: Request) {
   let body: {
     staffLocalId?: string;
     scheduleDate?: string;
+    /** The day this round covers, "YYYY-MM-DD", for selecting it later. */
+    scheduleOn?: string;
     days?: number;
     payload?: SharedSchedulePayload;
   };
@@ -80,6 +82,11 @@ export async function POST(req: Request) {
     staff_local_id: staffLocalId,
     staff_name: payload.staffName ?? "",
     schedule_date: scheduleDate ?? null,
+    // Only stored if it is a real date -- a malformed value would make the
+    // staff page silently fall back to the most recent round instead.
+    schedule_on: /^\d{4}-\d{2}-\d{2}$/.test(body.scheduleOn ?? "")
+      ? body.scheduleOn
+      : null,
     payload,
     expires_at: expiresAt.toISOString(),
   });

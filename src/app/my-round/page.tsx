@@ -27,13 +27,37 @@ export default async function MyRoundPage() {
   // Everything below relies on RLS rather than filtering by hand: the staff
   // policy only exposes rows published to this login, so a bug here cannot
   // widen what a staff member sees.
-  const { data: rows } = await supabase
+  const cols = "staff_name, schedule_date, payload, created_at, schedule_on";
+
+  // Local date, matching how rounds are dated when published.
+  const now = new Date();
+  const todayIso = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+
+  // Today's round first. Opening this in the morning should show today, not
+  // whatever was published most recently -- which could be yesterday's.
+  const { data: todayRows } = await supabase
     .from("shared_schedules")
-    .select("staff_name, schedule_date, payload, created_at")
+    .select(cols)
+    .eq("schedule_on", todayIso)
     .order("created_at", { ascending: false })
     .limit(1);
 
-  const latest = rows?.[0];
+  let latest = todayRows?.[0];
+
+  // Nothing for today: fall back to the most recent, which covers rounds
+  // published before dates were stored as well as a day off.
+  if (!latest) {
+    const { data: rows } = await supabase
+      .from("shared_schedules")
+      .select(cols)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    latest = rows?.[0];
+  }
 
   if (!latest) {
     return (

@@ -12,6 +12,11 @@ export type NavItem = {
   href: string;
   align?: "left" | "right";
   isAdmin?: boolean;
+  /**
+   * Show this item inside the menu dropdown rather than inline in the header.
+   * Lets the bar stay short as pages are added, without hiding anything.
+   */
+  inMenu?: boolean;
 };
 
 export type BrandConfig = {
@@ -58,10 +63,14 @@ export function HeaderStructure({
 }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { activeConfig } = useThemeStore();
 
-  const leftNav = navItems.filter((n) => n.align !== "right");
-  const rightNav = navItems.filter((n) => n.align === "right");
+  const leftNav = navItems.filter((n) => n.align !== "right" && !n.inMenu);
+  const rightNav = navItems.filter((n) => n.align === "right" && !n.inMenu);
+  // Everything flagged inMenu, wherever it was aligned, collects in the
+  // dropdown. Admin-only entries are still filtered by isAdmin below.
+  const menuNav = navItems.filter((n) => n.inMenu);
 
   return (
     <header className="relative w-full bg-slate-950 text-slate-100 border-b border-slate-800">
@@ -199,6 +208,81 @@ export function HeaderStructure({
               </Link>
             );
           })}
+
+          {menuNav.length > 0 && (
+            <div
+              className="relative"
+              onMouseEnter={() => setMenuOpen(true)}
+              onMouseLeave={() => setMenuOpen(false)}
+            >
+              <button
+                type="button"
+                onClick={() => setMenuOpen((o) => !o)}
+                aria-expanded={menuOpen}
+                aria-haspopup="true"
+                aria-label="More"
+                className="flex items-center gap-2 rounded px-2 py-2 text-sm hover:text-teal-400"
+              >
+                <span className="flex flex-col gap-[3px]">
+                  <span className="block h-[2px] w-4 bg-current" />
+                  <span className="block h-[2px] w-4 bg-current" />
+                  <span className="block h-[2px] w-4 bg-current" />
+                </span>
+                Menu
+              </button>
+
+              {menuOpen && (
+                <div className="absolute right-0 top-full z-50 w-52 rounded border border-slate-700 bg-slate-900 py-2 shadow-lg">
+                  {menuNav.map((item) => {
+                    if (item.isAdmin && !isAdmin) return null;
+
+                    // The admin entry has sub-pages. Nesting a second dropdown
+                    // inside this one would be awkward to use, so its links are
+                    // listed flat under a heading instead.
+                    if (item.id === "admin") {
+                      return (
+                        <div key={item.id} className="mt-1 border-t border-slate-800 pt-1">
+                          <p className="px-4 py-1 text-[10px] uppercase tracking-widest text-slate-500">
+                            {item.text}
+                          </p>
+                          {[
+                            ["/admin/users", "Users"],
+                            ["/admin/staff", "Staff"],
+                            ["/admin/appointments", "Appointments"],
+                            ["/admin/pricing", "Pricing"],
+                            ["/admin/logs", "Logs"],
+                            ["/admin/header-editor", "Header Editor"],
+                            ["/admin/themes", "Theme Builder"],
+                            ["/admin/editor", "Page Editor"],
+                          ].map(([href, label]) => (
+                            <Link
+                              key={href}
+                              href={href}
+                              onClick={() => setMenuOpen(false)}
+                              className="block px-4 py-2 text-sm hover:bg-slate-800"
+                            >
+                              {label}
+                            </Link>
+                          ))}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        onClick={() => setMenuOpen(false)}
+                        className="block px-4 py-2 text-sm hover:bg-slate-800"
+                      >
+                        {item.text}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {!userPresent && (
             <Link

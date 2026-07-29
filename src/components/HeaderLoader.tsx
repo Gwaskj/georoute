@@ -31,11 +31,17 @@ export default async function HeaderLoader() {
     layout.navItems && Array.isArray(layout.navItems)
       ? layout.navItems
       : [
-          { id: "scheduler", text: "Scheduler", href: "/scheduler", align: "left" },
-          { id: "settings", text: "Settings", href: "/settings", align: "left" },
-          { id: "account", text: "Account", href: "/account", align: "left" },
-          { id: "feedback", text: "Feedback", href: "/feedback", align: "left" },
-          { id: "admin", text: "Admin", href: "#", align: "right", isAdmin: true },
+          // Inline: the places people go to do the job.
+          { id: "scheduler", text: "Scheduler", href: "/scheduler", align: "right" },
+          { id: "calendar", text: "Calendar", href: "/calendar", align: "right" },
+          { id: "pricing", text: "Pricing", href: "/pricing", align: "right" },
+          // In the dropdown: everything else, so the bar stays short as pages
+          // are added rather than wrapping onto a second line.
+          { id: "help", text: "Help", href: "/help", align: "right", inMenu: true },
+          { id: "settings", text: "Settings", href: "/settings", align: "right", inMenu: true },
+          { id: "account", text: "Account", href: "/account", align: "right", inMenu: true },
+          { id: "feedback", text: "Feedback", href: "/feedback", align: "right", inMenu: true },
+          { id: "admin", text: "Admin", href: "#", align: "right", isAdmin: true, inMenu: true },
         ];
 
   // The standalone Billing page was merged into /account — drop any
