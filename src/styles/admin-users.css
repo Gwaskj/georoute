@@ -58,7 +58,8 @@
   border: 1px solid #334155;
   background: #0f172a;
   color: #f1f5f9;
-  width: 220px;
+  width: 260px;
+  max-width: 100%;
 }
 
 /* ---------------------------------------

@@ -5,9 +5,12 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import "@/styles/theme.css";
 import "@/styles/utilities.css";
-import "@/styles/Button.module.css";
-import "@/styles/Input.module.css";
-import "@/styles/Card.module.css";
+// Plain .css, not .module.css: every usage refers to these by literal class
+// name (className="button button-primary"). As modules the names were hashed
+// at build time, so none of these rules ever matched anything.
+import "@/styles/Button.css";
+import "@/styles/Input.css";
+import "@/styles/Card.css";
 
 import { ReactNode } from "react";
 import Link from "next/link";
