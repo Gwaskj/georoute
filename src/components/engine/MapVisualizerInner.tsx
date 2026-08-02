@@ -207,6 +207,37 @@ function FocusManager({
 }
 
 // Shared rich popup body for a single appointment marker.
+/**
+ * Keep Leaflet's idea of its own size in step with the element.
+ *
+ * Leaflet measures its container once, on mount, and never looks again. The
+ * results column beside this map grows with the number of visits, which
+ * stretches the map's container after that measurement -- so the tiles kept
+ * covering only the area the box had when it first rendered, leaving the rest
+ * of a tall box blank.
+ */
+function KeepMapSized() {
+  const map = useMap();
+
+  useEffect(() => {
+    const el = map.getContainer();
+
+    const observer = new ResizeObserver(() => map.invalidateSize());
+    observer.observe(el);
+
+    // The first measurement can land before the surrounding layout settles,
+    // so take one more reading on the next frame.
+    const raf = requestAnimationFrame(() => map.invalidateSize());
+
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, [map]);
+
+  return null;
+}
+
 function AppointmentPopup({ a }: { a: AppointmentMarker }) {
   return (
     <Popup>
@@ -736,6 +767,7 @@ export default function MapVisualizerInner({
       )}
       <MapContainer key={mapKey} className={styles.map}>
         <ZoomControl position="topright" />
+        <KeepMapSized />
         <MapInitializer zoom={zoom} />
         <FocusManager
           selectedStaffId={selectedStaffId}

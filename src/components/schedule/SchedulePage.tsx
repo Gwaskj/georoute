@@ -179,11 +179,14 @@ function ResultsView({ isFree }: { isFree: boolean }) {
   }
 
   return (
-    <div className="grid h-full grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)] gap-4">
+    // items-start so the two columns size themselves. They used to stretch
+    // to match, which let a long results list drag the map box to whatever
+    // height that list happened to be.
+    <div className="grid h-full grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)] items-start gap-4">
       {/* LEFT SIDE — MAP + SUMMARY */}
       <div className="flex flex-col">
         {/* MAP */}
-        <div className="flex-1 min-h-[320px] rounded border border-slate-800 bg-slate-950 overflow-hidden">
+        <div className="relative h-[440px] lg:h-[600px] rounded border border-slate-800 bg-slate-950 overflow-hidden">
           <MapVisualizer
             selectedStaffId={selectedStaffId}
             selectedVisitId={selectedVisitId}
