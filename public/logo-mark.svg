@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="GeoRoutes">
+  <!--
+    Brand mark: a map pin sitting on a route line.
+
+    Transparent background so it reads on the dark header without a competing
+    box. Drawn at 48px and shown at 40, so every weight is chosen to survive
+    that: strokes at 2px or above, one accent colour, and no detail smaller
+    than the pin's inner dot. Same teal-to-sky range as the header banner and
+    the site's buttons, so the three read as one system.
+  -->
+  <defs>
+    <linearGradient id="pin" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5eead4" />
+      <stop offset="55%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#22b8cf" />
+    </linearGradient>
+  </defs>
+
+  <!-- Route passing behind the pin, echoing the header banner -->
+  <path
+    d="M3 37 C 12 37, 14 41, 24 41 S 38 34, 45 34"
+    fill="none"
+    stroke="#38bdf8"
+    stroke-opacity="0.5"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-dasharray="4 5"
+  />
+
+  <!-- Stops either end of the route -->
+  <circle cx="4.5" cy="36.6" r="2.4" fill="#38bdf8" fill-opacity="0.75" />
+  <circle cx="43.5" cy="34.2" r="2.4" fill="#38bdf8" fill-opacity="0.75" />
+
+  <!-- Pin -->
+  <path
+    d="M24 4 C 16.8 4, 11 9.8, 11 17 c 0 8.9, 11.2 17.4, 12.5 18.4 a 1 1 0 0 0 1 0 C 25.8 34.4, 37 25.9, 37 17 c 0 -7.2 -5.8 -13 -13 -13 z"
+    fill="url(#pin)"
+  />
+
+  <!-- Inner well, punched dark so the mark still reads when very small -->
+  <circle cx="24" cy="17" r="5" fill="#0b1220" />
+  <circle cx="24" cy="17" r="2" fill="#5eead4" />
+</svg>

@@ -107,9 +107,11 @@ export function HeaderStructure({
                     being clipped top and bottom on every page. Height is
                     pinned to fit the bar and width follows the aspect ratio,
                     so any logo shape renders whole. */}
+                {/* Decorative when the brand name is rendered as text beside
+                    it -- announcing "Logo" and then the name repeats it. */}
                 <Image
                   src={logoUrl}
-                  alt="Logo"
+                  alt={brand.enabled ? "" : brand.text || "GeoRoutes"}
                   width={200}
                   height={48}
                   className="h-10 w-auto max-w-[160px] object-contain"
