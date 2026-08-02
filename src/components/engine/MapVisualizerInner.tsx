@@ -778,23 +778,60 @@ export default function MapVisualizerInner({
               }}
             >
               {travelInfo && (
-                <Popup>
-                  <div style={{ fontSize: 12, lineHeight: 1.6, minWidth: 140 }}>
-                    <div style={{ fontWeight: 700 }}>
-                      {travelInfo.fromLabel} → {travelInfo.toLabel}
-                    </div>
-                    <div style={{ color: "#475569" }}>
-                      {travelInfo.travelMinutes != null
-                        ? `${travelInfo.travelMinutes} min · ${travelInfo.distanceMiles} mi`
-                        : "Calculating…"}
-                    </div>
-                    {travelInfo.arrivalTime && (
-                      <div style={{ color: "#475569" }}>
-                        Arrives {fmtTime(travelInfo.arrivalTime)}
+                <>
+                  {/* Label the leg without needing a click. It follows the
+                      cursor along the line while hovering, and pins itself
+                      open once the leg is selected, so the route you are
+                      tracing stays named while you look at the rest. */}
+                  <Tooltip
+                    // One label carrying everything, shown on hover.
+                    //
+                    // It was a click-only popup, which meant the lines were
+                    // unlabelled until you guessed which to click. Adding a
+                    // tooltip as well was worse: your cursor is on the line
+                    // when you click it, so both appeared at once, stacked and
+                    // repeating the same two names. The popup is gone and this
+                    // carries the times instead -- the same detail, without
+                    // needing a click or colliding with anything.
+                    {...({ sticky: true, direction: "top", opacity: 1 } as any)}
+                  >
+                    <div style={{ fontSize: 11, lineHeight: 1.6, minWidth: 150 }}>
+                      <div>
+                        <span style={{ color: "#64748b" }}>Leaving</span>{" "}
+                        <strong>{travelInfo.fromLabel}</strong>
+                        {travelInfo.departureTime && (
+                          <span style={{ color: "#475569" }}>
+                            {" "}
+                            · {fmtTime(travelInfo.departureTime)}
+                          </span>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </Popup>
+                      <div>
+                        <span style={{ color: "#64748b" }}>Arrive at</span>{" "}
+                        <strong>{travelInfo.toLabel}</strong>
+                        {travelInfo.arrivalTime && (
+                          <span style={{ color: "#475569" }}>
+                            {" "}
+                            · {fmtTime(travelInfo.arrivalTime)}
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          color: "#475569",
+                          marginTop: 3,
+                          paddingTop: 3,
+                          borderTop: "1px solid #e2e8f0",
+                        }}
+                      >
+                        {travelInfo.travelMinutes != null
+                          ? `${travelInfo.travelMinutes} min · ${travelInfo.distanceMiles} mi`
+                          : "Calculating…"}
+                      </div>
+                    </div>
+                  </Tooltip>
+
+                </>
               )}
             </Polyline>,
           ];
