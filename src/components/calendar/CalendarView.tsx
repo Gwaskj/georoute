@@ -9,7 +9,11 @@ import {
   toIsoDate,
   type RecurrenceRule,
 } from "@/lib/recurrence/occurrences";
-import MonthGrid, { buildMonthCells, type DayCell } from "./MonthGrid";
+import MonthGrid, {
+  buildCells,
+  type DayCell,
+  type CalendarView as ViewMode,
+} from "./MonthGrid";
 
 function ruleFor(a: Appointment): RecurrenceRule {
   return {
@@ -30,10 +34,10 @@ export default function CalendarView({ isFree }: { isFree: boolean }) {
     useExceptionStore();
 
   const todayIso = useMemo(() => toIsoDate(new Date()), []);
-  const [cursor, setCursor] = useState(() => ({
-    year: Number(todayIso.slice(0, 4)),
-    month: Number(todayIso.slice(5, 7)) - 1,
-  }));
+  const [view, setView] = useState<ViewMode>("month");
+  // A single anchor date drives every view; each one just covers a different
+  // span around it, and stepping moves by that view's own unit.
+  const [anchor, setAnchor] = useState(todayIso);
   const [selected, setSelected] = useState<string | null>(todayIso);
   const [moveTarget, setMoveTarget] = useState<Record<string, string>>({});
 
@@ -42,8 +46,8 @@ export default function CalendarView({ isFree }: { isFree: boolean }) {
   }, [isFree, load]);
 
   const baseCells = useMemo(
-    () => buildMonthCells(cursor.year, cursor.month, todayIso),
-    [cursor, todayIso]
+    () => buildCells(view, anchor, todayIso),
+    [view, anchor, todayIso]
   );
 
   const active = useMemo(
@@ -84,30 +88,64 @@ export default function CalendarView({ isFree }: { isFree: boolean }) {
     movedIn: movedIntoDate.get(c.iso) ?? 0,
   }));
 
-  const monthLabel = new Date(Date.UTC(cursor.year, cursor.month, 1, 12)).toLocaleDateString(
-    "en-GB",
-    { month: "long", year: "numeric" }
-  );
+  const rangeLabel = (() => {
+    const d = (iso: string) => new Date(`${iso}T12:00:00Z`);
+    if (view === "month") {
+      return d(anchor).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+    }
+    if (view === "day") {
+      return d(anchor).toLocaleDateString("en-GB", {
+        weekday: "long", day: "numeric", month: "long", year: "numeric",
+      });
+    }
+    // A week can straddle two months, so show both ends rather than guessing.
+    const first = baseCells[0].iso;
+    const last = baseCells[baseCells.length - 1].iso;
+    const opts = { day: "numeric", month: "short" } as const;
+    const from = d(first).toLocaleDateString("en-GB", opts);
+    const to = d(last).toLocaleDateString("en-GB", { ...opts, year: "numeric" });
+    return `${from} – ${to}`;
+  })();
 
+  // Each view steps by its own unit: a month, a week, or a day.
   const step = (delta: number) =>
-    setCursor(({ year, month }) => {
-      const m = month + delta;
-      if (m < 0) return { year: year - 1, month: 11 };
-      if (m > 11) return { year: year + 1, month: 0 };
-      return { year, month: m };
+    setAnchor((current) => {
+      const [y, m, dd] = current.split("-").map(Number);
+      const d = new Date(Date.UTC(y, m - 1, dd, 12));
+      if (view === "month") d.setUTCMonth(d.getUTCMonth() + delta);
+      else if (view === "day") d.setUTCDate(d.getUTCDate() + delta);
+      else d.setUTCDate(d.getUTCDate() + delta * 7);
+      return toIsoDate(d);
     });
 
-  const selectedAppointments = selected ? (byDate.get(selected) ?? []) : [];
+  const VIEWS: { id: ViewMode; label: string }[] = [
+    { id: "month", label: "Month" },
+    { id: "week", label: "Week" },
+    { id: "workweek", label: "Working week" },
+    { id: "day", label: "Day" },
+  ];
+
+  // In day view there is no grid to click, so the panel follows the anchor.
+  // Elsewhere it follows the selected cell -- but only while that cell is
+  // actually on screen. Paging away otherwise left the panel describing a day
+  // the grid no longer showed.
+  const focusedIso = (() => {
+    if (view === "day") return anchor;
+    const visible = new Set(baseCells.map((c) => c.iso));
+    if (selected && visible.has(selected)) return selected;
+    return visible.has(todayIso) ? todayIso : baseCells[0].iso;
+  })();
+  const selectedAppointments = focusedIso ? (byDate.get(focusedIso) ?? []) : [];
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-100">{monthLabel}</h2>
+        <h2 className="text-lg font-semibold text-slate-100">{rangeLabel}</h2>
         <div className="flex items-center gap-1">
           <button
             type="button"
             onClick={() => step(-1)}
-            aria-label="Previous month"
+            aria-label="Previous"
             className="rounded border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
           >
             ←
@@ -115,10 +153,7 @@ export default function CalendarView({ isFree }: { isFree: boolean }) {
           <button
             type="button"
             onClick={() => {
-              setCursor({
-                year: Number(todayIso.slice(0, 4)),
-                month: Number(todayIso.slice(5, 7)) - 1,
-              });
+              setAnchor(todayIso);
               setSelected(todayIso);
             }}
             className="rounded border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
@@ -128,7 +163,7 @@ export default function CalendarView({ isFree }: { isFree: boolean }) {
           <button
             type="button"
             onClick={() => step(1)}
-            aria-label="Next month"
+            aria-label="Next"
             className="rounded border border-slate-700 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
           >
             →
@@ -136,13 +171,51 @@ export default function CalendarView({ isFree }: { isFree: boolean }) {
         </div>
       </div>
 
-      <MonthGrid cells={cells} selectedIso={selected} onSelect={setSelected} />
+      <div
+        role="group"
+        aria-label="Calendar view"
+        className="flex flex-wrap gap-1"
+      >
+        {VIEWS.map((v) => (
+          <button
+            key={v.id}
+            type="button"
+            aria-pressed={view === v.id}
+            // The anchor is left alone: it already tracks the period being
+            // viewed, including after paging. Re-pointing it at 'selected'
+            // here sent you back to whichever date was last clicked.
+            onClick={() => setView(v.id)}
+            className={`rounded border px-3 py-1 text-xs transition-colors ${
+              view === v.id
+                ? "border-teal-500 bg-teal-500/15 text-teal-200"
+                : "border-slate-700 text-slate-300 hover:bg-slate-800"
+            }`}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
 
-      {selected && (
+      {/* The day view's single cell would just repeat the detail panel below. */}
+      {view !== "day" && (
+        <MonthGrid
+          cells={cells}
+          view={view}
+          selectedIso={selected}
+          onSelect={(iso) => {
+            setSelected(iso);
+            // Also the anchor, so switching to week or day view lands on the
+            // day just clicked rather than wherever the period started.
+            setAnchor(iso);
+          }}
+        />
+      )}
+
+      {focusedIso && (
         <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-semibold text-slate-100">
-              {new Date(`${selected}T12:00:00Z`).toLocaleDateString("en-GB", {
+              {new Date(`${focusedIso}T12:00:00Z`).toLocaleDateString("en-GB", {
                 weekday: "long",
                 day: "numeric",
                 month: "long",
@@ -165,9 +238,9 @@ export default function CalendarView({ isFree }: { isFree: boolean }) {
                 // A moved occurrence shows on its new date; the control there
                 // has to clear the exception keyed to the ORIGINAL date.
                 const movedHere = exs.find(
-                  (e) => e.action === "move" && e.movedToDate === selected
+                  (e) => e.action === "move" && e.movedToDate === focusedIso
                 );
-                const key = `${a.id}|${selected}`;
+                const key = `${a.id}|${focusedIso}`;
 
                 return (
                   <li
@@ -213,7 +286,7 @@ export default function CalendarView({ isFree }: { isFree: boolean }) {
                               type="button"
                               disabled={!moveTarget[key]}
                               onClick={() =>
-                                moveOccurrence(a.id, selected, moveTarget[key])
+                                moveOccurrence(a.id, focusedIso, moveTarget[key])
                               }
                               className="rounded border border-slate-700 px-2 py-1 text-[11px] text-slate-300 hover:bg-slate-800 disabled:opacity-40"
                             >
@@ -221,7 +294,7 @@ export default function CalendarView({ isFree }: { isFree: boolean }) {
                             </button>
                             <button
                               type="button"
-                              onClick={() => skipOccurrence(a.id, selected)}
+                              onClick={() => skipOccurrence(a.id, focusedIso)}
                               className="rounded border border-slate-700 px-2 py-1 text-[11px] text-slate-300 hover:border-red-500/60 hover:text-red-300"
                             >
                               Skip
