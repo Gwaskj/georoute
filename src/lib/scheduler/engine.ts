@@ -160,41 +160,49 @@ function findSlotForVisit(
   // ── DYNAMIC (NON-STRICT) SCHEDULING ────────────────────
   const sorted = existing.slice().sort((a, b) => a.start - b.start);
 
-  let current = baseStart;
+  /** Does [start, end] clear every slot already on this person's day? */
+  const fitsTimeline = (start: number, end: number): boolean => {
+    for (const slot of sorted) {
+      const travelBefore = slot.isBreak ? 0 : travelMin(slot.postcode, clientPostcode);
+      const travelAfter = slot.isBreak ? 0 : travelMin(clientPostcode, slot.postcode);
 
-  for (const slot of sorted) {
-    const travelBefore = slot.isBreak ? 0 : travelMin(slot.postcode, clientPostcode);
-    const travelAfter = slot.isBreak ? 0 : travelMin(clientPostcode, slot.postcode);
+      const bufferedStart = slot.start - travelBefore - minGapMinutes;
+      const bufferedEnd = slot.end + travelAfter + minGapMinutes;
 
-    const earliestStart = current;
-    const latestEnd = earliestStart + visitDuration;
-
-    if (
-      latestEnd + travelAfter <= slot.start - minGapMinutes &&
-      earliestStart - travelBefore >= baseStart
-    ) {
-      if (
-        earliestStart >= baseStart &&
-        latestEnd <= baseEnd &&
-        clientGapOk(earliestStart, latestEnd, clientVisits, windowMinGapToNext)
-      ) {
-        return { start: earliestStart, end: latestEnd };
-      }
+      if (start < bufferedEnd && end > bufferedStart) return false;
     }
-
-    current = Math.max(current, slot.end + minGapMinutes);
-  }
+    return true;
+  };
 
   const originPostcode = getStaffOriginPostcode(staff, officePostcode);
   const travelFromOffice = travelMin(originPostcode, clientPostcode);
-  const start = roundUpTo5(current + travelFromOffice);
-  const end = start + visitDuration;
 
-  if (
-    start >= baseStart &&
-    end <= baseEnd &&
-    clientGapOk(start, end, clientVisits, windowMinGapToNext)
-  ) {
+  // Start times worth trying, earliest first.
+  //
+  // This used to consider only one: the first moment the person was free. If
+  // that moment happened to break a per-client gap -- which is exactly what a
+  // second visit to the same client does -- the visit was abandoned rather
+  // than moved later, even with the whole afternoon empty. So the moments at
+  // which each constraint stops binding are candidates too.
+  const candidates = new Set<number>([roundUpTo5(baseStart + travelFromOffice)]);
+
+  for (const slot of sorted) {
+    const travelAfter = slot.isBreak
+      ? 0
+      : travelMin(slot.postcode, clientPostcode);
+    candidates.add(roundUpTo5(slot.end + minGapMinutes + travelAfter));
+  }
+
+  // The instant each existing visit to this client stops blocking a new one.
+  for (const v of clientVisits) {
+    candidates.add(roundUpTo5(v.end + v.minGapToNext));
+  }
+
+  for (const start of [...candidates].sort((a, b) => a - b)) {
+    const end = start + visitDuration;
+    if (start < baseStart || end > baseEnd) continue;
+    if (!fitsTimeline(start, end)) continue;
+    if (!clientGapOk(start, end, clientVisits, windowMinGapToNext)) continue;
     return { start, end };
   }
 
@@ -578,9 +586,21 @@ function schedulePass(
     // ── STANDARD ASSIGNMENT (single staff) ──
     let assigned = 0;
 
-    for (const s of eligibleStaff) {
-      if (assigned >= appt.requiredStaff) break;
+    // Every eligible person is costed, then the best one takes the visit.
+    //
+    // This used to take whoever came first in the list and could fit it, which
+    // had two consequences: the first staff member absorbed the entire day
+    // while colleagues sat idle, and no comparison of travel happened at all
+    // -- the one cost this tool exists to reduce.
+    const options: {
+      s: Staff;
+      slot: { start: number; end: number };
+      minGapToNext: number;
+      travel: number;
+      load: number;
+    }[] = [];
 
+    for (const s of eligibleStaff) {
       const staffDayStart = s.workStart ? Math.max(dayStartMin, toMinutes(s.workStart)) : dayStartMin;
       const staffDayEnd = s.workEnd ? Math.min(dayEndMin, toMinutes(s.workEnd)) : dayEndMin;
       const timeline = staffTimelines.get(s.id) ?? [];
@@ -603,15 +623,46 @@ function schedulePass(
 
       if (!slot) continue;
 
-      timeline.push({ start: slot.start, end: slot.end, postcode: appt.postcode });
-      staffTimelines.set(s.id, timeline);
-      visits.push(makeISOVisit(baseDate, appt, s, slot.start, slot.end, visitWindowName));
+      // Travel is measured from wherever this person already ends up, which is
+      // their last visit, or their start location if they have none yet.
+      const placed = timeline.filter((t) => !t.isBreak);
+      const lastStop = placed.reduce<StaffTimelineSlot | null>(
+        (latest, t) => (!latest || t.start > latest.start ? t : latest),
+        null
+      );
+      const from = lastStop
+        ? lastStop.postcode
+        : getStaffOriginPostcode(s, officePostcode);
+
+      options.push({
+        s,
+        slot,
+        minGapToNext: usedMinGapToNext,
+        travel: travelMin(from, appt.postcode),
+        load: placed.length,
+      });
+    }
+
+    // Least travel first. Where that ties -- which it does whenever staff share
+    // a base -- the person carrying less takes it, so work spreads across the
+    // team instead of piling onto whoever happens to be first in the list.
+    options.sort(
+      (a, b) => a.travel - b.travel || a.load - b.load || a.slot.start - b.slot.start
+    );
+
+    for (const opt of options.slice(0, appt.requiredStaff)) {
+      const timeline = staffTimelines.get(opt.s.id) ?? [];
+      timeline.push({ start: opt.slot.start, end: opt.slot.end, postcode: appt.postcode });
+      staffTimelines.set(opt.s.id, timeline);
+      visits.push(
+        makeISOVisit(baseDate, appt, opt.s, opt.slot.start, opt.slot.end, visitWindowName)
+      );
 
       // Record client visit on first staff assignment
       if (assigned === 0) {
-        recordClientVisit(appt.name, slot.start, slot.end, usedMinGapToNext);
+        recordClientVisit(appt.name, opt.slot.start, opt.slot.end, opt.minGapToNext);
       }
-      recordClientStaff(appt.name, [s.id]);
+      recordClientStaff(appt.name, [opt.s.id]);
 
       assigned++;
     }
