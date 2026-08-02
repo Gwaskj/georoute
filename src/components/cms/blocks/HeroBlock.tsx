@@ -2,15 +2,18 @@ import type { HeroData } from "@/lib/types/cms";
 
 export default function HeroBlock({ data }: { data: HeroData }) {
   return (
-    <section className="relative mx-auto max-w-6xl px-6 pt-28 pb-20 text-center">
+    <section className="relative mx-auto max-w-6xl px-4 sm:px-6 pt-16 sm:pt-24 md:pt-28 pb-14 sm:pb-20 text-center">
       {data.badge && (
         <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/30 bg-teal-500/10 px-4 py-1.5 text-xs font-medium text-teal-400 mb-8 backdrop-blur-sm">
           {data.badge}
         </div>
       )}
 
-      <h1 className="text-6xl font-extrabold tracking-tight drop-shadow-[0_0_25px_rgba(0,0,0,0.6)]">
+      <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight [overflow-wrap:anywhere] drop-shadow-[0_0_25px_rgba(0,0,0,0.6)]">
         {data.title}
+        {/* Space matters: without it the accessible name and the text search
+            engines read run together as "forcommunity visits". */}
+        {data.titleAccent ? " " : null}
         {data.titleAccent && (
           <span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-400 leading-[1.15] pb-1">
             {data.titleAccent}
@@ -19,7 +22,7 @@ export default function HeroBlock({ data }: { data: HeroData }) {
       </h1>
 
       {data.subtitle && (
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-300 leading-relaxed">
+        <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-slate-300 leading-relaxed">
           {data.subtitle}
         </p>
       )}

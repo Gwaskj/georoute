@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import PricingDetail from "@/components/pricing/PricingDetail";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import type { AnyBlock, PricingHeaderData } from "@/lib/types/cms";
@@ -57,8 +58,6 @@ export default function PricingPage() {
     load();
   }, []);
 
-  if (loading) return null;
-
   return (
     <div className="bg-slate-950 min-h-screen">
       <div className="mx-auto max-w-6xl px-4 py-16">
@@ -73,8 +72,11 @@ export default function PricingPage() {
           )}
         </div>
 
+        {/* Only the cards depend on fetched data. Everything else renders
+            server-side so the page is never blank to a crawler or on first
+            paint. */}
         <div className="grid gap-6 md:grid-cols-2">
-          {plans.map((plan) => (
+          {(loading ? [] : plans).map((plan) => (
             <div
               key={plan.id}
               className={`rounded-2xl p-6 ${
@@ -110,6 +112,8 @@ export default function PricingPage() {
             </div>
           ))}
         </div>
+
+        <PricingDetail />
 
         {profile?.is_admin && (
           <div className="mt-10 text-center space-x-6">

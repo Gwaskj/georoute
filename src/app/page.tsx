@@ -8,12 +8,12 @@ import type { AnyBlock } from "@/lib/types/cms";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "GeoRoutes – Smarter Route Planning",
-  description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start, no account required.",
+  title: "Care & Community Visit Scheduling Software – GeoRoutes",
+  description: "Scheduling software for community teams: plan care rounds, district nursing visits and therapy caseloads around real road distances. Handles skills, double-up calls, repeat visits and time windows. Free to start, no account needed.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "GeoRoutes – Smarter Route Planning",
-    description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start, no account required.",
+    title: "Care & Community Visit Scheduling Software – GeoRoutes",
+    description: "Scheduling software for community teams: plan care rounds, district nursing visits and therapy caseloads around real road distances. Handles skills, double-up calls, repeat visits and time windows. Free to start, no account needed.",
     url: "/",
   },
 };

@@ -103,13 +103,17 @@ export function HeaderStructure({
                   transformOrigin: "top left",
                 }}
               >
+                {/* The header bar is 64px tall, so a fixed 100x100 logo was
+                    being clipped top and bottom on every page. Height is
+                    pinned to fit the bar and width follows the aspect ratio,
+                    so any logo shape renders whole. */}
                 <Image
                   src={logoUrl}
                   alt="Logo"
-                  width={100}
-                  height={100}
-                  className="object-contain"
-                  style={{ width: "100px", height: "100px" }}
+                  width={200}
+                  height={48}
+                  className="h-10 w-auto max-w-[160px] object-contain"
+                  priority
                 />
               </div>
             )}

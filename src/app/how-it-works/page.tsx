@@ -33,7 +33,7 @@ const steps = [
   {
     number: "05",
     title: "Review and export",
-    body: "View the full generated schedule broken down by staff member, with start and end times for every visit. Pro users can save and retrieve their schedule history, share it with their team, and export it for use in other tools.",
+    body: "View the full generated schedule broken down by staff member, with start and end times for every visit, and follow each route on the map. Open a round as a multi-stop route in Google Maps or Apple Maps, send it to a staff member as a read-only link, or give them a login that shows only their own day. Pro accounts keep your schedule history so you can retrieve a previous day.",
   },
 ];
 
