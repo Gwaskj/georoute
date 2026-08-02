@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import PageRenderer from "@/components/cms/PageRenderer";
 import FreeTierAdSlot from "@/components/ads/FreeTierAdSlot";
+import HomeIntro from "@/components/home/HomeIntro";
 import type { AnyBlock } from "@/lib/types/cms";
 
 export const dynamic = "force-dynamic";
@@ -130,6 +131,10 @@ export default async function HomePage() {
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.04] bg-[url('/grid.svg')] bg-repeat" />
 
       <PageRenderer blocks={blocks} />
+
+      {/* The substance of the page. Kept above the ad slot so the ad follows
+          real content rather than leading it. */}
+      <HomeIntro />
 
       <div className="mx-auto max-w-6xl px-4 pb-16">
         <p className="mb-1 text-center text-[10px] uppercase tracking-widest text-slate-600">

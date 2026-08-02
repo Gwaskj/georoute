@@ -16,7 +16,6 @@ import { SchedulerContext } from "@/lib/scheduler/types";
 import { getRouteBatched, clearLocalCache, getRouteErrors } from "@/lib/routing";
 import { logActivity } from "@/lib/logsClient";
 import Link from "next/link";
-import FreeTierAdSlot from "@/components/ads/FreeTierAdSlot";
 
 interface GenerateScheduleProps {
   algorithm: "default";
@@ -328,14 +327,6 @@ export default function GenerateSchedule({
         </p>
       )}
 
-      {visits.length > 0 && (
-        <div className="mt-2">
-          <p className="mb-1 text-center text-[10px] uppercase tracking-widest text-slate-600">
-            Advertisement
-          </p>
-          <FreeTierAdSlot />
-        </div>
-      )}
     </div>
   );
 }

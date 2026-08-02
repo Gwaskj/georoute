@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import AdBanner from "@/components/AdBanner";
 import type { AnyBlock, PricingHeaderData } from "@/lib/types/cms";
 
 const DEFAULT_HEADER: PricingHeaderData = {
@@ -111,15 +110,6 @@ export default function PricingPage() {
             </div>
           ))}
         </div>
-
-        {!user || (user && profile && !profile.is_pro) ? (
-          <div className="mt-10">
-            <p className="mb-1 text-center text-[10px] uppercase tracking-widest text-slate-600">
-              Advertisement
-            </p>
-            <AdBanner />
-          </div>
-        ) : null}
 
         {profile?.is_admin && (
           <div className="mt-10 text-center space-x-6">

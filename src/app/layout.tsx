@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 
 // GLOBAL STYLES
@@ -66,13 +65,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               inLanguage: "en-GB",
             }),
           }}
-        />
-
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1904838490296389"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
         />
 
         <ThemeProvider>
