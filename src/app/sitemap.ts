@@ -20,8 +20,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/how-it-works", changeFrequency: "monthly", priority: 0.9 },
     { path: "/help", changeFrequency: "monthly", priority: 0.8 },
     { path: "/pricing", changeFrequency: "weekly", priority: 0.8 },
-    { path: "/signup", changeFrequency: "monthly", priority: 0.5 },
-    { path: "/login", changeFrequency: "yearly", priority: 0.4 },
+    // /login and /signup are deliberately absent: nobody searches for them,
+    // they carry ~55 words each, and listing thin utility pages dilutes the
+    // sitemap. They stay crawlable, just not advertised.
     { path: "/feedback", changeFrequency: "monthly", priority: 0.3 },
     { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
     { path: "/terms", changeFrequency: "monthly", priority: 0.3 },

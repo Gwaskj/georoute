@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 200" width="1600" height="200" preserveAspectRatio="xMidYMid slice" role="presentation">
+  <!--
+    Header banner: an abstract route network rather than a photograph.
+
+    Rendered behind a 64px header at 40% opacity and cropped with object-cover,
+    so it is built as vector with a wide, short viewBox: it stays crisp at any
+    width and has no letterboxing of its own to show through. Strokes are kept
+    light and sparse because anything busy turns to noise once it is scaled
+    down and faded back.
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1220" />
+      <stop offset="55%" stop-color="#0f1b2d" />
+      <stop offset="100%" stop-color="#0a1a1c" />
+    </linearGradient>
+
+    <linearGradient id="route" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2dd4bf" stop-opacity="0.15" />
+      <stop offset="45%" stop-color="#2dd4bf" stop-opacity="0.85" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.25" />
+    </linearGradient>
+
+    <linearGradient id="routeAlt" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.10" />
+      <stop offset="60%" stop-color="#38bdf8" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0.15" />
+    </linearGradient>
+
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#2dd4bf" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#2dd4bf" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="200" fill="url(#bg)" />
+
+  <!-- Faint grid, suggesting a map without pretending to be one. -->
+  <g stroke="#7dd3fc" stroke-opacity="0.05" stroke-width="1">
+    <path d="M0 50H1600M0 100H1600M0 150H1600" />
+    <path d="M100 0V200M300 0V200M500 0V200M700 0V200M900 0V200M1100 0V200M1300 0V200M1500 0V200" />
+  </g>
+
+  <!-- Soft light behind the primary route, to lift it off the grid. -->
+  <ellipse cx="620" cy="104" rx="360" ry="72" fill="url(#glow)" opacity="0.35" />
+
+  <!-- Primary route -->
+  <path
+    d="M-20 150 C 160 150, 210 70, 360 70 S 560 130, 700 104 S 900 44, 1060 76 S 1320 140, 1620 96"
+    fill="none"
+    stroke="url(#route)"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
+
+  <!-- Secondary route, offset so the two read as different rounds -->
+  <path
+    d="M-20 76 C 180 60, 260 130, 420 140 S 700 160, 880 138 S 1180 72, 1620 132"
+    fill="none"
+    stroke="url(#routeAlt)"
+    stroke-width="1.75"
+    stroke-linecap="round"
+    stroke-dasharray="7 9"
+    opacity="0.75"
+  />
+
+  <!-- Stops along the primary route -->
+  <g fill="#0b1220" stroke="#2dd4bf" stroke-width="2">
+    <circle cx="360" cy="70" r="5.5" />
+    <circle cx="700" cy="104" r="5.5" />
+    <circle cx="1060" cy="76" r="5.5" />
+  </g>
+  <g fill="#2dd4bf">
+    <circle cx="360" cy="70" r="1.75" />
+    <circle cx="700" cy="104" r="1.75" />
+    <circle cx="1060" cy="76" r="1.75" />
+  </g>
+
+  <!-- Smaller stops on the secondary route -->
+  <g fill="#38bdf8" opacity="0.55">
+    <circle cx="420" cy="140" r="3" />
+    <circle cx="880" cy="138" r="3" />
+    <circle cx="1300" cy="104" r="3" />
+  </g>
+</svg>
