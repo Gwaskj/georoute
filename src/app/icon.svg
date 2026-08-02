@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="GeoRoutes">
+  <!--
+    Favicon variant of the brand mark.
+
+    Deliberately not the same artwork as logo-mark.svg. A favicon is read at
+    16px, where the route line, its dashes and the end stops all collapse into
+    grey mush -- so they are dropped and the pin is scaled up to fill the
+    canvas instead. The rounded dark tile is there because a bare teal pin
+    disappears against a dark browser tab strip; the tile guarantees contrast
+    either way.
+  -->
+  <defs>
+    <linearGradient id="p" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#5eead4" />
+      <stop offset="60%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#22b8cf" />
+    </linearGradient>
+  </defs>
+
+  <rect width="32" height="32" rx="7" fill="#0b1220" />
+
+  <path
+    d="M16 5 C 11 5, 7 9, 7 14 c 0 6.4, 8 12.2, 8.6 12.6 a 0.7 0.7 0 0 0 0.8 0 C 17 26.2, 25 20.4, 25 14 c 0 -5 -4 -9 -9 -9 z"
+    fill="url(#p)"
+  />
+
+  <circle cx="16" cy="13.8" r="3.4" fill="#0b1220" />
+</svg>
