@@ -6,6 +6,12 @@ test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe("Unauthenticated pages", () => {
   test("login page loads", async ({ page }) => {
+    // Vercel analytics exists only on Vercel; locally it 404s and would fail
+    // this test for a reason that is not a fault.
+    await page.route("**/_vercel/insights/**", (route) =>
+      route.fulfill({ status: 200, contentType: "application/javascript", body: "" })
+    );
+
     const errors: string[] = [];
     page.on("console", (msg) => {
       if (msg.type() === "error") errors.push(msg.text());
@@ -18,10 +24,7 @@ test.describe("Unauthenticated pages", () => {
     expect(errors, "No console errors").toHaveLength(0);
   });
 
-  // Skipped: Playwright 1.61.0 bug — apiRequestContext throws "file data stream has
-  // unexpected number of bytes" during Supabase auth check on page load.
-  // Page renders correctly; re-enable when Playwright 1.62 stable ships.
-  test.skip("signup page loads", async ({ page }) => {
+  test("signup page loads", async ({ page }) => {
     const errors: string[] = [];
     page.on("console", (msg) => {
       if (msg.type() === "error") errors.push(msg.text());
@@ -31,8 +34,7 @@ test.describe("Unauthenticated pages", () => {
     expect(errors, "No console errors").toHaveLength(0);
   });
 
-  // Skipped: same Playwright 1.61.0 networking bug as signup page above.
-  test.skip("home page loads", async ({ page }) => {
+  test("home page loads", async ({ page }) => {
     await page.goto("/");
     await expect(page).not.toHaveURL(/\/login/);
   });

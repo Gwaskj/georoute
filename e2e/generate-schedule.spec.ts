@@ -1,10 +1,10 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Generate schedule flow", () => {
-  // Skipped: Playwright 1.61.0 bug — apiRequestContext throws "file data stream has
-  // unexpected number of bytes" when the ORS routing API returns a compressed response.
-  // Page renders correctly; re-enable when Playwright 1.62 stable ships.
-  test.skip("generates a schedule and shows results", async ({ page }) => {
+  // Hits the live routing API, so it needs a real wait -- this was skipped
+  // with a note blaming a Playwright bug, but it was only ever waiting three
+  // seconds for a round trip that takes closer to twenty.
+  test("generates a schedule and shows results", async ({ page }) => {
     await page.goto("/scheduler");
     await expect(page).not.toHaveURL(/\/login/);
 
@@ -14,7 +14,7 @@ test.describe("Generate schedule flow", () => {
     await generateButton.click();
 
     // Should not show the routing error box
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(18000);
     const routingError = page.getByText(/routing error/i);
     await expect(routingError).toHaveCount(0);
 

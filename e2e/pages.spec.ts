@@ -1,9 +1,17 @@
 import { test, expect } from "@playwright/test";
 
-// Smoke tests: each page should load, not redirect to /login, and produce
-// no console errors or failed network requests.
+// Smoke tests: each page should load, not redirect to /login, and produce no
+// console errors or failed network requests.
 function smokeTest(name: string, path: string) {
   test(`${name} loads without errors`, async ({ page }) => {
+    // Vercel injects its analytics script only on Vercel. Locally it 404s on
+    // every page, which failed every test in this file for a reason that is
+    // not a fault -- a suite that can never pass is one nobody trusts. Stub it
+    // so a genuine failure is the only thing that turns this red.
+    await page.route("**/_vercel/insights/**", (route) =>
+      route.fulfill({ status: 200, contentType: "application/javascript", body: "" })
+    );
+
     const errors: string[] = [];
     page.on("console", (msg) => {
       if (msg.type() === "error") errors.push(msg.text());
@@ -28,7 +36,8 @@ function smokeTest(name: string, path: string) {
 
 test.describe("Account pages", () => {
   smokeTest("account", "/account");
-  smokeTest("billing", "/account/billing");
+  // /account/billing was merged into /account and now 404s; the test for it
+  // outlived the page.
 });
 
 test.describe("Admin pages", () => {
@@ -46,5 +55,13 @@ test.describe("Admin pages", () => {
 });
 
 test.describe("Public pages", () => {
+  smokeTest("home", "/");
   smokeTest("pricing", "/pricing");
+  smokeTest("how it works", "/how-it-works");
+  smokeTest("help hub", "/help");
+  smokeTest("help guide", "/help/care-planning");
+});
+
+test.describe("Pro pages", () => {
+  smokeTest("calendar", "/calendar");
 });
