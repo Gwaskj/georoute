@@ -49,6 +49,15 @@ export const GUIDES: Guide[] = [
     minutes: 8,
   },
   {
+    slug: "multiple-visits-per-day",
+    title: "Multiple visits a day to the same person",
+    metaTitle: "Scheduling Multiple Visits Per Day to the Same Client",
+    description:
+      "How to schedule several visits a day to one person with a minimum gap between them — morning, lunch, tea and bed calls — and how to run the same scheduler without repeat visits at all.",
+    category: "basics",
+    minutes: 8,
+  },
+  {
     slug: "time-windows",
     title: "Call purposes and time windows",
     metaTitle: "Call Purposes and Custom Time Windows",

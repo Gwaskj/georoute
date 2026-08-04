@@ -88,11 +88,13 @@ export default function HelpPage() {
             Help and guides
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-base">
-            GeoRoutes is a multipurpose scheduler for teams who work out in the
-            community rather than from one building. It takes a list of people
-            to visit, a list of staff, and the rules you work to — then builds
-            each person&apos;s day around real driving distances instead of
-            straight lines on a map.
+            GeoRoutes is a multipurpose route scheduler for teams who work out in
+            the community rather than from one building. It takes a list of
+            people to visit, a list of staff, and the rules you work to — then
+            builds each person&apos;s day around real driving distances instead
+            of straight lines on a map. It handles several visits a day to the
+            same person, with a minimum gap between them, and works just as well
+            for rounds that need nothing of the sort.
           </p>
         </header>
 

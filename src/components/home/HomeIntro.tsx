@@ -14,7 +14,7 @@ export default function HomeIntro() {
     <section className="border-t border-slate-800 bg-slate-950">
       <div className="mx-auto max-w-3xl px-4 py-16">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-100">
-          Scheduling for teams that work out in the community
+          A multipurpose route scheduler for visits, not deliveries
         </h2>
 
         <div className="mt-5 space-y-4 text-sm leading-relaxed text-slate-300">
@@ -34,6 +34,41 @@ export default function HomeIntro() {
             still fill a day once travel is counted. Housing officers, support
             workers and mobile engineers face the same problem in a different
             uniform.
+          </p>
+        </div>
+
+        <h3 className="mt-10 text-lg font-semibold text-slate-100">
+          Several visits a day to the same person
+        </h3>
+        <div className="mt-4 space-y-4 text-sm leading-relaxed text-slate-300">
+          <p>
+            This is the case most route planners cannot express, and the one
+            GeoRoutes was built around. Ordinary planners assume one stop per
+            address: ask for the same address four times, spaced across the day,
+            and the efficient answer becomes &ldquo;do all four while you are
+            there&rdquo; — which is exactly what nobody wants.
+          </p>
+          <p>
+            Here you say how many visits a person needs and the least time that
+            must pass between them. Someone on morning, lunch, tea and bed calls
+            gets four separate visits at sensible intervals, routed around every
+            other client on the round. Each one can have its own length, its own
+            part of the day, and its own requirement for two carers rather than
+            one.
+          </p>
+          <p>
+            None of it is compulsory. Visits required defaults to one, and a
+            service doing a single visit per person never touches the setting —
+            the same scheduler simply behaves as a straightforward route
+            planner. Mixed rounds work too: one client on four calls alongside
+            twenty on one is an ordinary day.{" "}
+            <Link
+              href="/help/multiple-visits-per-day"
+              className="text-teal-400 hover:text-teal-300"
+            >
+              How repeat visits are set up
+            </Link>{" "}
+            covers it in full.
           </p>
         </div>
 

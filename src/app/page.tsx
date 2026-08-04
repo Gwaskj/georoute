@@ -8,12 +8,12 @@ import type { AnyBlock } from "@/lib/types/cms";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Care & Community Visit Scheduling Software – GeoRoutes",
-  description: "Scheduling software for community teams: plan care rounds, district nursing visits and therapy caseloads around real road distances. Handles skills, double-up calls, repeat visits and time windows. Free to start, no account needed.",
+  title: "Multipurpose Route Scheduler for Repeat Visits – GeoRoutes",
+  description: "A multipurpose route scheduler for teams visiting people at home. Handles several visits a day to the same person with a minimum gap between them — or single visits, if that is all you need. Real road distances, skills, double-ups and time windows. Free to start.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Care & Community Visit Scheduling Software – GeoRoutes",
-    description: "Scheduling software for community teams: plan care rounds, district nursing visits and therapy caseloads around real road distances. Handles skills, double-up calls, repeat visits and time windows. Free to start, no account needed.",
+    title: "Multipurpose Route Scheduler for Repeat Visits – GeoRoutes",
+    description: "A multipurpose route scheduler for teams visiting people at home. Handles several visits a day to the same person with a minimum gap between them — or single visits, if that is all you need. Real road distances, skills, double-ups and time windows. Free to start.",
     url: "/",
   },
 };
