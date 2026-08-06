@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // GLOBAL STYLES
 import "./globals.css";
@@ -16,6 +17,8 @@ import { ReactNode } from "react";
 import Link from "next/link";
 import HeaderLoader from "@/components/HeaderLoader";
 import ThemeProvider from "@/components/ThemeProvider";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import ConsentSettingsLink from "@/components/privacy/ConsentSettingsLink";
 
 import { SITE_URL } from "@/lib/siteUrl";
 
@@ -92,6 +95,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   <Link href="/calendar" className="hover:text-slate-200">Calendar</Link>
                   <Link href="/privacy" className="hover:text-slate-200">Privacy Policy</Link>
                   <Link href="/terms" className="hover:text-slate-200">Terms of Service</Link>
+                  <ConsentSettingsLink />
                 </div>
               </div>
             </footer>
@@ -100,6 +104,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </ThemeProvider>
 
         <Analytics />
+        <SpeedInsights />
+        <GoogleAnalytics />
       </body>
     </html>
   );

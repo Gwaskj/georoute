@@ -14,16 +14,13 @@ import { createServerClient } from "@supabase/ssr";
  * components, where a redirect can only happen after the page has already
  * rendered and its data has been fetched. It also means a page added later is
  * covered without anyone remembering to guard it.
+ *
+ * The list of protected routes lives in `config.matcher` at the foot of this
+ * file and nowhere else. Next.js reads that matcher statically at build time,
+ * so it cannot be built from a constant -- and a second copy of the list up
+ * here would be inert, which is worse than no copy: adding a route to it would
+ * look like protection while doing nothing at all.
  */
-const OWNER_ONLY = [
-  "/scheduler",
-  "/staff",
-  "/settings",
-  "/account",
-  "/calendar",
-  "/admin",
-];
-
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
