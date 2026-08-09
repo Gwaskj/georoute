@@ -9,6 +9,7 @@ import {
 } from "@/store/appointmentStore";
 
 import { useSkillsStore, Skill } from "@/store/skillsStore";
+import PostcodeHint from "@/components/common/PostcodeHint";
 import type { RecurFreq } from "@/lib/recurrence/occurrences";
 import { useCustomWindowStore } from "@/store/customWindowStore";   // ⭐ FIXED
 import { useScheduleResultStore } from "@/store/scheduleResultStore";
@@ -311,6 +312,7 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                     }
                     className="w-full rounded bg-slate-900 border border-slate-700 px-2 py-1"
                   />
+                  <PostcodeHint value={form.postcode} />
                 </div>
 
                 <div>

@@ -4,10 +4,14 @@ import { useState, useMemo, useEffect } from "react";
 import { useStaffStore, Staff, Gender, StartLocation, StaffBreak } from "@/store/staffStore";
 import { useSkillsStore, Skill } from "@/store/skillsStore";
 import { useSettingsStore } from "@/store/settingsStore";
+import PostcodeHint from "@/components/common/PostcodeHint";
+import { normalisePostcode } from "@/lib/postcode/validate";
 
-// Simple cleaning now that postcode validation is removed
+// Shared with the postcode checker so what gets saved is the same string that
+// was looked up -- "ls14dy" and "LS1 4DY" must not become two cache entries or
+// two different values in the store.
 function cleanPostcode(p: string) {
-  return p.trim().toUpperCase();
+  return normalisePostcode(p);
 }
 
 interface AddStaffProps {
@@ -420,8 +424,13 @@ function StaffForm({
           }
           className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
         />
-        {errors.home && (
+        {errors.home ? (
           <p className="text-xs text-red-400 mt-1">{errors.home}</p>
+        ) : (
+          // Suppressed while a hard validation error is showing -- two lines of
+          // feedback under one field contradict each other more often than they
+          // help.
+          <PostcodeHint value={form.homePostcode} />
         )}
       </div>
 
@@ -436,8 +445,10 @@ function StaffForm({
           placeholder="Leave blank to use global office postcode"
           className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
         />
-        {errors.office && (
+        {errors.office ? (
           <p className="text-xs text-red-400 mt-1">{errors.office}</p>
+        ) : (
+          <PostcodeHint value={form.officePostcode} />
         )}
       </div>
 
