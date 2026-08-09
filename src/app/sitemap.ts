@@ -5,9 +5,37 @@ import { GUIDES } from "@/lib/help/guides";
 // Only publicly useful, indexable pages belong here. Account, settings, staff
 // and admin are user-specific and are disallowed in robots.ts instead -- listing
 // them would invite Google to crawl pages it can only ever see logged out.
-export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date();
+/**
+ * Dates are written out rather than taken from `new Date()` at build time.
+ *
+ * Every URL previously carried the build timestamp, so each deploy told Google
+ * all eighteen pages had changed at the same instant -- including ones
+ * untouched for weeks. Google discounts lastmod when it looks unreliable, so
+ * the field was earning nothing. Reading git at build time does not fix it
+ * either: Vercel builds from a shallow clone, where `git log -1 -- <file>`
+ * reports the current commit for every file.
+ *
+ * Bump the date when a page's content genuinely changes. A date that stays put
+ * while a page is untouched is the accurate answer, not a stale one.
+ */
+const PAGE_UPDATED: Record<string, string> = {
+  "/": "2026-08-09",
+  "/scheduler": "2026-07-23",
+  "/how-it-works": "2026-08-02",
+  "/help": "2026-08-04",
+  "/pricing": "2026-08-02",
+  "/feedback": "2026-07-29",
+  "/privacy": "2026-07-29",
+  "/terms": "2026-07-29",
+};
 
+// Noon UTC so a date cannot land on the wrong day once serialised through a
+// timezone offset -- the same reason the recurrence maths uses midday.
+function asDate(iso: string): Date {
+  return new Date(`${iso}T12:00:00Z`);
+}
+
+export default function sitemap(): MetadataRoute.Sitemap {
   const pages: {
     path: string;
     changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
@@ -34,11 +62,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     path: `/help/${g.slug}`,
     changeFrequency: "monthly" as const,
     priority: 0.7,
+    updated: g.updated,
   }));
 
-  return [...pages, ...guides].map(({ path, changeFrequency, priority }) => ({
+  return [
+    ...pages.map((p) => ({ ...p, updated: PAGE_UPDATED[p.path] })),
+    ...guides,
+  ].map(({ path, changeFrequency, priority, updated }) => ({
     url: `${SITE_URL}${path}`,
-    lastModified,
+    // A missing entry would silently fall back to "now" and reintroduce the
+    // problem for that one URL, so it is better to have no lastmod at all.
+    ...(updated ? { lastModified: asDate(updated) } : {}),
     changeFrequency,
     priority,
   }));
