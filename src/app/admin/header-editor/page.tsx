@@ -325,8 +325,12 @@ export default function HeaderEditorPage() {
     setBannerRotation(0);
   }
 
-  const leftNav = navItems.filter((n) => n.align !== "right");
-  const rightNav = navItems.filter((n) => n.align === "right");
+  // Mirrors HeaderStructure: anything flagged inMenu is collected into the
+  // dropdown wherever it was aligned, so the preview has to exclude it from
+  // both groups or it shows a bar that the real header will never render.
+  const leftNav = navItems.filter((n) => n.align !== "right" && !n.inMenu);
+  const rightNav = navItems.filter((n) => n.align === "right" && !n.inMenu);
+  const menuNav = navItems.filter((n) => n.inMenu);
 
   if (isAdmin === null) return null;
 
@@ -428,6 +432,14 @@ export default function HeaderEditorPage() {
             {rightNav.map((item) => (
               <span key={item.id}>{item.text}</span>
             ))}
+            {/* Named rather than drawn open: the point of the preview is to
+                show what sits on the bar, and the count is what tells you
+                whether you have pushed too much out of sight. */}
+            {menuNav.length > 0 && (
+              <span title={menuNav.map((n) => n.text).join(", ")}>
+                ☰ Menu ({menuNav.length})
+              </span>
+            )}
             <span className="px-4 py-2 bg-slate-800 rounded">Logout</span>
           </div>
 
@@ -603,15 +615,35 @@ export default function HeaderEditorPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-slate-300">Admin only:</label>
-                <input
-                  type="checkbox"
-                  checked={item.isAdmin || false}
-                  onChange={(e) =>
-                    updateNavItem(index, { isAdmin: e.target.checked })
-                  }
-                />
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-slate-300">Admin only:</label>
+                  <input
+                    type="checkbox"
+                    checked={item.isAdmin || false}
+                    onChange={(e) =>
+                      updateNavItem(index, { isAdmin: e.target.checked })
+                    }
+                  />
+                </div>
+
+                {/* The header has always supported putting an item in the
+                    dropdown instead of the bar -- the flag was read when
+                    rendering but never offered here, so where a link appeared
+                    could only be changed by editing the database directly. */}
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-slate-300">Show in:</label>
+                  <select
+                    className="bg-slate-950 border border-slate-700 text-xs text-white rounded px-2 py-1"
+                    value={item.inMenu ? "menu" : "bar"}
+                    onChange={(e) =>
+                      updateNavItem(index, { inMenu: e.target.value === "menu" })
+                    }
+                  >
+                    <option value="bar">Header bar</option>
+                    <option value="menu">Menu dropdown</option>
+                  </select>
+                </div>
               </div>
 
               <div className="flex items-center justify-between mt-2">
