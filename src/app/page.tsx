@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import PageRenderer from "@/components/cms/PageRenderer";
 import FreeTierAdSlot from "@/components/ads/FreeTierAdSlot";
 import HomeIntro from "@/components/home/HomeIntro";
+import ProfessionPicker from "@/components/home/ProfessionPicker";
 import type { AnyBlock } from "@/lib/types/cms";
 
 export const dynamic = "force-dynamic";
@@ -131,6 +132,12 @@ export default async function HomePage() {
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.04] bg-[url('/grid.svg')] bg-repeat" />
 
       <PageRenderer blocks={blocks} />
+
+      {/* Placed directly under the marketing blocks and above the long-form
+          intro: these are the only home page links to the sector guides, and
+          the four of them sat uncrawled while the one guide the page did link
+          to was picked up. Depth of link mattered more than depth of content. */}
+      <ProfessionPicker />
 
       {/* The substance of the page. Kept above the ad slot so the ad follows
           real content rather than leading it. */}

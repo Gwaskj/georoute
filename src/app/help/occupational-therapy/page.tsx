@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import GuideShell from "@/components/help/GuideShell";
-import { Section, FieldList, Callout, FaqSection } from "@/components/help/GuideContent";
+import { Section, Steps, FieldList, Callout, FaqSection } from "@/components/help/GuideContent";
 import { getGuide, guideMetadata } from "@/lib/help/guides";
 
 const guide = getGuide("occupational-therapy");
@@ -27,6 +27,52 @@ const visitTypes = [
   {
     name: "Major adaptation visits",
     body: "Housing adaptations and complex assessments can run half a day. Treat them as the fixed point the rest of the day is built around rather than something to slot in.",
+  },
+];
+
+const dailyRoutine = [
+  {
+    title: "Plan the week, then work a day at a time",
+    body: "OT caseloads move more slowly than nursing ones — an assessment booked today may be three weeks out. Decide the week's shape first: which days are home visits, which are clinic, report writing or equipment ordering. Then schedule each visiting day individually, because that is where travel actually gets decided.",
+  },
+  {
+    title: "Be honest about visit length",
+    body: "This is the step OT services most often get wrong. An initial assessment is not an hour: it is an hour with the person, plus setting up, plus the conversation at the door that always happens, plus notes. Enter the time the visit genuinely occupies rather than the contact time. Four visits underestimated by twenty minutes each is a day that ends eighty minutes late.",
+  },
+  {
+    title: "Group by geography before you group by anything else",
+    body: "With few, long visits, travel is the largest controllable cost in the day. If the caseload allows any flexibility about which day someone is seen, use it to cluster visits in the same area onto the same day. A week planned this way rather than by referral order routinely saves a whole visit's worth of driving.",
+  },
+  {
+    title: "Mark joint visits as needing two staff",
+    body: "Joint visits with a physiotherapist, a social worker or a second OT for a moving-and-handling assessment need two diaries to align at one address. Set staff required to 2 rather than booking two separate visits and hoping. These are the hardest appointments to place, so give them the widest window the referral genuinely allows.",
+  },
+  {
+    title: "Generate, and expect the day to look empty",
+    body: "An OT day with four appointments and three hours of driving looks underused next to a home care round. It is not. Read the travel figures rather than the appointment count — that is the number that tells you whether the day is full, and it is the one that justifies the shape of the caseload to anyone asking.",
+  },
+  {
+    title: "Leave slack for equipment and follow-up",
+    body: "Equipment deliveries, chasing an order, an unplanned call back to a client who has had a fall — these fill the gaps between visits and are the reason a day scheduled to the minute never works. Either build shorter working hours than the theoretical maximum, or leave a visit slot unfilled deliberately.",
+  },
+];
+
+const disruptions = [
+  {
+    name: "A visit needs rescheduling",
+    body: "Move it rather than deleting and re-adding. The occurrence keeps its setup — duration, staff required, any skills — so a rebooked assessment does not quietly become a thirty-minute single-handed visit because someone re-entered it from memory.",
+  },
+  {
+    name: "The caseload has clustered in one area",
+    body: "This is an opportunity rather than a problem. If several referrals have come from the same part of the patch, pull them onto the same day even if it means one waits an extra two days. The travel saved is often larger than the delay costs.",
+  },
+  {
+    name: "A joint visit will not fit anywhere",
+    body: "Double-staffed visits fail to place more often than any other type, because they need two people free at once. Widen the window before you do anything else. If it still will not fit, the honest question is whether it genuinely needs two people for the whole visit or only for part of it.",
+  },
+  {
+    name: "Assessments are consistently overrunning",
+    body: "Increase the standard duration rather than absorbing it. A service where every assessment runs twenty minutes over is not a service with a discipline problem; it is a service whose assumed visit length is wrong. Correcting it makes every subsequent day honest.",
   },
 ];
 
@@ -102,6 +148,29 @@ export default function Page() {
           honest case for or against how the patch is currently divided between
           therapists.
         </Callout>
+      </Section>
+
+      <Section title="Running an OT caseload day to day">
+        <p>
+          The routine for a service with four long visits a day looks nothing
+          like one with sixty short calls. The decisions that matter are made
+          when the week is planned, not when the day is generated.
+        </p>
+        <Steps steps={dailyRoutine} />
+        <Callout title="Judge the day by travel, not by appointment count">
+          Four visits and three hours of driving is a full day. The appointment
+          count is the least useful number on the page for an OT service, and
+          managing to it rather than to travel is how caseloads end up
+          criss-crossing the patch.
+        </Callout>
+      </Section>
+
+      <Section title="When the week does not go to plan">
+        <p>
+          Fewer appointments means each disruption costs proportionally more.
+          These are the ones worth having a habit for.
+        </p>
+        <FieldList fields={disruptions} />
       </Section>
 
       <Section title="Related setup">

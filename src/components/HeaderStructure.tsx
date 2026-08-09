@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useThemeStore } from "@/store/themeStore";
 import SeasonalDoodle from "@/components/effects/SeasonalDoodle";
 
@@ -43,6 +43,25 @@ type Props = {
   onLogout: () => void;
 };
 
+/**
+ * The admin sub-pages, in one place.
+ *
+ * This list was previously written out three times -- twice in the desktop
+ * paths and not at all in the mobile one, which is how the mobile menu ended
+ * up rendering "Admin" as an ordinary link to its placeholder href of "#".
+ * Tapping it navigated nowhere and the sub-pages were unreachable on a phone.
+ */
+const ADMIN_LINKS: [string, string][] = [
+  ["/admin/users", "Users"],
+  ["/admin/staff", "Staff"],
+  ["/admin/appointments", "Appointments"],
+  ["/admin/pricing", "Pricing"],
+  ["/admin/logs", "Logs"],
+  ["/admin/header-editor", "Header Editor"],
+  ["/admin/themes", "Theme Builder"],
+  ["/admin/editor", "Page Editor"],
+];
+
 export function HeaderStructure({
   logoUrl,
   bannerUrl,
@@ -64,6 +83,33 @@ export function HeaderStructure({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Closing used to be handled by onMouseLeave. With the menu opening on click
+  // instead, it needs an explicit way out: a click anywhere else, or Escape.
+  // Without this it could only be dismissed by hitting the same button again,
+  // which is not where anyone's hand goes next.
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
   const { activeConfig } = useThemeStore();
 
   const leftNav = navItems.filter((n) => n.align !== "right" && !n.inMenu);
@@ -216,11 +262,12 @@ export function HeaderStructure({
           })}
 
           {menuNav.length > 0 && (
-            <div
-              className="relative"
-              onMouseEnter={() => setMenuOpen(true)}
-              onMouseLeave={() => setMenuOpen(false)}
-            >
+            // Click to open, not hover. A tap on a touch device fires a
+            // synthetic mouseenter and then a click, so hover-to-open plus
+            // click-to-toggle meant the menu opened and immediately closed
+            // again on a phone -- and a menu that opens on hover has no way to
+            // be dismissed by keyboard either.
+            <div className="relative" ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setMenuOpen((o) => !o)}
@@ -237,9 +284,21 @@ export function HeaderStructure({
                 Menu
               </button>
 
-              {menuOpen && (
-                <div className="absolute right-0 top-full z-50 w-52 rounded border border-slate-700 bg-slate-900 py-2 shadow-lg">
-                  {menuNav.map((item) => {
+              {/* Rendered whether or not the menu is open, and hidden with CSS
+                  rather than unmounted. Unmounting meant these links existed
+                  only after a hover, so a crawler -- which does not hover --
+                  saw a header containing four links and never followed Help or
+                  anything else in here. The markup is identical either way, so
+                  this is a visibility change, not a difference in what is
+                  served to people and to crawlers. */}
+              <div
+                className={`absolute right-0 top-full z-50 w-52 rounded border border-slate-700 bg-slate-900 py-2 shadow-lg ${
+                  menuOpen ? "" : "pointer-events-none invisible opacity-0"
+                }`}
+                aria-hidden={menuOpen ? undefined : true}
+              >
+                {(() => {
+                  return menuNav.map((item) => {
                     if (item.isAdmin && !isAdmin) return null;
 
                     // The admin entry has sub-pages. Nesting a second dropdown
@@ -284,9 +343,9 @@ export function HeaderStructure({
                         {item.text}
                       </Link>
                     );
-                  })}
-                </div>
-              )}
+                  });
+                })()}
+              </div>
             </div>
           )}
 
@@ -325,6 +384,32 @@ export function HeaderStructure({
 
               {navItems.map((item) => {
                 if (item.isAdmin && !isAdmin) return null;
+
+                // Admin is a heading with sub-pages, not a destination -- its
+                // href is only ever "#". Rendered as a link, a tap went to "#"
+                // and the sub-pages could not be reached from a phone at all.
+                // Listed flat rather than behind a second toggle: a dropdown
+                // inside an already-open menu is an extra tap for no benefit
+                // when there is room to show the lot.
+                if (item.id === "admin") {
+                  return (
+                    <div key={item.id} className="mt-1 border-t border-slate-800 pt-2">
+                      <p className="py-1 text-[10px] uppercase tracking-widest text-slate-500">
+                        {item.text}
+                      </p>
+                      {ADMIN_LINKS.map(([href, label]) => (
+                        <Link
+                          key={href}
+                          href={href}
+                          className="block py-1 pl-3 hover:text-teal-400"
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          {label}
+                        </Link>
+                      ))}
+                    </div>
+                  );
+                }
 
                 return (
                   <Link

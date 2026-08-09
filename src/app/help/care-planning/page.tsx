@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import GuideShell from "@/components/help/GuideShell";
-import { Section, FieldList, Callout, FaqSection } from "@/components/help/GuideContent";
+import { Section, Steps, FieldList, Callout, FaqSection } from "@/components/help/GuideContent";
 import { getGuide, guideMetadata } from "@/lib/help/guides";
 
 const guide = getGuide("care-planning");
@@ -26,7 +26,65 @@ const pattern = [
   },
 ];
 
+const dailyRoutine = [
+  {
+    title: "The evening before: confirm who is working",
+    body: "Almost every failed round traces back to staff availability being wrong at the point the schedule was built. Before you generate anything, check tomorrow's carers against the rota: who is on, what hours, and whether anyone is starting from a different place than usual. A carer marked as working 07:00 to 15:00 who is actually on until 13:00 produces a round that looks fine on screen and collapses at lunchtime.",
+  },
+  {
+    title: "Set the planning day and check what is due",
+    body: "Set the date at the top of the scheduler. Recurring packages appear automatically for that day, so what you are looking at is the caseload as it actually stands — including anything moved onto this date from elsewhere. Read the count before you go further: if it is higher or lower than you expected, something has been moved or skipped and it is far cheaper to find out now.",
+  },
+  {
+    title: "Add today's exceptions",
+    body: "Hospital admissions, respite, a client away with family, a one-off extra call after a discharge. Skip the visits that are not happening and add the ones that are. This is the only part of the day that genuinely needs judgement, and it is worth doing carefully — a call left in for someone in hospital costs a carer a wasted journey.",
+  },
+  {
+    title: "Generate, then read the warnings before the schedule",
+    body: "The temptation is to look straight at the rounds. Read the warnings first. They name the specific visits that could not be placed and why — no one with the right skill available, a window too narrow to fit, a double-up where two diaries would not align. A schedule with three unplaced calls is not a finished schedule, and finding that out at 07:00 tomorrow is the expensive version.",
+  },
+  {
+    title: "Resolve what could not be placed",
+    body: "Each warning has a small number of honest fixes: widen the window, extend someone's hours, move the call to another day, split a double-up across two times, or accept it needs agency cover. Change the input and generate again. What you should not do is quietly drop the visit — the whole point of the warning is that someone has to decide, and it should be a decision rather than an omission.",
+  },
+  {
+    title: "Check the map before you send anything",
+    body: "The timings can be perfectly valid and the day still be wrong. Look at each carer's route on the map: a round that crosses the patch twice usually means a window is tighter than it needs to be, or a call is pinned to a strict time that only needs a window. Thirty seconds here often saves an hour of driving.",
+  },
+  {
+    title: "Share each round with the carer",
+    body: "Send each staff member their own round as a link. They see their stops in order with arrival times and can open the whole day as a multi-stop route in Google Maps, Apple Maps or Waze rather than typing postcodes one at a time. Links are read-only and expire, so a round that has been superseded stops working rather than sending someone to yesterday's calls.",
+  },
+];
+
+const disruptions = [
+  {
+    name: "A carer calls in sick",
+    body: "Reduce that carer's hours to nothing or remove them for the day, then regenerate. The scheduler redistributes their calls across whoever is left and tells you plainly which ones will not fit — which is the number you need when deciding whether to call in agency cover. Reassigning by hand hides the shortfall until someone is standing outside a door.",
+  },
+  {
+    name: "A client goes into hospital",
+    body: "Skip the visits rather than deleting the client. Skipping removes them from the days affected while keeping the package intact, so when they come home you unskip rather than rebuilding the whole care package from memory.",
+  },
+  {
+    name: "A new package starts mid-week",
+    body: "Add the client with the full pattern — visits required, gap, purposes, durations — and set the recurrence to start from the right date. Do not add today's calls as one-offs and mean to set up the pattern later; that is how a package ends up existing only in someone's head.",
+  },
+  {
+    name: "The round is consistently overrunning",
+    body: "This is a capacity problem wearing a scheduling costume. Check the durations against how long calls genuinely take, including getting in and out of the property. Fifteen minutes of optimism per call across a thirty-call round is seven and a half hours that does not exist, and no amount of routing recovers it.",
+  },
+];
+
 const faqs = [
+  {
+    q: "How do I plan a care round day to day?",
+    a: "Confirm who is working, set the planning day so recurring packages appear, add the day's exceptions such as hospital admissions or extra calls, generate, then read the warnings before the rounds. Resolve anything that could not be placed by changing the input and generating again, check each carer's route on the map for obvious back-tracking, then share each round with the carer as a read-only link. The loop is: change the input, regenerate, reissue — never edit a generated round by hand.",
+  },
+  {
+    q: "What should I do when a carer calls in sick?",
+    a: "Remove that carer or set their hours to nothing for the day and generate again. The scheduler redistributes their calls and names the ones that will not fit, which tells you exactly how much agency cover you need. Reassigning calls by hand hides the shortfall until a visit is missed.",
+  },
   {
     q: "Can GeoRoutes be used as care planning software?",
     a: "It plans the scheduling and routing side of care delivery — who visits whom, in what order, at what time, and how they travel between calls. It is not a care records system: it does not hold care plans, risk assessments, medication records or notes against a person. Services typically keep their existing records system and use GeoRoutes to build the rounds those records describe.",
@@ -95,6 +153,36 @@ export default function Page() {
           schedule fails, it will almost always fail here — and the honest fix
           is usually capacity or a wider window, not a cleverer route.
         </Callout>
+      </Section>
+
+      <Section title="Running it day to day">
+        <p>
+          Setting a service up is a one-off. Running it is a routine, and the
+          routine is what most people actually need help with. This is the shape
+          a working day takes once the initial setup is done.
+        </p>
+        <Steps steps={dailyRoutine} />
+        <Callout title="Regenerate rather than patch">
+          The instinct when something changes is to shuffle the affected calls
+          by hand. Resist it. Moving one call by hand leaves every downstream
+          arrival time wrong on the printed round, and the travel between them
+          silently stops matching reality. Change the input and generate again
+          — it takes seconds, and the whole day stays consistent.
+        </Callout>
+      </Section>
+
+      <Section title="Handling the things that go wrong">
+        <p>
+          No round survives contact with a Tuesday. These are the four
+          disruptions that come up most, and the quickest way through each.
+        </p>
+        <FieldList fields={disruptions} />
+        <p>
+          The common thread is that each one is a change to an input — who is
+          working, who needs visiting, how long for — rather than a change to
+          the schedule itself. Express the change, regenerate, reissue. That
+          loop is the whole operating model.
+        </p>
       </Section>
 
       <Section title="What this does not do">

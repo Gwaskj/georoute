@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import GuideShell from "@/components/help/GuideShell";
-import { Section, FieldList, Callout, FaqSection } from "@/components/help/GuideContent";
+import { Section, Steps, FieldList, Callout, FaqSection } from "@/components/help/GuideContent";
 import { getGuide, guideMetadata } from "@/lib/help/guides";
 
 const guide = getGuide("physiotherapy");
@@ -27,6 +27,52 @@ const patterns = [
   {
     name: "Joint visits with OT",
     body: "Common in reablement and discharge planning. Where both professionals are on your staff list, set staff required to 2 so they are scheduled together.",
+  },
+];
+
+const dailyRoutine = [
+  {
+    title: "Work from the course of treatment, not single visits",
+    body: "Rehab is a block of visits over weeks, not a one-off. Set each patient up as a recurring pattern for the length of their course — twice a week for six weeks — so the whole programme exists as one thing rather than being rebooked from memory every Friday. That is also what makes it obvious when a course has quietly run past its end date.",
+  },
+  {
+    title: "Split the day between community and clinic honestly",
+    body: "Most community physio services run both. Decide which parts of the day are home visits and set working hours to match, rather than scheduling across the whole day and hoping the clinic block survives. A home visit booked into what was meant to be clinic time is the disruption that costs the most, because it displaces several patients rather than one.",
+  },
+  {
+    title: "Set duration by treatment type",
+    body: "An initial assessment, a progress review and a routine treatment session are different lengths, and averaging them produces a day that is wrong in both directions. Enter each visit at its real length including setting up equipment and writing notes — the first visit in a course is almost always the longest.",
+  },
+  {
+    title: "Cluster the patch, then generate",
+    body: "Where a patient is seen twice a week, which two days is usually flexible. Use that flexibility to put patients in the same area on the same day. Over a six-week course this compounds into a large amount of travel saved, and it is far easier to arrange at the start of a course than halfway through.",
+  },
+  {
+    title: "Read the warnings, then look at the route",
+    body: "Warnings name the visits that could not be placed and why. After that, look at the map: a rehab round that crosses the patch twice usually means two patients are pinned to times that only need windows. Physio appointments are more movable than most community visits, so this is often quick to fix.",
+  },
+  {
+    title: "Review progress against the plan weekly",
+    body: "At the end of each week, check which courses are ending, which need extending and which patients have been discharged. Ending a recurrence when a course finishes is the difference between a caseload that reflects reality and one that slowly fills with people who no longer need visiting.",
+  },
+];
+
+const disruptions = [
+  {
+    name: "A patient cancels on the day",
+    body: "Skip that occurrence rather than deleting the pattern, so the rest of the course stays intact. If the gap is large enough to be useful, regenerate — the scheduler will often pull another visit forward into the space rather than leaving the therapist idle between two ends of the patch.",
+  },
+  {
+    name: "A course needs extending",
+    body: "Extend the recurrence end date rather than adding individual visits on the end. Added one at a time they lose the pattern, and the next person to look at the caseload cannot tell how much of the course is left.",
+  },
+  {
+    name: "Clinic sessions keep being eaten by home visits",
+    body: "This is a working-hours problem rather than a scheduling one. Set the therapist's community hours to exclude clinic blocks so the scheduler cannot place a home visit there. Protecting the time in the input is more reliable than protecting it by intention.",
+  },
+  {
+    name: "Travel is disproportionate to contact time",
+    body: "Common in rural patches with long courses. Look at whether the two days a week each patient is seen can be aligned by area rather than by referral date. If travel still dominates, the honest question is whether some of the course could be delivered in clinic or remotely.",
   },
 ];
 
@@ -87,6 +133,30 @@ export default function Page() {
           afternoon visit onwards, and the cause is invisible in the output
           because nothing about it was technically invalid.
         </Callout>
+      </Section>
+
+      <Section title="Running a physio caseload day to day">
+        <p>
+          A rehab caseload is a set of overlapping courses rather than a list of
+          appointments, and the routine reflects that: most of the useful
+          decisions are made when a course starts, not on the morning of a
+          visit.
+        </p>
+        <Steps steps={dailyRoutine} />
+        <Callout title="Set the course up once, properly">
+          The single biggest time saving in a physio service is entering a
+          course of treatment as a recurring pattern with an end date, rather
+          than rebooking each patient every week. It also stops courses running
+          on past their intended length without anyone noticing.
+        </Callout>
+      </Section>
+
+      <Section title="When a course does not run to plan">
+        <p>
+          Courses get cancelled, extended and interrupted. Handling each in a
+          way that keeps the pattern intact is what keeps the caseload honest.
+        </p>
+        <FieldList fields={disruptions} />
       </Section>
 
       <Section title="Getting more out of a rehab round">
