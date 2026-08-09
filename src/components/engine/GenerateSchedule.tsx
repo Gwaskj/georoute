@@ -14,6 +14,7 @@ import { useExceptionStore } from "@/store/exceptionStore";
 import { saveSchedulerResult } from "@/lib/scheduler/persist";
 import { SchedulerContext } from "@/lib/scheduler/types";
 import { getRouteBatched, clearLocalCache, getRouteErrors } from "@/lib/routing";
+import { checkPostcode } from "@/lib/postcode/validate";
 import { logActivity } from "@/lib/logsClient";
 import Link from "next/link";
 
@@ -131,23 +132,58 @@ export default function GenerateSchedule({
     }
 
     if (failedPairs.length > 0) {
-      const errors = getRouteErrors();
-      const details = failedPairs
-        .map((pair) => {
-          const [from, to] = pair.split(" → ");
-          const reason = errors.get(
-            `${from.trim().toUpperCase()} → ${to.trim().toUpperCase()}`
-          );
-          return reason ? `${pair} (${reason})` : pair;
-        })
-        .join("; ");
-      setRouteError(
-        `Could not get travel times for: ${details}. Double-check these postcodes are valid — if they look correct, the routing service may be temporarily unavailable.`
+      // One unroutable postcode fails every pair it takes part in, so listing
+      // pairs repeats a single fault once per other postcode on the round --
+      // ten appointments turn one typo into twenty near-identical lines. Blame
+      // the postcode instead: it is named once, and it is the thing to fix.
+      //
+      // Which postcode is at fault is asked directly rather than inferred from
+      // which pairs failed. Inference cannot tell a bad postcode from an
+      // outage when there are only two postcodes in play, because a single bad
+      // one fails every pair there is -- and the router's own message says
+      // "one or both", so it does not resolve it either.
+      const norm = (p: string) => p.trim().toUpperCase();
+      const checked = await Promise.all(
+        postcodes.map(async (pc) => ({ pc: norm(pc), result: await checkPostcode(pc) }))
       );
+      const culprits = checked
+        .filter((c) => c.result.status === "not-found" || c.result.status === "malformed")
+        .map((c) => c.pc);
+
+      // Every postcode checks out, so they are not what is wrong -- the
+      // routing service is. Naming correct addresses as typos would send
+      // someone hunting through good data.
+      const everythingFailed = culprits.length === 0;
+
+      const describe = (pc: string): string => {
+        const owners: string[] = [];
+        if (officePostcode && norm(officePostcode) === pc) owners.push("your office postcode");
+        for (const s of staff) {
+          if (s.homePostcode && norm(s.homePostcode) === pc) owners.push(`${s.name} (home)`);
+          if (s.officePostcode && norm(s.officePostcode) === pc) owners.push(`${s.name} (office)`);
+        }
+        for (const a of dueAppointments) {
+          if (a.postcode && norm(a.postcode) === pc) owners.push(a.name || "an appointment");
+        }
+        return owners.length ? `${pc} — ${owners.join(", ")}` : pc;
+      };
+
+      const message =
+        everythingFailed || culprits.length === 0
+          ? "No travel times could be worked out. The routing service looks to be unavailable — please try again shortly."
+          : `Could not find ${culprits.length === 1 ? "this postcode" : "these postcodes"}: ${culprits
+              .map(describe)
+              .join("; ")}. Check for a typo, then generate again.`;
+
+      setRouteError(message);
+      const errors = getRouteErrors();
       logActivity("routing_error", null, {
         isFree,
         failedPairs: failedPairs.length,
-        details,
+        culprits,
+        // Kept for the log only -- useful when diagnosing an outage, too noisy
+        // to put in front of someone who just wants to know what to correct.
+        reasons: [...errors.values()].slice(0, 3),
       });
       setIsRunning(false);
       return;
