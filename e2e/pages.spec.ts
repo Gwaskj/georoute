@@ -4,11 +4,16 @@ import { test, expect } from "@playwright/test";
 // console errors or failed network requests.
 function smokeTest(name: string, path: string) {
   test(`${name} loads without errors`, async ({ page }) => {
-    // Vercel injects its analytics script only on Vercel. Locally it 404s on
+    // Vercel injects its analytics scripts only on Vercel. Locally they 404 on
     // every page, which failed every test in this file for a reason that is
     // not a fault -- a suite that can never pass is one nobody trusts. Stub it
     // so a genuine failure is the only thing that turns this red.
-    await page.route("**/_vercel/insights/**", (route) =>
+    //
+    // Matched at /_vercel/ rather than per product: this pattern previously
+    // named the insights path alone, so adding Speed Insights at
+    // /_vercel/speed-insights/ slipped straight past it and reopened the same
+    // hole. Anything Vercel injects under this prefix is now covered.
+    await page.route("**/_vercel/**", (route) =>
       route.fulfill({ status: 200, contentType: "application/javascript", body: "" })
     );
 

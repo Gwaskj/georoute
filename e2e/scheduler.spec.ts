@@ -2,9 +2,9 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Scheduler page — pro user", () => {
   test("loads without errors", async ({ page }) => {
-    // Vercel analytics exists only on Vercel; locally it 404s and would fail
-    // this test for a reason that is not a fault.
-    await page.route("**/_vercel/insights/**", (route) =>
+    // Vercel analytics and speed insights exist only on Vercel; locally they
+    // 404 and would fail this test for a reason that is not a fault.
+    await page.route("**/_vercel/**", (route) =>
       route.fulfill({ status: 200, contentType: "application/javascript", body: "" })
     );
 

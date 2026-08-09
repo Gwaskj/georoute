@@ -1,9 +1,33 @@
+// Derived rather than hardcoded so the allowlist follows the project if the
+// Supabase URL ever changes -- a stale hostname here would not fail the build,
+// it would fail every header image at runtime, which is far harder to spot.
+const supabaseHost = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname;
+  } catch {
+    return null;
+  }
+})();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
 
+  // Optimisation was previously off altogether, which meant <Image> served
+  // whatever was uploaded at full size: the header logo was a 1536x1024 PNG of
+  // 1.5MB, rendered into a 40px-tall slot, fetched with priority on every page.
+  // Allowlisting the storage bucket lets Next resize and re-encode instead, so
+  // an oversized admin upload cannot become a 1.5MB download for every visitor.
   images: {
-    unoptimized: true,
+    remotePatterns: supabaseHost
+      ? [
+          {
+            protocol: "https",
+            hostname: supabaseHost,
+            pathname: "/storage/v1/object/public/**",
+          },
+        ]
+      : [],
   },
 
   // Enable Turbopack explicitly (silences the warning)
