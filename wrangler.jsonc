@@ -1,0 +1,37 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "georoute",
+  "main": ".open-next/worker.js",
+
+  // Pin the runtime date rather than tracking latest, so a Cloudflare runtime
+  // change cannot alter behaviour on a deploy that contains no code change.
+  "compatibility_date": "2026-08-13",
+
+  // Required by the adapter: Next.js and the Supabase client both reach for
+  // Node built-ins (this app uses node:crypto in the share-link route), and
+  // Workers only provides them behind this flag.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+
+  "assets": {
+    "directory": ".open-next/assets",
+    // Static files are served straight from the CDN without waking the worker;
+    // anything not matching an asset falls through to Next's router.
+    "binding": "ASSETS"
+  },
+
+  "observability": {
+    "enabled": true
+  },
+
+  // NEXT_PUBLIC_* values are inlined into the client bundle at build time, so
+  // they must be present when the build runs, not just at request time. They
+  // are not secrets -- the anon key is designed to be public and is protected
+  // by row-level security.
+  //
+  // SUPABASE_SERVICE_ROLE_KEY is emphatically not in here. It is set with
+  // `wrangler secret put`, so it never appears in the repository or in the
+  // Cloudflare dashboard's plain-text variables.
+  "vars": {
+    "NEXT_PUBLIC_SITE_URL": "https://www.georoutes.co.uk"
+  }
+}

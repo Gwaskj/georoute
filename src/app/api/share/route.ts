@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { randomBytes } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { SITE_URL } from "@/lib/siteUrl";
@@ -13,9 +12,17 @@ import {
  * 32 bytes from the CSPRNG, base64url encoded. Long enough that guessing is
  * not a realistic attack even though the link needs no password -- which
  * matters, because what sits behind it is client names and home addresses.
+ *
+ * Web Crypto rather than node:crypto's randomBytes. Both are cryptographically
+ * secure and this is the only Node built-in the app reached for, so using the
+ * standard API keeps the route runnable on any runtime rather than tying the
+ * one security-critical function in the codebase to a compatibility shim.
  */
 function makeToken(): string {
-  return randomBytes(32).toString("base64url");
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  // btoa needs a binary string; Uint8Array has no direct base64 encoder.
+  const binary = String.fromCharCode(...bytes);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 function serviceClient() {

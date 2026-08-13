@@ -36,6 +36,13 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Wrangler local secrets -- holds the Supabase service role key for
+# `opennextjs-cloudflare preview`. Never commit.
+.dev.vars
+.wrangler/
+.wrangler-dryrun/
+.open-next/
+
 # vercel
 .vercel
 

@@ -12,7 +12,11 @@ export default defineConfig({
   workers: 1,
   reporter: "list",
   use: {
-    baseURL: "http://localhost:3000",
+    // Overridable so the same suite can be pointed at the Cloudflare Workers
+    // preview (`npm run cf:preview`, port 8788) as well as `next start`.
+    // Running it against both is the only way to catch behaviour that differs
+    // between the Node and workerd runtimes.
+    baseURL: process.env.E2E_BASE_URL || "http://localhost:3000",
     trace: "off",
     extraHTTPHeaders: {
       "accept-encoding": "identity",

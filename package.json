@@ -8,13 +8,14 @@
     "start": "next start",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",
-    "@vercel/analytics": "^2.0.1",
-    "@vercel/speed-insights": "^2.0.0",
     "leaflet": "1.9.4",
     "next": "^16.2.6",
     "react": "^19.2.6",
@@ -23,6 +24,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.2",
     "@playwright/test": "^1.61.0",
     "@types/leaflet": "1.9.21",
     "@types/node": "^20.19.0",
@@ -35,6 +37,12 @@
     "playwright": "^1.60.0",
     "postcss": "^8.5.14",
     "tailwindcss": "^3.4.19",
-    "typescript": "5.4.5"
+    "typescript": "5.4.5",
+    "wrangler": "^4.123.0"
+  },
+  "allowScripts": {
+    "workerd@1.20260811.1": true,
+    "esbuild@0.25.4": true,
+    "esbuild@0.28.1": true
   }
 }

@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // GLOBAL STYLES
 import "./globals.css";
@@ -18,6 +16,7 @@ import Link from "next/link";
 import HeaderLoader from "@/components/HeaderLoader";
 import ThemeProvider from "@/components/ThemeProvider";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import CloudflareWebAnalytics from "@/components/analytics/CloudflareWebAnalytics";
 
 import { SITE_URL } from "@/lib/siteUrl";
 
@@ -101,9 +100,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </div>
         </ThemeProvider>
 
-        <Analytics />
-        <SpeedInsights />
+        {/* Vercel Analytics and Speed Insights were here. They are platform
+            features that only report when served from Vercel, so they went
+            with the migration. Cloudflare replaces the first for free and
+            without a script -- traffic analytics are measured at the edge
+            because every request already passes through it -- and
+            CloudflareWebAnalytics below covers the rest. */}
         <GoogleAnalytics />
+        <CloudflareWebAnalytics />
       </body>
     </html>
   );
