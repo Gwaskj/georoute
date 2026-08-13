@@ -65,9 +65,14 @@ const nextConfig = {
 
   async redirects() {
     return [
-      // Redirect the old Vercel preview URL to the canonical domain.
-      // The apex -> www redirect is configured in Vercel's domain settings,
-      // not here, to avoid a loop if both layers try to redirect.
+      // Apex to www lives in middleware.ts, not here. A host-matched redirect
+      // in this file works correctly on Node but is broken by the Cloudflare
+      // adapter, which leaves :path* unsubstituted and matches www as well as
+      // the apex -- redirecting www to itself forever. The rule below has the
+      // same shape and the same weakness; it is kept only because that preview
+      // hostname is nearly dead, and it is harmless if it never fires.
+      //
+      // The old Vercel preview URL, kept until it stops receiving traffic.
       {
         source: "/:path*",
         has: [{ type: "host", value: "georoute-bice.vercel.app" }],

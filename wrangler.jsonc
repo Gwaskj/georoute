@@ -12,6 +12,19 @@
   // Workers only provides them behind this flag.
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
 
+  // Keep the workers.dev URL alive as a fallback that does not depend on DNS
+  // or on the custom domains being attached. Declaring `routes` here without
+  // it silently switches it off, which left the Worker with no reachable
+  // address at all when the route update then failed.
+  "workers_dev": true,
+
+  // Custom domains are attached in the dashboard rather than declared here.
+  // Declaring them requires a token with Zone > Workers Routes > Edit, which
+  // this deploy does not have; without it `wrangler deploy` uploads the code
+  // and then fails at the trigger step, leaving the two out of step. If that
+  // permission is granted later, move them back here so the repository is the
+  // single source of truth for where this Worker serves.
+
   "assets": {
     "directory": ".open-next/assets",
     // Static files are served straight from the CDN without waking the worker;
@@ -32,6 +45,9 @@
   // `wrangler secret put`, so it never appears in the repository or in the
   // Cloudflare dashboard's plain-text variables.
   "vars": {
-    "NEXT_PUBLIC_SITE_URL": "https://www.georoutes.co.uk"
+    "NEXT_PUBLIC_SITE_URL": "https://www.georoutes.co.uk",
+    // Cloudflare Web Analytics beacon token. Not a secret -- it identifies
+    // the site to the analytics endpoint and is visible in the page source.
+    "NEXT_PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN": "a51f64bf772b4bf9898ed00600c5fd5f"
   }
 }
