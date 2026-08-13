@@ -35,8 +35,10 @@ const nextConfig = {
 
   // Vercel already sends Strict-Transport-Security; these are the standard
   // headers it does not. Deliberately no Content-Security-Policy: this site
-  // loads AdSense, Leaflet tiles and Supabase, and a policy written without
-  // testing each of those would break the page rather than protect it.
+  // loads Leaflet tiles, Supabase and Google Analytics, and a policy written
+  // without testing each of those would break the page rather than protect it.
+  // Worth revisiting now that AdSense is gone -- it was much the messiest of
+  // the origins to allow for.
   async headers() {
     return [
       {

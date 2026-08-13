@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import PageRenderer from "@/components/cms/PageRenderer";
-import FreeTierAdSlot from "@/components/ads/FreeTierAdSlot";
 import HomeIntro from "@/components/home/HomeIntro";
 import ProfessionPicker from "@/components/home/ProfessionPicker";
 import type { AnyBlock } from "@/lib/types/cms";
@@ -143,12 +142,6 @@ export default async function HomePage() {
           real content rather than leading it. */}
       <HomeIntro />
 
-      <div className="mx-auto max-w-6xl px-4 pb-16">
-        <p className="mb-1 text-center text-[10px] uppercase tracking-widest text-slate-600">
-          Advertisement
-        </p>
-        <FreeTierAdSlot />
-      </div>
     </div>
   );
 }

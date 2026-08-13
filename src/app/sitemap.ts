@@ -19,14 +19,12 @@ import { GUIDES } from "@/lib/help/guides";
  * while a page is untouched is the accurate answer, not a stale one.
  */
 const PAGE_UPDATED: Record<string, string> = {
-  "/": "2026-08-09",
-  "/scheduler": "2026-07-23",
-  "/how-it-works": "2026-08-02",
-  "/help": "2026-08-04",
+  "/": "2026-08-13",
+  "/how-it-works": "2026-08-13",
+  "/help": "2026-08-13",
   "/pricing": "2026-08-02",
-  "/feedback": "2026-07-29",
-  "/privacy": "2026-07-29",
-  "/terms": "2026-07-29",
+  "/privacy": "2026-08-13",
+  "/terms": "2026-08-13",
 };
 
 // Noon UTC so a date cannot land on the wrong day once serialised through a
@@ -42,16 +40,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: number;
   }[] = [
     { path: "/", changeFrequency: "weekly", priority: 1 },
-    // The scheduler itself is usable without an account, so it is a genuine
-    // entry point rather than an app screen behind a login.
-    { path: "/scheduler", changeFrequency: "weekly", priority: 0.9 },
     { path: "/how-it-works", changeFrequency: "monthly", priority: 0.9 },
     { path: "/help", changeFrequency: "monthly", priority: 0.8 },
     { path: "/pricing", changeFrequency: "weekly", priority: 0.8 },
     // /login and /signup are deliberately absent: nobody searches for them,
-    // they carry ~55 words each, and listing thin utility pages dilutes the
+    // they carry ~60 words each, and listing thin utility pages dilutes the
     // sitemap. They stay crawlable, just not advertised.
-    { path: "/feedback", changeFrequency: "monthly", priority: 0.3 },
+    //
+    // /scheduler is absent for the same reason, despite being the product.
+    // It was listed at priority 0.9 -- the second highest on the site -- and
+    // renders about 107 words, because it is an application screen rather
+    // than something to read. Anyone working down the sitemap, reviewer or
+    // crawler, went from the home page straight to a near-empty screen.
+    //
+    // /feedback is absent because it is 61 words wrapping an embedded Google
+    // Form: content from a third party with nothing added around it.
     { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
     { path: "/terms", changeFrequency: "monthly", priority: 0.3 },
   ];

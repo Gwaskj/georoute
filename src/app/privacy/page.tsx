@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 const CONTACT_EMAIL = "support@georoutes.co.uk";
-const LAST_UPDATED = "18 June 2026";
+const LAST_UPDATED = "13 August 2026";
 
 function Section({
   title,
@@ -71,8 +71,17 @@ export default function PrivacyPolicyPage() {
                 Cookies and similar technologies.
               </strong>{" "}
               We use cookies to keep you signed in and to remember your
-              preferences. Pages that show advertising also set cookies as
-              described in &quot;Advertising&quot; below.
+              preferences. These are necessary for the service to work and are
+              not used for advertising or tracking. GeoRoutes shows no
+              advertising and sets no advertising cookies.
+            </p>
+            <p>
+              <strong className="text-slate-100">Analytics.</strong> We use
+              Google Analytics to count page visits. For visitors in the UK,
+              the EEA and Switzerland it runs with storage consent denied, so
+              it sets no cookies and no identifier on your device — which is
+              why this site shows no cookie banner. We also use Vercel
+              Analytics and Speed Insights, which are cookieless by design.
             </p>
           </Section>
 
@@ -82,39 +91,7 @@ export default function PrivacyPolicyPage() {
               <li>To calculate routes via our routing provider (OpenRouteService).</li>
               <li>To process subscription payments and manage your plan via Stripe.</li>
               <li>To communicate with you about your account or changes to our service.</li>
-              <li>To show advertising to free-tier users, as described below.</li>
             </ul>
-          </Section>
-
-          <Section title="Advertising">
-            <p>
-              GeoRoutes uses Google AdSense to show advertising to users on
-              our free plan. Google, as a third-party vendor, uses cookies
-              (including the DoubleClick DART cookie) to serve ads based on
-              your visits to this and other websites.
-            </p>
-            <p>
-              You can opt out of personalised advertising by visiting{" "}
-              <a
-                href="https://www.google.com/settings/ads"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-teal-400 underline hover:text-teal-300"
-              >
-                Google&apos;s Ads Settings
-              </a>
-              , or learn more about how Google uses information from sites
-              that use its services at{" "}
-              <a
-                href="https://policies.google.com/technologies/partner-sites"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-teal-400 underline hover:text-teal-300"
-              >
-                policies.google.com/technologies/partner-sites
-              </a>
-              . Paying subscribers are not shown ads.
-            </p>
           </Section>
 
           <Section title="Third-party service providers">
@@ -123,7 +100,9 @@ export default function PrivacyPolicyPage() {
               <li><strong className="text-slate-100">Supabase</strong> — authentication, database, and file storage.</li>
               <li><strong className="text-slate-100">Stripe</strong> — subscription billing and payment processing.</li>
               <li><strong className="text-slate-100">OpenRouteService (ORS)</strong> — route and travel-time calculation from the postcodes you provide.</li>
-              <li><strong className="text-slate-100">Google AdSense</strong> — advertising on free-tier pages.</li>
+              <li><strong className="text-slate-100">postcodes.io</strong> — checking that a UK postcode exists when you enter one.</li>
+              <li><strong className="text-slate-100">Google Analytics</strong> — page-visit counts, running without cookies or identifiers in the UK, EEA and Switzerland.</li>
+              <li><strong className="text-slate-100">Vercel</strong> — hosting, plus cookieless traffic and performance analytics.</li>
             </ul>
           </Section>
 

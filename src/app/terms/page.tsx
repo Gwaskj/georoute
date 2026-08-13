@@ -99,7 +99,7 @@ export default function TermsPage() {
           <Section title="Third-party services">
             <p>
               The Service relies on third-party providers — including
-              Supabase, Stripe, OpenRouteService, and Google AdSense — to
+              Supabase, Stripe, OpenRouteService, and Vercel — to
               operate. We are not responsible for outages or issues
               originating from these providers, but will work to minimise
               their impact on you.

@@ -6,25 +6,31 @@ import { usePathname } from "next/navigation";
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 /**
- * Google Analytics 4 in Google "advanced" consent mode.
+ * Google Analytics 4, running permanently cookieless in the UK, EEA and
+ * Switzerland.
  *
- * Consent defaults are declared denied for the UK, EEA and Switzerland before
- * the tag is configured. Under those defaults GA4 sets no cookies and no
- * identifiers; it sends only cookieless pings until a consent signal upgrades
- * it. Everywhere else the defaults are granted, because no prior-consent rule
- * applies there.
+ * Consent defaults are declared denied for those regions before the tag is
+ * configured, so GA4 sets no cookies and no identifiers there and sends only
+ * cookieless pings. Everywhere else the defaults are granted, because no
+ * prior-consent rule applies.
  *
- * The consent signal comes from the Funding Choices message. Because both are
- * Google tags sharing this dataLayer, Funding Choices issues the
- * consent-update itself once the user decides -- no wiring is needed here.
+ * There is deliberately nothing that ever upgrades those defaults to granted.
+ * The consent signal used to come from the Funding Choices message, which
+ * loaded as part of the AdSense tag; AdSense has since been removed, so no
+ * consent framework runs on the site at all.
  *
- * Why not "basic" mode, which withholds the tag entirely until consent:
- * basic gets its consent decision through the googlefc callback queue, and
- * googlefc only loads with the AdSense tag. That made analytics conditional on
- * AdSense serving, so while this site sat unapproved -- and for Pro
- * subscribers, who never render an ad slot -- no analytics would have been
- * collected at all, silently. Advanced mode reports traffic from day one and
- * still sets no cookie on a UK visitor who has not agreed to one.
+ * That leaves a genuinely clean position rather than a broken one. PECR
+ * requires prior consent for storing or accessing information on a device,
+ * and under denied consent this tag does neither -- so no cookie banner is
+ * required, and none is shown. The cost is that UK and EEA sessions are
+ * reported without a client identifier: page views and traffic sources still
+ * arrive, returning visitors cannot be distinguished from new ones. For
+ * knowing which pages get read, that is enough.
+ *
+ * Restoring full measurement would mean adding a consent banner and calling
+ * gtag("consent", "update", ...) on acceptance. Worth doing only if the
+ * per-user detail is actually needed, since it trades a clean no-banner site
+ * for a cookie prompt on every first visit.
  */
 
 /**

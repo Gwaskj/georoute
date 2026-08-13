@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import FreeTierAdSlot from "@/components/ads/FreeTierAdSlot";
 
 export const metadata: Metadata = {
   title: "How It Works",
@@ -180,13 +179,6 @@ export default function HowItWorksPage() {
               View pricing
             </Link>
           </div>
-        </div>
-
-        <div className="mt-10">
-          <p className="mb-1 text-center text-[10px] uppercase tracking-widest text-slate-600">
-            Advertisement
-          </p>
-          <FreeTierAdSlot />
         </div>
 
       </div>
