@@ -82,7 +82,11 @@ const FALLBACK_BLOCKS: AnyBlock[] = [
       title: "See Your Day at a Glance",
       subtitle:
         "A clean visual overview of your team's routes — pins, paths, and all.",
-      imageUrl: "/fake-map.png",
+      // WebP rather than the original PNG: identical image, 615 KB down to
+      // 57 KB. It is decorative and was the heaviest thing on the page by an
+      // order of magnitude -- with the header images now a few KB each, this
+      // was essentially the entire weight of the home page.
+      imageUrl: "/fake-map.webp",
       imageAlt: "Route map preview",
     },
   },

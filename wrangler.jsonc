@@ -12,11 +12,17 @@
   // Workers only provides them behind this flag.
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
 
-  // Keep the workers.dev URL alive as a fallback that does not depend on DNS
-  // or on the custom domains being attached. Declaring `routes` here without
-  // it silently switches it off, which left the Worker with no reachable
-  // address at all when the route update then failed.
-  "workers_dev": true,
+  // The site is reachable only at its own domains. workers.dev served the
+  // whole application on a hostname nobody chose, which is a second address
+  // for the same content -- crawlable, outside the canonical domain, and not
+  // something a visitor should ever land on.
+  //
+  // Both are pinned rather than left to default: leaving workers_dev unset
+  // switches it on, and it was on until now precisely because it was the only
+  // reachable address while the custom domains were unattached. Do not turn it
+  // off again without first confirming https://www.georoutes.co.uk/ answers.
+  "workers_dev": false,
+  "preview_urls": false,
 
   // Custom domains are attached in the dashboard rather than declared here.
   // Declaring them requires a token with Zone > Workers Routes > Edit, which
