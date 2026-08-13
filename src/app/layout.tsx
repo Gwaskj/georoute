@@ -16,7 +16,6 @@ import Link from "next/link";
 import HeaderLoader from "@/components/HeaderLoader";
 import ThemeProvider from "@/components/ThemeProvider";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
-import CloudflareWebAnalytics from "@/components/analytics/CloudflareWebAnalytics";
 
 import { SITE_URL } from "@/lib/siteUrl";
 
@@ -100,14 +99,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </div>
         </ThemeProvider>
 
-        {/* Vercel Analytics and Speed Insights were here. They are platform
-            features that only report when served from Vercel, so they went
-            with the migration. Cloudflare replaces the first for free and
-            without a script -- traffic analytics are measured at the edge
-            because every request already passes through it -- and
-            CloudflareWebAnalytics below covers the rest. */}
+        {/* Vercel Analytics and Speed Insights were here; they only report
+            when served from Vercel, so they went with the migration.
+            Cloudflare measures traffic at the edge instead -- every request
+            already passes through it, so that needs no script at all.
+
+            Cloudflare Web Analytics (the RUM beacon, which would have added
+            Core Web Vitals) is deliberately absent. Its collector lives at
+            /cdn-cgi/rum, and on a Worker serving every path on the domain
+            that route never reaches Cloudflare -- it 404s, the beacon retries
+            cross-origin, and CORS blocks it. The result was a failed request
+            and two console errors on every single page load, in exchange for
+            no data. */}
         <GoogleAnalytics />
-        <CloudflareWebAnalytics />
       </body>
     </html>
   );
