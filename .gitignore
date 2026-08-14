@@ -54,3 +54,6 @@ supabase/.temp/
 next-env.d.ts
 
 .vercel
+
+# ESLint JSON output, written ad hoc when counting rule hits.
+.eslint.json
