@@ -344,13 +344,19 @@ function schedulePass(
     return [...preferred, ...others];
   }
 
-  const today = new Date();
-  const baseDate = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-    0, 0, 0, 0
-  );
+  // Midnight local on the day being planned. Local rather than UTC because
+  // every window and working hour in this engine is a wall-clock "HH:MM", and
+  // building from UTC midnight would shift the whole day by the offset for
+  // half the year.
+  const baseDate = (() => {
+    const iso = ctx.planningDate;
+    if (iso) {
+      const [y, m, d] = iso.split("-").map(Number);
+      if (y && m && d) return new Date(y, m - 1, d, 0, 0, 0, 0);
+    }
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+  })();
 
   const customWindows = getCustomWindows(windows);
 

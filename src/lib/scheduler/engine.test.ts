@@ -526,3 +526,52 @@ describe("determinism", () => {
     expect(shape(runScheduler(build()))).toBe(shape(runScheduler(build())));
   });
 });
+
+describe("the day being planned", () => {
+  it("dates visits on the planning day, not on today", () => {
+    // Far enough from today that a timezone slip could not coincidentally pass.
+    const planningDate = "2027-03-09";
+    const r = runScheduler(
+      context({
+        planningDate,
+        staff: [staff({ id: "s1" })],
+        appointments: [appointment({ id: "a1" })],
+      })
+    );
+
+    expect(r.visits).toHaveLength(1);
+    const d = new Date(r.visits[0].start);
+    const actual = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+    // The regression this guards: the engine built every timestamp from
+    // new Date(), so a round planned for a future day was stamped with the
+    // day it happened to be generated on -- wrong in scheduled_visits, and
+    // wrong on the link staff are sent.
+    expect(actual, `visit was dated ${actual}, expected ${planningDate}`).toBe(planningDate);
+  });
+
+  it("still uses today when no planning day is given", () => {
+    const r = runScheduler(
+      context({ staff: [staff({ id: "s1" })], appointments: [appointment({ id: "a1" })] })
+    );
+    const d = new Date(r.visits[0].start);
+    const today = new Date();
+    expect(d.getDate()).toBe(today.getDate());
+    expect(d.getMonth()).toBe(today.getMonth());
+  });
+
+  it("dates reserved breaks on the planning day too", () => {
+    const planningDate = "2027-03-09";
+    const r = runScheduler(
+      context({
+        planningDate,
+        staff: [staff({ id: "s1", breaks: [{ id: "b", minutes: 30, windowStart: "12:00", windowEnd: "14:00" }] })],
+        appointments: Array.from({ length: 4 }, (_, i) => appointment({ id: `a${i}` })),
+      })
+    );
+    expect(r.breaks.length).toBeGreaterThan(0);
+    const d = new Date(r.breaks[0].start);
+    expect(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`)
+      .toBe(planningDate);
+  });
+});

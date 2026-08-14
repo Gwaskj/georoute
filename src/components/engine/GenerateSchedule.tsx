@@ -209,6 +209,10 @@ export default function GenerateSchedule({
       officePostcode,
       dayStart: settings.dayStart,
       dayEnd: settings.dayEnd,
+      // Without this the engine dated every visit "today", so planning a
+      // future day produced a round that looked right on screen and carried
+      // the wrong date into the database and onto the staff's link.
+      planningDate: scheduleDate,
       getTravelMinutes,
     };
 

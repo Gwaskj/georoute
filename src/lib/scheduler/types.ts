@@ -26,6 +26,16 @@ export interface SchedulerContext {
   officePostcode: string | null;
   dayStart: string; // "08:00"
   dayEnd: string;   // "20:00"
+  /**
+   * The day being planned, as "YYYY-MM-DD".
+   *
+   * Every visit time is built by adding minutes to midnight on this date, so
+   * it decides what date the resulting timestamps carry. Omitting it means
+   * today, which is what the engine did unconditionally before this existed --
+   * so planning next Tuesday produced a round stamped with today's date, which
+   * then went into scheduled_visits and onto the link staff are sent.
+   */
+  planningDate?: string;
   /** Custom travel time lookup (fromPostcode, toPostcode) => minutes.
    *  If not provided, falls back to a hardcoded 10 minutes. */
   getTravelMinutes?: (fromPostcode: string, toPostcode: string) => number;
