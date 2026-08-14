@@ -47,6 +47,22 @@ export async function middleware(req: NextRequest) {
   // the destination, and it matches www as well as the apex -- which redirects
   // www to itself, an infinite loop that takes the whole site down. Verified
   // against both runtimes with the identical config.
+  // Plain HTTP was being served with a 200 rather than redirected. Vercel
+  // upgraded it automatically; Cloudflare will too once "Always Use HTTPS" is
+  // switched on for the zone, but that is a dashboard setting and this is not,
+  // so the guarantee travels with the application.
+  //
+  // Only acts when the proxy explicitly reports http. Inferring from req.url
+  // would be wrong behind a TLS-terminating proxy, where the worker sees a
+  // plain-http URL for a request the visitor made over https -- and redirecting
+  // those to https would loop forever.
+  const proto = req.headers.get("x-forwarded-proto");
+  if (proto === "http") {
+    const url = new URL(req.url);
+    url.protocol = "https:";
+    return NextResponse.redirect(url, 308);
+  }
+
   const host = req.headers.get("host")?.split(":")[0].toLowerCase();
   if (host === "georoutes.co.uk") {
     const url = new URL(req.url);
