@@ -2,12 +2,6 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Scheduler page — pro user", () => {
   test("loads without errors", async ({ page }) => {
-    // Vercel analytics and speed insights exist only on Vercel; locally they
-    // 404 and would fail this test for a reason that is not a fault.
-    await page.route("**/_vercel/**", (route) =>
-      route.fulfill({ status: 200, contentType: "application/javascript", body: "" })
-    );
-
     const errors: string[] = [];
     page.on("console", (msg) => {
       if (msg.type() === "error") errors.push(msg.text());

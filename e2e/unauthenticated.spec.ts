@@ -6,12 +6,6 @@ test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe("Unauthenticated pages", () => {
   test("login page loads", async ({ page }) => {
-    // Vercel analytics and speed insights exist only on Vercel; locally they
-    // 404 and would fail this test for a reason that is not a fault.
-    await page.route("**/_vercel/**", (route) =>
-      route.fulfill({ status: 200, contentType: "application/javascript", body: "" })
-    );
-
     const errors: string[] = [];
     page.on("console", (msg) => {
       if (msg.type() === "error") errors.push(msg.text());

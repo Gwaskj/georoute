@@ -68,17 +68,12 @@ const nextConfig = {
       // Apex to www lives in middleware.ts, not here. A host-matched redirect
       // in this file works correctly on Node but is broken by the Cloudflare
       // adapter, which leaves :path* unsubstituted and matches www as well as
-      // the apex -- redirecting www to itself forever. The rule below has the
-      // same shape and the same weakness; it is kept only because that preview
-      // hostname is nearly dead, and it is harmless if it never fires.
+      // the apex -- redirecting www to itself forever.
       //
-      // The old Vercel preview URL, kept until it stops receiving traffic.
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: "georoute-bice.vercel.app" }],
-        destination: "https://www.georoutes.co.uk/:path*",
-        permanent: true,
-      },
+      // The redirect from the old georoute-bice.vercel.app preview host is
+      // gone with it. That project has been deleted, the hostname 404s at
+      // Vercel's edge and never reaches this application, so the rule could
+      // not fire even if the adapter handled it correctly.
     ];
   },
 };

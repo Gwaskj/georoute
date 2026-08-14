@@ -11,8 +11,6 @@ export interface RouteResult {
   cached: boolean;
 }
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-
 /**
  * Reasons the last failed lookup for a given postcode pair failed, e.g. a bad
  * postcode the Edge Function couldn't geocode. Keyed by "ORIGIN → DEST".

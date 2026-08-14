@@ -49,8 +49,6 @@ export default function StaffPage() {
     addStaff,
     updateStaff,
     deleteStaff,
-    selectedStaffIds,
-    setSelectedStaffIds,
     loadFromSupabase,
   } = useStaffStore();
 
