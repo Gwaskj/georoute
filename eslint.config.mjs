@@ -8,6 +8,12 @@ export default [
   {
     ignores: [
       ".next/**",
+      // Build output from the Cloudflare adapter. Bundled and minified, so
+      // linting it reported tens of thousands of problems in code nobody
+      // wrote and drowned the real ones.
+      ".open-next/**",
+      ".wrangler/**",
+      ".wrangler-dryrun/**",
       "node_modules/**",
       "playwright-report/**",
       "test-results/**",
