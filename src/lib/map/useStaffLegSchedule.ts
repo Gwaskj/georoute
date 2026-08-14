@@ -110,7 +110,9 @@ export function useStaffLegSchedule(
           }
 
           let points = straightLine;
-          const coords = (route.polyline as any)?.coordinates;
+          // polyline is already typed as a GeoJSON LineString, which has
+          // coordinates -- the cast was hiding that rather than needed.
+          const coords = route.polyline?.coordinates;
           if (Array.isArray(coords)) {
             points = coords.map(([lng, lat]: number[]) => [lat, lng]);
           }

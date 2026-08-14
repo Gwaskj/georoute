@@ -81,35 +81,106 @@ type AppointmentMarker = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function normalizePoints(raw: any[]): [number, number][] {
+/**
+ * A stored route, from either the routes table or a free-mode session.
+ *
+ * Both sources predate the per-leg model the map uses now, and neither is
+ * validated on the way in, so every field is treated as possibly absent. These
+ * feed the "legacy" loading paths below, which exist for schedules saved
+ * before legs were introduced.
+ */
+interface StoredRoute {
+  id: string;
+  staff_id?: string | null;
+  points?: unknown;
+}
+
+/** A coloured StoredRoute, after applyStaffColors has run over it. */
+interface ColouredRoute {
+  id: string;
+  staff_id?: string | null;
+  color: string;
+  points: [number, number][];
+}
+
+/** An appointment as free mode stored it, before the current marker shape. */
+interface StoredAppointment {
+  id: string;
+  staffId?: string;
+  lat?: number;
+  lng?: number;
+  // Both longitude spellings and both name spellings appear in stored data,
+  // which is the reason this shape needed writing down rather than guessing.
+  lon?: number;
+  clientName?: string;
+  name?: string;
+  label?: string;
+  postcode?: string;
+  time?: string;
+  staffName?: string;
+  color?: string;
+}
+
+/**
+ * A coordinate as it might arrive from any of the sources feeding this map.
+ *
+ * Every spelling is optional because the point of normalizePoints is that the
+ * caller does not know which one it has -- routing responses, cached rows and
+ * geocoded results have each used different names over time.
+ */
+interface LooseCoordinate {
+  lat?: number | null;
+  latitude?: number | null;
+  y?: number | null;
+  lng?: number | null;
+  lon?: number | null;
+  longitude?: number | null;
+  x?: number | null;
+}
+
+function normalizePoints(raw: unknown): [number, number][] {
   if (!Array.isArray(raw)) return [];
   return raw
-    .map((p: any) => {
+    .map((point) => {
+      const p = point as LooseCoordinate | null | undefined;
       if (!p) return null;
       const lat = p.lat ?? p.latitude ?? p.y ?? null;
       const lng = p.lng ?? p.lon ?? p.longitude ?? p.x ?? null;
       if (lat == null || lng == null) return null;
       return [lat, lng] as [number, number];
     })
-    .filter(Boolean) as [number, number][];
+    .filter((p): p is [number, number] => p !== null);
 }
 
 // ─── Map sub-components ───────────────────────────────────────────────────────
 
+/**
+ * Leaflet's map instance, plus the two markers this component parks on it.
+ *
+ * Leaflet has no state of its own for "have I already set this up", and the
+ * map object outlives React's effects -- so initialisation is recorded on the
+ * instance itself. Declaring the fields is what replaces four `as any` casts;
+ * the underscore prefix follows Leaflet's own convention for internals.
+ */
+type InitialisedMap = ReturnType<typeof useMap> & {
+  _initialized?: boolean;
+  _tileLayer?: ReturnType<typeof L.tileLayer>;
+};
+
 function MapInitializer({ zoom }: { zoom: number }) {
-  const map = useMap();
+  const map = useMap() as InitialisedMap;
   useEffect(() => {
-    if ((map as any)._initialized) return;
-    (map as any)._initialized = true;
+    if (map._initialized) return;
+    map._initialized = true;
     map.setView([53.0, -2.2], zoom);
     map.zoomControl.remove();
-    if (!(map as any)._tileLayer) {
+    if (!map._tileLayer) {
       const tileLayer = L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         { attribution: "&copy; OpenStreetMap contributors" }
       );
       tileLayer.addTo(map);
-      (map as any)._tileLayer = tileLayer;
+      map._tileLayer = tileLayer;
     }
   }, [map, zoom]);
   return null;
@@ -479,7 +550,7 @@ export default function MapVisualizerInner({
       const freeRoutesRaw = data?.routes ?? [];
       const freeAppointmentsRaw = data?.appointments ?? [];
 
-      const normalizedRoutes = (freeRoutesRaw ?? []).map((r: any) => ({
+      const normalizedRoutes = (freeRoutesRaw ?? []).map((r: StoredRoute) => ({
         id: r.id,
         staff_id: r.staff_id ?? null,
         points: normalizePoints(r.points ?? []),
@@ -487,7 +558,7 @@ export default function MapVisualizerInner({
       const colored = applyStaffColors(normalizedRoutes);
 
       // Convert legacy routes to single-leg format
-      const legacyLegs: RouteLeg[] = colored.map((r: any) => ({
+      const legacyLegs: RouteLeg[] = colored.map((r: ColouredRoute) => ({
         id: r.id,
         staffId: r.staff_id ?? r.id,
         color: r.color,
@@ -500,7 +571,7 @@ export default function MapVisualizerInner({
       }));
 
       const legacyMarkers: AppointmentMarker[] = (freeAppointmentsRaw ?? []).map(
-        (a: any) => ({
+        (a: StoredAppointment) => ({
           id: a.id,
           staffId: a.staffId ?? "",
           lat: a.lat ?? 53.0,
@@ -523,13 +594,13 @@ export default function MapVisualizerInner({
     async function loadPro() {
       async function loadRoutes() {
         const { data } = await supabase.from("routes").select("*");
-        const normalized = (data ?? []).map((r: any) => ({
+        const normalized = (data ?? []).map((r: StoredRoute) => ({
           id: r.id,
           staff_id: r.staff_id ?? null,
           points: normalizePoints(r.points ?? []),
         }));
         const colored = applyStaffColors(normalized);
-        const legacyLegs: RouteLeg[] = colored.map((r: any) => ({
+        const legacyLegs: RouteLeg[] = colored.map((r: ColouredRoute) => ({
           id: r.id,
           staffId: r.staff_id ?? r.id,
           color: r.color,
@@ -546,7 +617,7 @@ export default function MapVisualizerInner({
       async function loadAppointments() {
         const { data } = await supabase.from("appointments").select("*");
         setAppointments(
-          (data ?? []).map((a: any) => ({
+          (data ?? []).map((a: StoredAppointment) => ({
             id: a.id,
             staffId: a.staffId ?? "",
             lat: a.lat ?? 53.0,

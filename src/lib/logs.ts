@@ -3,7 +3,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function logAction(
   action: string,
   targetUserId: string | null,
-  details: any = {}
+  // Matches logsClient.logActivity, which types the same argument this way.
+  // The column is jsonb, so anything serialisable is valid -- what is not
+  // wanted is a caller passing a function or a class instance by accident.
+  details: Record<string, unknown> = {}
 ) {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();

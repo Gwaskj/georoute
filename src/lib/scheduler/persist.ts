@@ -71,12 +71,13 @@ export async function saveSchedulerResult({
       staff: ctx.staff,
       appointments: ctx.appointments,
       routes: existing.routes ?? [],
-      officePostcode: ctx.officePostcode ?? null,
+      officePostcode: ctx.officePostcode ?? undefined,
       selectedStaffIds: existing.selectedStaffIds ?? [],
+      // Free mode keeps visits only so the results tab survives a tab switch.
+      // This was assigned through an `as any` cast because FreeSchedulerData
+      // did not declare the field; it does now.
+      visits,
     };
-
-    // Free mode keeps visits only for UI display
-    (updated as any).visits = visits;
 
     await saveFreeSchedulerData(updated);
     return;
@@ -135,7 +136,24 @@ export async function loadProScheduledVisits(): Promise<ScheduledVisit[]> {
 
   if (!data) return [];
 
-  return data.map((row: any) => ({
+  // The shape of a scheduled_visits row. Written out here rather than
+  // imported because these are the database's column names, not the app's
+  // ScheduledVisit -- this function is the boundary that translates one into
+  // the other, so it is the one place both spellings should appear.
+  interface VisitRow {
+    visit_id: string;
+    appointment_id: string | null;
+    staff_id: string | null;
+    client_name: string | null;
+    staff_name: string | null;
+    start_time: string;
+    end_time: string;
+    postcode: string | null;
+    address: string | null;
+    window_name: string | null;
+  }
+
+  return (data as VisitRow[]).map((row) => ({
     id: row.visit_id,
     appointmentId: row.appointment_id ?? "",
     staffId: row.staff_id ?? "",
