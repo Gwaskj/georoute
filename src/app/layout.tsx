@@ -16,6 +16,9 @@ import Link from "next/link";
 import HeaderLoader from "@/components/HeaderLoader";
 import ThemeProvider from "@/components/ThemeProvider";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import ErrorReporter from "@/components/errors/ErrorReporter";
+import ErrorBoundary from "@/components/errors/ErrorBoundary";
+import ErrorNotice from "@/components/errors/ErrorNotice";
 
 import { SITE_URL } from "@/lib/siteUrl";
 
@@ -78,8 +81,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
             <HeaderLoader />
 
+            {/* Wraps only the page, not the header and footer: a render error
+                in one route should leave the site navigable rather than
+                replacing everything with an apology. */}
             <main className="flex-1">
-              {children}
+              <ErrorBoundary>{children}</ErrorBoundary>
             </main>
 
             <footer className="border-t border-slate-800 bg-slate-950/80">
@@ -112,6 +118,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             and two console errors on every single page load, in exchange for
             no data. */}
         <GoogleAnalytics />
+        <ErrorReporter />
+        <ErrorNotice />
       </body>
     </html>
   );

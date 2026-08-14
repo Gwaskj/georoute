@@ -52,6 +52,7 @@ type Props = {
  * Tapping it navigated nowhere and the sub-pages were unreachable on a phone.
  */
 const ADMIN_LINKS: [string, string][] = [
+  ["/admin/errors", "Errors"],
   ["/admin/users", "Users"],
   ["/admin/staff", "Staff"],
   ["/admin/appointments", "Appointments"],
