@@ -42,6 +42,28 @@ interface StaffFormState {
   breaks: BreakFormRow[];
 }
 
+/**
+ * What the two form components below need.
+ *
+ * Both took `any`, which meant the form fields -- the largest surface in this
+ * component and the one most likely to be edited -- were unchecked: a typo in
+ * a field name compiled fine and simply stopped saving that value.
+ */
+interface StaffFormProps {
+  form: StaffFormState;
+  setForm: React.Dispatch<React.SetStateAction<StaffFormState>>;
+  skills: Skill[];
+  handleToggleSkill: (skillId: string) => void;
+  handleAddSkillFromInput: (value: string) => void;
+  errors: { home?: string; office?: string };
+}
+
+interface StaffModalProps extends StaffFormProps {
+  isEditing: boolean;
+  onClose: () => void;
+  onSubmit: () => void;
+}
+
 const emptyForm: StaffFormState = {
   name: "",
   homePostcode: "",
@@ -99,8 +121,11 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
 
   // Edit mode listener
   useEffect(() => {
-    const handler = (e: any) => {
-      const { id } = e.detail;
+    // Dispatched by the staff list to open this modal in edit mode. A
+    // CustomEvent rather than a prop because the list and this component have
+    // no common parent to hold the state.
+    const handler = (e: Event) => {
+      const { id } = (e as CustomEvent<{ id: string }>).detail;
       const s = staff.find((x) => x.id === id);
       if (!s) return;
 
@@ -345,7 +370,7 @@ function StaffModalUI({
   onClose,
   onSubmit,
   errors,
-}: any) {
+}: StaffModalProps) {
   return (
     <div className="modal-overlay">
       <div className="modal-container max-w-md">
@@ -401,7 +426,7 @@ function StaffForm({
   handleToggleSkill,
   handleAddSkillFromInput,
   errors,
-}: any) {
+}: StaffFormProps) {
   return (
     <>
       <div>
@@ -409,7 +434,7 @@ function StaffForm({
         <input
           type="text"
           value={form.name}
-          onChange={(e) => setForm((f: any) => ({ ...f, name: e.target.value }))}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
           className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
         />
       </div>
@@ -420,7 +445,7 @@ function StaffForm({
           type="text"
           value={form.homePostcode}
           onChange={(e) =>
-            setForm((f: any) => ({ ...f, homePostcode: e.target.value }))
+            setForm((f) => ({ ...f, homePostcode: e.target.value }))
           }
           className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
         />
@@ -440,7 +465,7 @@ function StaffForm({
           type="text"
           value={form.officePostcode}
           onChange={(e) =>
-            setForm((f: any) => ({ ...f, officePostcode: e.target.value }))
+            setForm((f) => ({ ...f, officePostcode: e.target.value }))
           }
           placeholder="Leave blank to use global office postcode"
           className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
@@ -460,7 +485,7 @@ function StaffForm({
               type="radio"
               name="startLocation"
               checked={form.startLocation === "home"}
-              onChange={() => setForm((f: any) => ({ ...f, startLocation: "home" }))}
+              onChange={() => setForm((f) => ({ ...f, startLocation: "home" }))}
             />
             Home
           </label>
@@ -469,7 +494,7 @@ function StaffForm({
               type="radio"
               name="startLocation"
               checked={form.startLocation !== "home"}
-              onChange={() => setForm((f: any) => ({ ...f, startLocation: "office" }))}
+              onChange={() => setForm((f) => ({ ...f, startLocation: "office" }))}
             />
             Office
           </label>
@@ -485,7 +510,7 @@ function StaffForm({
           type="date"
           value={form.dateOfBirth}
           onChange={(e) =>
-            setForm((f: any) => ({ ...f, dateOfBirth: e.target.value }))
+            setForm((f) => ({ ...f, dateOfBirth: e.target.value }))
           }
           className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
         />
@@ -496,7 +521,7 @@ function StaffForm({
         <select
           value={form.gender}
           onChange={(e) =>
-            setForm((f: any) => ({
+            setForm((f) => ({
               ...f,
               gender: e.target.value as Gender | "",
             }))
@@ -517,14 +542,14 @@ function StaffForm({
           <input
             type="time"
             value={form.workStart}
-            onChange={(e) => setForm((f: any) => ({ ...f, workStart: e.target.value }))}
+            onChange={(e) => setForm((f) => ({ ...f, workStart: e.target.value }))}
             className="flex-1 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
           />
           <span className="text-slate-400">to</span>
           <input
             type="time"
             value={form.workEnd}
-            onChange={(e) => setForm((f: any) => ({ ...f, workEnd: e.target.value }))}
+            onChange={(e) => setForm((f) => ({ ...f, workEnd: e.target.value }))}
             className="flex-1 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
           />
         </div>
@@ -540,7 +565,7 @@ function StaffForm({
         <div className="space-y-2">
           {form.breaks.map((row: BreakFormRow, i: number) => {
             const update = (patch: Partial<BreakFormRow>) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 breaks: f.breaks.map((r: BreakFormRow) =>
                   r.id === row.id ? { ...r, ...patch } : r
@@ -583,7 +608,7 @@ function StaffForm({
                     type="button"
                     aria-label={`Remove break ${i + 1}`}
                     onClick={() =>
-                      setForm((f: any) => ({
+                      setForm((f) => ({
                         ...f,
                         breaks: f.breaks.filter((r: BreakFormRow) => r.id !== row.id),
                       }))
@@ -601,7 +626,7 @@ function StaffForm({
         <button
           type="button"
           onClick={() =>
-            setForm((f: any) => ({
+            setForm((f) => ({
               ...f,
               breaks: [
                 ...f.breaks,

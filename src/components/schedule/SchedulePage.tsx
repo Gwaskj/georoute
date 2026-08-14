@@ -151,8 +151,10 @@ function ResultsView({ isFree }: { isFree: boolean }) {
     hasAttemptedRestore.current = true;
     if (isFree) {
       loadFreeSchedulerData().then((data) => {
-        if ((data as any)?.visits?.length) {
-          setResult((data as any).visits, [], []);
+        // FreeSchedulerData declares visits now, so this no longer needs a
+        // cast to reach it.
+        if (data?.visits?.length) {
+          setResult(data.visits, [], []);
         }
       });
     } else {

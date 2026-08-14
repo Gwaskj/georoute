@@ -345,7 +345,7 @@ export default function StaffPage() {
                     type="text"
                     value={form.name}
                     onChange={(e) =>
-                      setForm((f: any) => ({ ...f, name: e.target.value }))
+                      setForm((f) => ({ ...f, name: e.target.value }))
                     }
                     className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1 text-slate-100"
                   />
@@ -360,7 +360,7 @@ export default function StaffPage() {
                     type="text"
                     value={form.homePostcode}
                     onChange={(e) =>
-                      setForm((f: any) => ({
+                      setForm((f) => ({
                         ...f,
                         homePostcode: e.target.value,
                       }))
@@ -379,7 +379,7 @@ export default function StaffPage() {
                     type="text"
                     value={form.officePostcode}
                     onChange={(e) =>
-                      setForm((f: any) => ({
+                      setForm((f) => ({
                         ...f,
                         officePostcode: e.target.value,
                       }))
@@ -400,7 +400,7 @@ export default function StaffPage() {
                         name="startLocation"
                         checked={form.startLocation === "home"}
                         onChange={() =>
-                          setForm((f: any) => ({ ...f, startLocation: "home" }))
+                          setForm((f) => ({ ...f, startLocation: "home" }))
                         }
                       />
                       Home
@@ -411,7 +411,7 @@ export default function StaffPage() {
                         name="startLocation"
                         checked={form.startLocation !== "home"}
                         onChange={() =>
-                          setForm((f: any) => ({ ...f, startLocation: "office" }))
+                          setForm((f) => ({ ...f, startLocation: "office" }))
                         }
                       />
                       Office
@@ -428,7 +428,7 @@ export default function StaffPage() {
                     type="date"
                     value={form.dateOfBirth}
                     onChange={(e) =>
-                      setForm((f: any) => ({
+                      setForm((f) => ({
                         ...f,
                         dateOfBirth: e.target.value,
                       }))
@@ -445,7 +445,7 @@ export default function StaffPage() {
                   <select
                     value={form.gender}
                     onChange={(e) =>
-                      setForm((f: any) => ({
+                      setForm((f) => ({
                         ...f,
                         gender: e.target.value as Gender | "",
                       }))
@@ -497,7 +497,7 @@ export default function StaffPage() {
                               s.name.toLowerCase() === trimmed.toLowerCase()
                           ) ?? { id: crypto.randomUUID(), name: trimmed };
                           if (!form.skills.includes(skill.id)) {
-                            setForm((f: any) => ({
+                            setForm((f) => ({
                               ...f,
                               skills: [...f.skills, skill.id],
                             }));

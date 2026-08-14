@@ -30,6 +30,32 @@ export interface StaffBreak {
   windowEnd?: string;
 }
 
+/**
+ * A staff row as the database spells it.
+ *
+ * Snake case and nullable throughout, which is precisely why it is worth
+ * writing down: this is the only place the two naming conventions meet, and
+ * every field below is one that could silently arrive as null.
+ */
+interface StaffRow {
+  local_id: string;
+  name: string | null;
+  home_postcode: string | null;
+  office_postcode: string | null;
+  start_location: string | null;
+  date_of_birth: string | null;
+  // Narrower than the column, which is plain text. Only this app writes it,
+  // and it only ever writes a Gender or an empty string -- typing it as bare
+  // string instead pushes an unchecked cast onto every read.
+  gender: Gender | "" | null;
+  skills: string[] | null;
+  colour: string | null;
+  work_start: string | null;
+  work_end: string | null;
+  breaks: StaffBreak[] | null;
+  auth_user_id: string | null;
+}
+
 export interface Staff {
   id: string;
   name: string;
@@ -277,13 +303,13 @@ export const useStaffStore = create<StaffState>((set, get) => ({
 
     const seen = new Set<string>();
     const mapped: Staff[] = data
-      .filter((row: any) => {
+      .filter((row: StaffRow) => {
         const id = row.local_id;
         if (!id || seen.has(id)) return false;
         seen.add(id);
         return true;
       })
-      .map((row: any) => ({
+      .map((row: StaffRow) => ({
         id: row.local_id,
         name: row.name ?? "",
         homePostcode: row.home_postcode ?? "",

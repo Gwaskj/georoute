@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import PricingDetail from "@/components/pricing/PricingDetail";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 import type { AnyBlock, PricingHeaderData } from "@/lib/types/cms";
 
 const DEFAULT_HEADER: PricingHeaderData = {
@@ -11,10 +12,21 @@ const DEFAULT_HEADER: PricingHeaderData = {
   subtitle: "Start free, then upgrade when you're ready to scale.",
 };
 
+/** A row from the pricing table, as this page renders it. */
+interface PricingPlan {
+  id: string;
+  plan: string;
+  description: string | null;
+  price: number;
+  features: string[] | null;
+}
+
 export default function PricingPage() {
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
-  const [plans, setPlans] = useState<any[]>([]);
+  // Only presence is checked, never a field, so the session's own type is
+  // more than this page needs.
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<{ is_admin: boolean } | null>(null);
+  const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [header, setHeader] = useState<PricingHeaderData>(DEFAULT_HEADER);
   const [loading, setLoading] = useState(true);
 

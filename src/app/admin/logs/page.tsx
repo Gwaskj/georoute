@@ -8,7 +8,8 @@ import { useEffect, useState } from "react";
 interface AdminLogRow {
   id: string;
   action: string;
-  details: any;
+  // jsonb column: anything serialisable, rendered only as a preview string.
+  details: unknown;
   created_at: string;
   actor_id: string | null;
   target_user_id: string | null;
@@ -79,7 +80,7 @@ function formatRelative(value: string) {
   return `${diffD}d ago`;
 }
 
-function detailsPreview(details: any): string {
+function detailsPreview(details: unknown): string {
   if (!details) return "";
   try {
     const s = JSON.stringify(details);

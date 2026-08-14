@@ -11,6 +11,18 @@ type RouteSummaryData = {
   vehicles: number;
 };
 
+/**
+ * The two fields this summary reads off a stored route.
+ *
+ * Narrow on purpose. Routes come from two sources with different shapes, and
+ * declaring the whole of either here would tie this component to storage
+ * details it does not use.
+ */
+type SummaryRoute = {
+  staff_id?: string | null;
+  distance?: number | null;
+};
+
 export default function RouteSummary() {
   const isFree = useUserTier();
   const [summary, setSummary] = useState<RouteSummaryData | null>(null);
@@ -25,7 +37,7 @@ export default function RouteSummary() {
     const routes = data.routes ?? [];
 
     const total_jobs = appointments.length;
-    const vehicles = new Set(routes.map((r: any) => r.staff_id)).size;
+    const vehicles = new Set(routes.map((r: SummaryRoute) => r.staff_id)).size;
 
     return {
       total_jobs,
@@ -44,10 +56,10 @@ export default function RouteSummary() {
       .select("staff_id, distance");
 
     const total_jobs = appointments?.length ?? 0;
-    const vehicles = new Set(routes?.map((r: any) => r.staff_id)).size;
+    const vehicles = new Set(routes?.map((r: SummaryRoute) => r.staff_id)).size;
 
     const total_distance = routes?.reduce(
-      (sum: number, r: any) => sum + (r.distance ?? 0),
+      (sum: number, r: SummaryRoute) => sum + (r.distance ?? 0),
       0
     ) ?? 0;
 

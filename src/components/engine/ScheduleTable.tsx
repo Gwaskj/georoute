@@ -64,7 +64,7 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
     const freeAppts = data?.appointments ?? [];
 
     // Map free-session Appointment objects to AppointmentRow format
-    return freeAppts.map((a: any) => ({
+    return freeAppts.map((a) => ({
       id: a.id ?? crypto.randomUUID(),
       start_time: a.strictStartTime ?? null,
       end_time: null,
@@ -100,7 +100,19 @@ export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTabl
         return;
       }
 
-      const normalized: AppointmentRow[] = (data ?? []).map((row: any) => ({
+      // The scheduled_visits row shape, in the database's own spelling.
+      interface VisitRow {
+        visit_id: string;
+        start_time: string | null;
+        end_time: string | null;
+        staff_id: string | null;
+        staff_name: string | null;
+        appointment_id: string | null;
+        client_name: string | null;
+        postcode: string | null;
+      }
+
+      const normalized: AppointmentRow[] = (data as VisitRow[] ?? []).map((row) => ({
         id: row.visit_id,
         start_time: row.start_time,
         end_time: row.end_time,

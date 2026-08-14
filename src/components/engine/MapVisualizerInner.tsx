@@ -138,6 +138,23 @@ interface LooseCoordinate {
   x?: number | null;
 }
 
+/**
+ * Leaflet options react-leaflet's prop types do not expose.
+ *
+ * react-leaflet's MarkerProps and TooltipProps omit most of Leaflet's own
+ * options -- `icon` is not on MarkerProps at all -- so passing a custom pin
+ * requires going around the types. These were previously eight separate
+ * `as any` spreads, which is worse than it sounds: spreading `any` into JSX
+ * turns off checking for *every* prop on that element, so the position and
+ * children of those markers were unchecked as well.
+ *
+ * One cast, named and explained, in place of eight anonymous ones. Everything
+ * not passed through here stays checked.
+ */
+function leafletOptions<T>(options: Record<string, unknown>): T {
+  return options as T;
+}
+
 function normalizePoints(raw: unknown): [number, number][] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -896,7 +913,7 @@ export default function MapVisualizerInner({
                     // repeating the same two names. The popup is gone and this
                     // carries the times instead -- the same detail, without
                     // needing a click or colliding with anything.
-                    {...({ sticky: true, direction: "top", opacity: 1 } as any)}
+                    {...leafletOptions<React.ComponentProps<typeof Tooltip>>({ sticky: true, direction: "top", opacity: 1 })}
                   >
                     <div style={{ fontSize: 11, lineHeight: 1.6, minWidth: 150 }}>
                       <div>
@@ -963,7 +980,7 @@ export default function MapVisualizerInner({
                   iconSize: [18, 18],
                   iconAnchor: [9, 9],
                 }),
-              } as any)}
+              })}
             >
               <Popup>
                 <div style={{ fontSize: 12, fontWeight: 600 }}>
@@ -979,7 +996,9 @@ export default function MapVisualizerInner({
         {originPinGeo && (
           <Marker
             position={[originPinGeo.lat, originPinGeo.lng]}
-            {...({ icon: buildPinIcon({ color: ORIGIN_PIN_COLOR, glyph: originPinGeo.glyph }) } as any)}
+            {...leafletOptions<React.ComponentProps<typeof Marker>>({
+              icon: buildPinIcon({ color: ORIGIN_PIN_COLOR, glyph: originPinGeo.glyph }),
+            })}
           >
             <Popup>
               <div style={{ fontSize: 12, fontWeight: 600 }}>
@@ -995,7 +1014,7 @@ export default function MapVisualizerInner({
             <Marker
               key={a.id}
               position={[a.lat, a.lng]}
-              {...({ icon: buildPinIcon({ color: a.color, highlighted: highlightedAppointmentId === a.id }) } as any)}
+              {...leafletOptions<React.ComponentProps<typeof Marker>>({ icon: buildPinIcon({ color: a.color, highlighted: highlightedAppointmentId === a.id }) })}
               eventHandlers={{ click: () => setHighlightedAppointment(a.id) }}
             >
               <AppointmentPopup a={a} />
@@ -1012,7 +1031,7 @@ export default function MapVisualizerInner({
                   color: GLOBAL_PIN_COLOR,
                   badge: g.visits.length > 1 ? g.visits.length : undefined,
                 }),
-              } as any)}
+              })}
             >
               <Popup>
                 <div style={{ fontSize: 12, lineHeight: 1.6, minWidth: 160 }}>
@@ -1040,7 +1059,7 @@ export default function MapVisualizerInner({
                     badge: a.seq,
                     highlighted: highlightedAppointmentId === a.id,
                   }),
-                } as any)}
+                })}
                 eventHandlers={{ click: () => setHighlightedAppointment(a.id) }}
               >
                 <AppointmentPopup a={a} />
@@ -1052,10 +1071,10 @@ export default function MapVisualizerInner({
             <Marker
               key={stop.key}
               position={[stop.lat, stop.lng]}
-              {...({ icon: buildPinIcon({ color: stop.color, highlighted: stop.highlighted }) } as any)}
+              {...leafletOptions<React.ComponentProps<typeof Marker>>({ icon: buildPinIcon({ color: stop.color, highlighted: stop.highlighted }) })}
             >
               {stop.tooltipLabel && (
-                <Tooltip {...({ permanent: true, direction: "top", offset: [0, -28] } as any)}>
+                <Tooltip {...leafletOptions<React.ComponentProps<typeof Tooltip>>({ permanent: true, direction: "top", offset: [0, -28] })}>
                   {stop.tooltipLabel}
                 </Tooltip>
               )}

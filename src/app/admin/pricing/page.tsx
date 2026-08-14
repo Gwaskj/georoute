@@ -5,10 +5,21 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 
+/** A row from the pricing table, as this editor reads and writes it. */
+interface PricingRow {
+  id: string;
+  plan: string;
+  description: string | null;
+  price: number;
+  features: string[];
+  /** Set once a Stripe price has been created for the plan. */
+  stripe_price_id: string | null;
+}
+
 export default function AdminPricingEditor() {
   const isAdmin = useIsAdmin();
 
-  const [plans, setPlans] = useState<any[]>([]);
+  const [plans, setPlans] = useState<PricingRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +32,9 @@ export default function AdminPricingEditor() {
         .select("*")
         .order("price");
 
-      const normalized = (pricingData || []).map((p: any) => ({
+      // features has been stored both as a JSON array and as a bare value over
+      // time, so it is coerced to an array on the way in rather than trusted.
+      const normalized: PricingRow[] = (pricingData || []).map((p: PricingRow) => ({
         ...p,
         features: Array.isArray(p.features)
           ? p.features
