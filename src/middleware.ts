@@ -74,10 +74,13 @@ export async function middleware(req: NextRequest) {
   // Everything below is the owner-only guard, which most requests skip. The
   // matcher covers the whole site for the redirect above, so without this the
   // Supabase lookup would run on every page load and every asset request.
+  const path = req.nextUrl.pathname;
   const isOwnerOnly = OWNER_ONLY.some(
-    (p) => req.nextUrl.pathname === p || req.nextUrl.pathname.startsWith(`${p}/`)
+    (p) => path === p || path.startsWith(`${p}/`)
   );
   if (!isOwnerOnly) return NextResponse.next();
+
+  const isAdminPath = path === "/admin" || path.startsWith("/admin/");
 
   const res = NextResponse.next();
 
@@ -100,19 +103,39 @@ export async function middleware(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Signed out is not this guard's business -- the pages handle that
-  // themselves, and redirecting here would break the login flow.
-  if (!user) return res;
+  // Signed out is not this guard's business for the owner's own pages -- they
+  // handle it themselves, and redirecting here would break the login flow.
+  // Admin pages are different: there is no signed-out view of them worth
+  // serving, and letting the request through was how a logged-out visitor
+  // received the admin navigation and, on two pages, a working screen.
+  if (!user) {
+    return isAdminPath ? NextResponse.redirect(new URL("/", req.url)) : res;
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("owner_user_id")
+    .select("owner_user_id, is_admin")
     .eq("user_id", user.id)
     .maybeSingle();
 
   // owner_user_id set is what marks an account as staff.
   if (profile?.owner_user_id) {
     return NextResponse.redirect(new URL("/my-round", req.url));
+  }
+
+  // Admin pages are refused here, before the page renders at all.
+  //
+  // Each admin page also checks for itself, but those checks run in the
+  // browser after the component has mounted -- so the page and its navigation
+  // were served to anyone who asked, and two of them rendered a usable screen
+  // rather than a refusal. Deciding it server-side means a non-admin never
+  // receives the markup in the first place.
+  //
+  // Redirected home rather than shown a refusal: there is nothing an ordinary
+  // account can do about it, and confirming that a page exists is more than
+  // they need to know.
+  if (isAdminPath && !profile?.is_admin) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   return res;

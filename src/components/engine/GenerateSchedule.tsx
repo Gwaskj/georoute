@@ -85,6 +85,32 @@ export default function GenerateSchedule({
     clearLocalCache();
     const startedAt = Date.now();
 
+    // Say why nothing will happen, rather than producing an empty schedule.
+    //
+    // Both of these previously ran all the way through to "No appointments
+    // allocated" against every staff member, which reads as the scheduler
+    // failing rather than as there being nothing to do. The commonest way in
+    // is entirely innocent: appointments added as one-offs yesterday are not
+    // due today, so opening the scheduler the next morning and pressing
+    // Generate produced silence.
+    if (staff.length === 0) {
+      setRouteError("No staff have been added yet, so there is nobody to schedule visits for.");
+      setIsRunning(false);
+      return;
+    }
+
+    if (dueAppointments.length === 0) {
+      const total = appointments.filter((a) => !a.archived).length;
+      setRouteError(
+        total === 0
+          ? "No appointments have been added yet, so there is nothing to schedule."
+          : `None of your ${total} appointment${total === 1 ? " is" : "s are"} due on ${scheduleDate}. ` +
+            "Check the planning day above, or set the appointment to repeat if it should happen regularly."
+      );
+      setIsRunning(false);
+      return;
+    }
+
     // Pre-fetch all relevant postcode pairs to build a travel-time lookup
     const uniquePostcodes = new Set<string>();
 
