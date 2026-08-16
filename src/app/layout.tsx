@@ -16,6 +16,8 @@ import Link from "next/link";
 import HeaderLoader from "@/components/HeaderLoader";
 import ThemeProvider from "@/components/ThemeProvider";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import ConsentBanner from "@/components/consent/ConsentBanner";
+import ConsentSettingsLink from "@/components/consent/ConsentSettingsLink";
 import ErrorReporter from "@/components/errors/ErrorReporter";
 import ErrorBoundary from "@/components/errors/ErrorBoundary";
 import ErrorNotice from "@/components/errors/ErrorNotice";
@@ -98,6 +100,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   <Link href="/calendar" className="hover:text-slate-200">Calendar</Link>
                   <Link href="/privacy" className="hover:text-slate-200">Privacy Policy</Link>
                   <Link href="/terms" className="hover:text-slate-200">Terms of Service</Link>
+                  <ConsentSettingsLink />
                 </div>
               </div>
             </footer>
@@ -118,6 +121,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             and two console errors on every single page load, in exchange for
             no data. */}
         <GoogleAnalytics />
+        <ConsentBanner />
         <ErrorReporter />
         <ErrorNotice />
       </body>

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 const CONTACT_EMAIL = "support@georoutes.co.uk";
-const LAST_UPDATED = "13 August 2026";
+const LAST_UPDATED = "15 August 2026";
 
 function Section({
   title,
@@ -77,11 +77,19 @@ export default function PrivacyPolicyPage() {
             </p>
             <p>
               <strong className="text-slate-100">Analytics.</strong> We use
-              Google Analytics to count page visits. For visitors in the UK,
-              the EEA and Switzerland it runs with storage consent denied, so
-              it sets no cookies and no identifier on your device — which is
-              why this site shows no cookie banner. We also use Vercel
-              Analytics and Speed Insights, which are cookieless by design.
+              Google Analytics to count page visits and see which pages are
+              read. In the UK, the EEA and Switzerland we ask before it stores
+              anything: until you accept, it runs with storage denied and sets
+              no cookie or identifier on your device. If you decline, or ignore
+              the banner, it stays that way and the site works identically — we
+              simply count less precisely. You can change your answer at any
+              time using the <strong className="text-slate-100">Cookie
+              settings</strong> link in the footer.
+            </p>
+            <p>
+              We do not use Google Analytics for advertising. The advertising
+              permissions in the tag are refused permanently and are never
+              enabled by accepting analytics.
             </p>
           </Section>
 
@@ -101,8 +109,8 @@ export default function PrivacyPolicyPage() {
               <li><strong className="text-slate-100">Stripe</strong> — subscription billing and payment processing.</li>
               <li><strong className="text-slate-100">OpenRouteService (ORS)</strong> — route and travel-time calculation from the postcodes you provide.</li>
               <li><strong className="text-slate-100">postcodes.io</strong> — checking that a UK postcode exists when you enter one.</li>
-              <li><strong className="text-slate-100">Google Analytics</strong> — page-visit counts, running without cookies or identifiers in the UK, EEA and Switzerland.</li>
-              <li><strong className="text-slate-100">Vercel</strong> — hosting, plus cookieless traffic and performance analytics.</li>
+              <li><strong className="text-slate-100">Google Analytics</strong> — page-visit counts, storing nothing on your device unless you accept.</li>
+              <li><strong className="text-slate-100">Cloudflare</strong> — hosting and content delivery, plus traffic measurement performed at their network rather than in your browser, which sets nothing on your device.</li>
             </ul>
           </Section>
 

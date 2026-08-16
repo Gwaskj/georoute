@@ -14,23 +14,19 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
  * cookieless pings. Everywhere else the defaults are granted, because no
  * prior-consent rule applies.
  *
- * There is deliberately nothing that ever upgrades those defaults to granted.
- * The consent signal used to come from the Funding Choices message, which
- * loaded as part of the AdSense tag; AdSense has since been removed, so no
- * consent framework runs on the site at all.
+ * ConsentBanner is what upgrades analytics_storage to granted, and only for
+ * visitors who press Accept. Until then this tag stores nothing, which is
+ * what makes showing the banner lawful in the first place -- PECR requires
+ * prior consent for storing or accessing anything on a device, so the asking
+ * cannot happen after the storing.
  *
- * That leaves a genuinely clean position rather than a broken one. PECR
- * requires prior consent for storing or accessing information on a device,
- * and under denied consent this tag does neither -- so no cookie banner is
- * required, and none is shown. The cost is that UK and EEA sessions are
- * reported without a client identifier: page views and traffic sources still
- * arrive, returning visitors cannot be distinguished from new ones. For
- * knowing which pages get read, that is enough.
+ * The three advertising purposes stay denied permanently and nothing ever
+ * updates them: there is no advertising on this site, and granting a purpose
+ * nobody was asked about would be worse than not having the tag at all.
  *
- * Restoring full measurement would mean adding a consent banner and calling
- * gtag("consent", "update", ...) on acceptance. Worth doing only if the
- * per-user detail is actually needed, since it trades a clean no-banner site
- * for a cookie prompt on every first visit.
+ * A visitor who declines, or ignores the banner, stays exactly where the
+ * defaults put them: cookieless pings, page views counted, returning visitors
+ * indistinguishable from new ones.
  */
 
 /**
