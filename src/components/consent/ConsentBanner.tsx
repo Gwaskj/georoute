@@ -52,6 +52,19 @@ export default function ConsentBanner() {
     };
   }, []);
 
+  // Reserve the space the banner occupies while it is up, so anything at the
+  // foot of a page can still be scrolled to and clicked. Being fixed, it
+  // otherwise sits on top of whatever happens to be at the bottom of the
+  // viewport, and the footer links were exactly that.
+  useEffect(() => {
+    if (!visible) return;
+    const previous = document.body.style.paddingBottom;
+    document.body.style.paddingBottom = "7rem";
+    return () => {
+      document.body.style.paddingBottom = previous;
+    };
+  }, [visible]);
+
   const decide = (choice: ConsentChoice) => {
     writeConsent(choice);
     applyConsent(choice);
@@ -65,7 +78,12 @@ export default function ConsentBanner() {
       role="dialog"
       aria-live="polite"
       aria-label="Analytics cookies"
-      className="fixed inset-x-0 bottom-0 z-[100] border-t border-slate-700 bg-slate-900/98 px-4 py-4 backdrop-blur"
+      // z-40 keeps this beneath the modals, which are z-50. Above them it
+      // covered the Add button in the staff and appointment dialogs, so a
+      // first-time visitor in the UK could not add anything until they had
+      // answered -- the banner is meant to be ignorable, and blocking the
+      // product until it is dealt with is the opposite of that.
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-700 bg-slate-900/98 px-4 py-4 backdrop-blur"
     >
       <div className="mx-auto flex max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm leading-relaxed text-slate-300">
