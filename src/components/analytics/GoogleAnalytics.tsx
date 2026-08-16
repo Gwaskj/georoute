@@ -87,12 +87,32 @@ function bootstrap(id: string): void {
   document.head.appendChild(script);
 }
 
+/**
+ * Paths that must never be measured.
+ *
+ * A share link's token is the whole of its security: anyone holding it can
+ * read a staff member's round, which lists client names and home addresses.
+ * Sending the page URL to Analytics put that token into a third party's
+ * systems and into any report an Analytics user could open -- a credential
+ * copied somewhere it can never be withdrawn from.
+ *
+ * These pages are already noindex and are for one carer to read on a phone;
+ * there was never anything to learn from measuring them.
+ */
+function isPrivatePath(pathname: string): boolean {
+  return pathname.startsWith("/r/");
+}
+
 export default function GoogleAnalytics() {
   const pathname = usePathname();
   const started = useRef(false);
 
   useEffect(() => {
     if (!GA_ID || started.current) return;
+    // Checked before the tag loads at all, not merely before sending a
+    // page_view: gtag reads location itself on config, so loading it here at
+    // all would send the token regardless.
+    if (isPrivatePath(window.location.pathname)) return;
     started.current = true;
     bootstrap(GA_ID);
   }, []);
@@ -103,6 +123,10 @@ export default function GoogleAnalytics() {
   // root layout into dynamic rendering.
   useEffect(() => {
     if (!GA_ID || !started.current || !window.gtag) return;
+    // A client-side navigation can reach a share link from an ordinary page,
+    // where the tag is already running -- so the same exclusion is needed
+    // here, not only at start-up.
+    if (isPrivatePath(pathname)) return;
     window.gtag("event", "page_view", {
       page_path: `${pathname}${window.location.search}`,
       page_location: window.location.href,

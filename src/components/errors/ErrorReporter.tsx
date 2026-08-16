@@ -15,6 +15,21 @@ import { useEffect } from "react";
  * React intercepts them. ErrorBoundary handles those.
  */
 
+/**
+ * Strips a share token out of a URL before it is recorded.
+ *
+ * The token in /r/<token> is the entire security of a share link -- it grants
+ * a stranger the ability to read a carer's round, with client names and home
+ * addresses. Storing it in an error report would put a live credential into
+ * the database in plain text, and into any screen that displays those reports.
+ *
+ * Which page it was is still worth keeping, so the path is preserved and only
+ * the secret is removed.
+ */
+function redact(href: string): string {
+  return href.replace(/\/r\/[A-Za-z0-9_-]+/, "/r/[redacted]");
+}
+
 /** Reports are fire-and-forget. A failure to report must never break a page. */
 export function reportError(
   message: string,
@@ -25,7 +40,7 @@ export function reportError(
       message,
       stack: opts.stack ?? null,
       source: opts.source ?? "client",
-      url: typeof location !== "undefined" ? location.href : null,
+      url: typeof location !== "undefined" ? redact(location.href) : null,
       context: opts.context ?? {},
     });
 
