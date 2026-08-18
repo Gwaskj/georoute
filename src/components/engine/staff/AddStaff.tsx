@@ -34,7 +34,6 @@ interface StaffFormState {
   homePostcode: string;
   officePostcode: string;
   startLocation: StartLocation;
-  dateOfBirth: string;
   gender: Gender | "";
   skills: string[];
   workStart: string;
@@ -69,7 +68,6 @@ const emptyForm: StaffFormState = {
   homePostcode: "",
   officePostcode: "",
   startLocation: "office",
-  dateOfBirth: "",
   gender: "",
   skills: [],
   workStart: "",
@@ -84,17 +82,6 @@ function toBreakRow(b: StaffBreak): BreakFormRow {
     windowStart: b.windowStart ?? "",
     windowEnd: b.windowEnd ?? "",
   };
-}
-
-function calculateAge(dob: string): number | null {
-  if (!dob) return null;
-  const birth = new Date(dob);
-  if (Number.isNaN(birth.getTime())) return null;
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const m = today.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-  return age;
 }
 
 export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
@@ -136,7 +123,6 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
         homePostcode: s.homePostcode,
         officePostcode: s.officePostcode,
         startLocation: s.startLocation ?? "office",
-        dateOfBirth: s.dateOfBirth,
         gender: s.gender,
         skills: [...s.skills],
         workStart: s.workStart ?? "",
@@ -171,7 +157,6 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
       homePostcode: s.homePostcode,
       officePostcode: s.officePostcode,
       startLocation: s.startLocation ?? "office",
-      dateOfBirth: s.dateOfBirth,
       gender: s.gender,
       skills: [...s.skills],
       workStart: s.workStart ?? "",
@@ -207,7 +192,6 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
         homePostcode: normalisedHome,
         officePostcode: normalisedOffice,
         startLocation: form.startLocation,
-        dateOfBirth: form.dateOfBirth,
         gender: form.gender,
         skills: form.skills,
         workStart: form.workStart || undefined,
@@ -221,7 +205,6 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
         homePostcode: normalisedHome,
         officePostcode: normalisedOffice,
         startLocation: form.startLocation,
-        dateOfBirth: form.dateOfBirth,
         gender: form.gender,
         skills: form.skills,
         workStart: form.workStart || undefined,
@@ -311,7 +294,6 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
 
       <ul className="space-y-2">
         {activeStaff.map((s: Staff) => {
-          const age = calculateAge(s.dateOfBirth);
           return (
             <li
               key={s.id}
@@ -319,7 +301,6 @@ export default function AddStaff({ isFree, triggerOnly }: AddStaffProps) {
             >
               <span className="font-medium text-slate-100">{s.name}</span>
               <div className="flex items-center gap-2 text-xs text-slate-400">
-                {age !== null && <span>{age} yrs</span>}
                 {s.gender && <span>{s.gender}</span>}
 
                 <button
@@ -504,17 +485,6 @@ function StaffForm({
         </p>
       </div>
 
-      <div>
-        <label className="mb-1 block font-medium text-slate-200">Date of birth</label>
-        <input
-          type="date"
-          value={form.dateOfBirth}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, dateOfBirth: e.target.value }))
-          }
-          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
-        />
-      </div>
 
       <div>
         <label className="mb-1 block font-medium text-slate-200">Gender</label>

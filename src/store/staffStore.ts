@@ -42,8 +42,7 @@ interface StaffRow {
   name: string | null;
   home_postcode: string | null;
   office_postcode: string | null;
-  start_location: string | null;
-  date_of_birth: string | null;
+  start_location: string | null;
   // Narrower than the column, which is plain text. Only this app writes it,
   // and it only ever writes a Gender or an empty string -- typing it as bare
   // string instead pushes an unchecked cast onto every read.
@@ -61,8 +60,7 @@ export interface Staff {
   name: string;
   homePostcode: string;
   officePostcode: string;
-  startLocation: StartLocation;
-  dateOfBirth: string;
+  startLocation: StartLocation;
   gender: Gender | "";
   skills: string[];
   colour: string;
@@ -151,8 +149,7 @@ async function persistPro(staff: Staff[], selectedStaffIds: string[]) {
       user_id: user.id,
       name: s.name,
       home_postcode: s.homePostcode,
-      office_postcode: s.officePostcode,
-      date_of_birth: s.dateOfBirth,
+      office_postcode: s.officePostcode,
       gender: s.gender,
       skills: s.skills,
       colour: s.colour,
@@ -314,8 +311,7 @@ export const useStaffStore = create<StaffState>((set, get) => ({
         name: row.name ?? "",
         homePostcode: row.home_postcode ?? "",
         officePostcode: row.office_postcode ?? "",
-        startLocation: row.start_location === "home" ? "home" : "office",
-        dateOfBirth: row.date_of_birth ?? "",
+        startLocation: row.start_location === "home" ? "home" : "office",
         gender: row.gender ?? "",
         skills: row.skills ?? [],
         colour: row.colour ?? generateColour(),

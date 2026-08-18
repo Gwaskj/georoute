@@ -11,24 +11,12 @@ function cleanPostcode(p: string) {
   return p.trim().toUpperCase();
 }
 
-function calculateAge(dob: string): number | null {
-  if (!dob) return null;
-  const birth = new Date(dob);
-  if (Number.isNaN(birth.getTime())) return null;
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const m = today.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-  return age;
-}
-
 interface StaffFormState {
   id?: string;
   name: string;
   homePostcode: string;
   officePostcode: string;
   startLocation: StartLocation;
-  dateOfBirth: string;
   gender: Gender | "";
   skills: string[];
 }
@@ -38,7 +26,6 @@ const emptyForm: StaffFormState = {
   homePostcode: "",
   officePostcode: "",
   startLocation: "office",
-  dateOfBirth: "",
   gender: "",
   skills: [],
 };
@@ -108,7 +95,6 @@ export default function StaffPage() {
       homePostcode: s.homePostcode,
       officePostcode: s.officePostcode,
       startLocation: s.startLocation ?? "office",
-      dateOfBirth: s.dateOfBirth,
       gender: s.gender,
       skills: [...s.skills],
     });
@@ -129,7 +115,6 @@ export default function StaffPage() {
         homePostcode: normalisedHome,
         officePostcode: normalisedOffice,
         startLocation: form.startLocation,
-        dateOfBirth: form.dateOfBirth,
         gender: form.gender,
         skills: form.skills,
       });
@@ -140,7 +125,6 @@ export default function StaffPage() {
         homePostcode: normalisedHome,
         officePostcode: normalisedOffice,
         startLocation: form.startLocation,
-        dateOfBirth: form.dateOfBirth,
         gender: form.gender,
         skills: form.skills,
       });
@@ -255,7 +239,6 @@ export default function StaffPage() {
         ) : (
           <div className="space-y-2">
             {staff.map((s: Staff) => {
-              const age = calculateAge(s.dateOfBirth);
               return (
                 <div
                   key={s.id}
@@ -273,7 +256,6 @@ export default function StaffPage() {
                       </span>
                       <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-400">
                         {s.gender && <span>{s.gender}</span>}
-                        {age !== null && <span>{age} yrs</span>}
                         {s.homePostcode && <span>Home: {s.homePostcode}</span>}
                         {s.officePostcode && (
                           <span>Office: {s.officePostcode}</span>
@@ -419,23 +401,6 @@ export default function StaffPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="mb-1 block font-medium text-slate-200">
-                    Date of birth{" "}
-                    <span className="text-slate-500">(optional)</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={form.dateOfBirth}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        dateOfBirth: e.target.value,
-                      }))
-                    }
-                    className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1 text-slate-100"
-                  />
-                </div>
 
                 <div>
                   <label className="mb-1 block font-medium text-slate-200">

@@ -165,7 +165,6 @@ create table public.staff (
   name            text    not null default '',
   home_postcode   text    default '',
   office_postcode text    default '',
-  date_of_birth   text    default '',
   gender          text    default '',
   skills          jsonb   default '[]'::jsonb,
   colour          text    default '#0070f3',
@@ -217,7 +216,6 @@ create table public.appointments (
   purpose_id           text,              -- references a user_window local_id
   visits_required      int     default 1,
   min_gap_minutes      int     default 120,
-  notes                text    default '',
   staff_gender         text,
   required_skills      jsonb   default '[]'::jsonb,
   required_windows     jsonb   default '[]'::jsonb,

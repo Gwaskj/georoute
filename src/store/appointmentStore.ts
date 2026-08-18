@@ -25,7 +25,6 @@ export interface Appointment {
   visitsRequired: number;
   minGapMinutes: number;
 
-  notes: string;
 
   staffGender: string | null;
   requiredSkills: string[];
@@ -125,7 +124,6 @@ async function persistPro(appointments: Appointment[]) {
       purpose_id: a.purposeId ?? null,
       visits_required: a.visitsRequired,
       min_gap_minutes: a.minGapMinutes,
-      notes: a.notes,
       staff_gender: a.staffGender ?? null,
       required_skills: a.requiredSkills,
       required_windows: a.requiredWindows,
@@ -299,7 +297,6 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
       purposeId: row.purpose_id ?? null,
       visitsRequired: row.visits_required ?? 1,
       minGapMinutes: row.min_gap_minutes ?? 120,
-      notes: row.notes ?? "",
       staffGender: row.staff_gender ?? null,
       requiredSkills: row.required_skills ?? [],
       requiredWindows: row.required_windows ?? [],

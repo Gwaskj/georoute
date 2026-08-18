@@ -34,7 +34,6 @@ interface AppointmentFormState {
   visitsRequired: string;
   minGapMinutes: string;
 
-  notes: string;
 
   staffGender: string;
   requiredSkills: string[];
@@ -57,7 +56,6 @@ const emptyForm: AppointmentFormState = {
   requiredStaff: "1",
   visitsRequired: "1",
   minGapMinutes: "120",
-  notes: "",
 
   staffGender: "",
   requiredSkills: [],
@@ -106,7 +104,6 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
       requiredStaff: String(a.requiredStaff),
       visitsRequired: String(a.visitsRequired),
       minGapMinutes: String(a.minGapMinutes),
-      notes: a.notes,
 
       staffGender: a.staffGender ?? "",
       requiredSkills: a.requiredSkills ?? [],
@@ -174,7 +171,6 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
       requiredStaff,
       visitsRequired,
       minGapMinutes,
-      notes: form.notes.trim(),
 
       staffGender: form.staffGender || null,
       requiredSkills: form.requiredSkills,
@@ -406,17 +402,6 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                   />
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="mb-1 block font-medium">Notes</label>
-                  <textarea
-                    value={form.notes}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, notes: e.target.value }))
-                    }
-                    className="w-full rounded bg-slate-900 border border-slate-700 px-2 py-1"
-                    rows={3}
-                  />
-                </div>
               </div>
 
               {/* WHEN IT IS DUE */}
