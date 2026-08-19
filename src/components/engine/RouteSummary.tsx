@@ -24,89 +24,37 @@ type SummaryRoute = {
 };
 
 export default function RouteSummary() {
-  const isFree = useUserTier();
   const [summary, setSummary] = useState<RouteSummaryData | null>(null);
   const [loading, setLoading] = useState(true);
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-
-  async function loadFreeSummary(): Promise<RouteSummaryData | null> {
-    const data = await loadFreeSchedulerData();
-    if (!data) return null;
-
-    const appointments = data.appointments ?? [];
-    const routes = data.routes ?? [];
-
-    const total_jobs = appointments.length;
-    const vehicles = new Set(routes.map((r: SummaryRoute) => r.staff_id)).size;
-
-    return {
-      total_jobs,
-      total_distance: 0,
-      vehicles,
-    };
-  }
-
-  async function loadProSummary(): Promise<RouteSummaryData | null> {
-    const { data: appointments } = await supabase
-      .from("appointments")
-      .select("id");
-
-    const { data: routes } = await supabase
-      .from("routes")
-      .select("staff_id, distance");
-
-    const total_jobs = appointments?.length ?? 0;
-    const vehicles = new Set(routes?.map((r: SummaryRoute) => r.staff_id)).size;
-
-    const total_distance = routes?.reduce(
-      (sum: number, r: SummaryRoute) => sum + (r.distance ?? 0),
-      0
-    ) ?? 0;
-
-    return {
-      total_jobs,
-      total_distance,
-      vehicles,
-    };
-  }
 
   useEffect(() => {
+    /**
+     * Pro used to read this from the appointments and routes tables, kept live
+     * by a realtime subscription. Both are gone; the summary comes from the
+     * same local record everything else reads.
+     */
     async function load() {
       setLoading(true);
 
-      const result = isFree
-        ? await loadFreeSummary()
-        : await loadProSummary();
+      const data = await loadFreeSchedulerData();
+      if (!data) {
+        setSummary(null);
+        setLoading(false);
+        return;
+      }
 
-      setSummary(result);
+      const routes = (data.routes ?? []) as SummaryRoute[];
+
+      setSummary({
+        total_jobs: (data.appointments ?? []).length,
+        total_distance: routes.reduce((sum, r) => sum + (r.distance ?? 0), 0),
+        vehicles: new Set(routes.map((r) => r.staff_id)).size,
+      });
       setLoading(false);
     }
 
     load();
-
-    if (!isFree && !channelRef.current) {
-      channelRef.current = supabase
-        .channel("route-summary-updates")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "routes" },
-          () => load()
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "appointments" },
-          () => load()
-        )
-        .subscribe();
-    }
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
-  }, [isFree]);
+  }, []);
 
   return (
     <div className="w-full rounded border border-slate-800 bg-slate-950 p-4">

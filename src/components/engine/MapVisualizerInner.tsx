@@ -608,77 +608,11 @@ export default function MapVisualizerInner({
       setAppointments(legacyMarkers);
     }
 
-    async function loadPro() {
-      async function loadRoutes() {
-        const { data } = await supabase.from("routes").select("*");
-        const normalized = (data ?? []).map((r: StoredRoute) => ({
-          id: r.id,
-          staff_id: r.staff_id ?? null,
-          points: normalizePoints(r.points ?? []),
-        }));
-        const colored = applyStaffColors(normalized);
-        const legacyLegs: RouteLeg[] = colored.map((r: ColouredRoute) => ({
-          id: r.id,
-          staffId: r.staff_id ?? r.id,
-          color: r.color,
-          points: r.points,
-          fromVisitId: null,
-          toVisitId: null,
-          fromPostcode: "",
-          toPostcode: "",
-          legIndex: 0,
-        }));
-        setLegs(legacyLegs);
-      }
-
-      async function loadAppointments() {
-        const { data } = await supabase.from("appointments").select("*");
-        setAppointments(
-          (data ?? []).map((a: StoredAppointment) => ({
-            id: a.id,
-            staffId: a.staffId ?? "",
-            lat: a.lat ?? 53.0,
-            lng: a.lon ?? -2.2,
-            clientName: a.clientName ?? a.name ?? "Appointment",
-            postcode: a.postcode ?? "",
-            time: a.time ?? "",
-            staffName: a.staffName ?? "",
-            color: a.color ?? "#d00000",
-            durationMins: 0,
-            coStaff: [],
-            seq: 0,
-          }))
-        );
-      }
-
-      await Promise.all([loadRoutes(), loadAppointments()]);
-
-      if (!channelRef.current) {
-        channelRef.current = supabase
-          .channel("map-updates")
-          .on("postgres_changes", { event: "*", schema: "public", table: "routes" }, () => loadRoutes())
-          .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, () => loadAppointments())
-          .subscribe();
-      }
-    }
-
-    if (isFree) {
-      loadFree();
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    } else {
-      loadPro();
-    }
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
-  }, [isFree]);
+    // Pro used to read routes and appointments from Supabase here, kept live
+    // by a realtime channel. There is one copy of the data now and it is
+    // local, so both paths collapse into this one.
+    loadFree();
+  }, []);
 
   // ── View mode ─────────────────────────────────────────────────────────────
   // "legacy" → scheduledVisits not supplied (live-tracking admin pages): keep

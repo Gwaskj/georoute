@@ -27,7 +27,7 @@ export default function StaffSelector({ isFree }: StaffSelectorProps) {
     if (window.confirm(`Remove all ${staff.length} staff member${staff.length !== 1 ? "s" : ""}?`)) {
       clearAllStaff();
       clearScheduleResult();
-      clearSchedulerResult(isFree);
+      clearSchedulerResult();
     }
   };
 

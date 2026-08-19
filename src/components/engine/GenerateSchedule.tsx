@@ -247,11 +247,7 @@ export default function GenerateSchedule({
 
       setResult(result.visits, result.warnings, result.hints, result.breaks);
 
-      await saveSchedulerResult({
-        isFree,
-        ctx,
-        result,
-      });
+      await saveSchedulerResult({ ctx, result });
 
       logActivity("schedule_generated", null, {
         isFree,

@@ -43,7 +43,7 @@ export default function SchedulePage() {
 
       <GenerateSchedule algorithm="default" isFree={isFree} />
 
-      <ScheduleTable isFree={isFree} />
+      <ScheduleTable />
 
       <RouteSummary/>
 
