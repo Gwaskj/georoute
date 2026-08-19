@@ -370,7 +370,6 @@ export default function StaffResultsList({
                         />
 
                         <ShareRoundButton
-                          staffId={s.id}
                           staffName={s.name}
                           origin={navOrigin}
                           destination={navDestination}

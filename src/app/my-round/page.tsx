@@ -1,114 +1,27 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { SharedSchedulePayload } from "@/lib/share/types";
-import Link from "next/link";
-import ShareRouteLinks from "@/components/share/ShareRouteLinks";
-import RoundTimeline from "@/components/share/RoundTimeline";
-import SignOutLink from "@/components/share/SignOutLink";
+import RoundFromFragment from "@/components/share/RoundFromFragment";
 
-export const dynamic = "force-dynamic";
+/**
+ * A carer's round.
+ *
+ * This used to require a staff login and read the round from shared_schedules
+ * over RLS. Both are gone: the round arrives in the URL fragment, which the
+ * browser never transmits, so there is nothing here to authenticate against
+ * and nothing on the server to read.
+ */
 
+// Belt and braces alongside the robots.txt disallow. A round link may be
+// pasted into a group chat that pre-fetches URLs, so it must never be indexed
+// even if a crawler reaches it directly.
 export const metadata: Metadata = {
   title: "My round",
-  robots: { index: false, follow: false },
+  robots: { index: false, follow: false, nocache: true },
 };
 
-export default async function MyRoundPage() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
-  // Everything below relies on RLS rather than filtering by hand: the staff
-  // policy only exposes rows published to this login, so a bug here cannot
-  // widen what a staff member sees.
-  const cols = "staff_name, schedule_date, payload, created_at, schedule_on";
-
-  // Local date, matching how rounds are dated when published.
-  const now = new Date();
-  const todayIso = [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, "0"),
-    String(now.getDate()).padStart(2, "0"),
-  ].join("-");
-
-  // Today's round first. Opening this in the morning should show today, not
-  // whatever was published most recently -- which could be yesterday's.
-  const { data: todayRows } = await supabase
-    .from("shared_schedules")
-    .select(cols)
-    .eq("schedule_on", todayIso)
-    .order("created_at", { ascending: false })
-    .limit(1);
-
-  let latest = todayRows?.[0];
-
-  // Nothing for today: fall back to the most recent, which covers rounds
-  // published before dates were stored as well as a day off.
-  if (!latest) {
-    const { data: rows } = await supabase
-      .from("shared_schedules")
-      .select(cols)
-      .order("created_at", { ascending: false })
-      .limit(1);
-    latest = rows?.[0];
-  }
-
-  if (!latest) {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100">
-        <div className="mx-auto max-w-lg px-4 py-24 text-center">
-          <h1 className="mb-3 text-2xl font-semibold">No round yet</h1>
-          <p className="text-sm leading-relaxed text-slate-400">
-            Nothing has been published to you. Once your manager generates and
-            shares a schedule, it will appear here.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const payload = latest.payload as SharedSchedulePayload;
-  const stops = payload.stops ?? [];
-  const breaks = payload.breaks ?? [];
-
-
+export default function MyRoundPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-2xl px-4 py-10">
-        <header className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {payload.staffName || latest.staff_name || "My round"}
-          </h1>
-          {latest.schedule_date && (
-            <p className="mt-1 text-sm text-slate-400">{latest.schedule_date}</p>
-          )}
-          <p className="mt-1 text-xs text-slate-500">
-            {stops.length} visit{stops.length === 1 ? "" : "s"}
-            {breaks.length > 0 &&
-              ` · ${breaks.length} break${breaks.length === 1 ? "" : "s"}`}
-          </p>
-        </header>
-
-        <ShareRouteLinks payload={payload} />
-
-        <RoundTimeline payload={payload} />
-
-        <div className="mt-8 flex items-center justify-center gap-4 border-t border-slate-800 pt-6 text-xs">
-          <Link href="/update-password" className="text-slate-400 hover:text-slate-200">
-            Change password
-          </Link>
-          <span className="text-slate-700">·</span>
-          <SignOutLink />
-        </div>
-
-        <p className="mt-4 text-center text-[11px] leading-relaxed text-slate-600">
-          This page contains personal information about the people you visit.
-        </p>
-      </div>
+      <RoundFromFragment />
     </div>
   );
 }
