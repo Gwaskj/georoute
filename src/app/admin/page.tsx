@@ -169,34 +169,18 @@ export default function AdminDashboardPage() {
               <Stat label="Pro" value={t.pro ?? 0} />
               <Stat label="Free" value={t.free ?? 0} />
               <Stat
-                label="Staff logins"
+                label="Leftover carer logins"
                 value={t.staffAccounts ?? 0}
-                sub={`${t.staffWithLogin ?? 0} staff linked`}
+                sub="should be 0"
               />
               <Stat label="Admins" value={t.admins ?? 0} />
             </div>
           </section>
 
-          <section className="mb-8">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-slate-400">
-              Data
-            </h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              <Stat label="Staff records" value={t.staffRecords ?? 0} />
-              <Stat
-                label="Appointments"
-                value={t.appointments ?? 0}
-                sub={`${t.recurring ?? 0} recurring`}
-              />
-              <Stat label="Archived" value={t.archivedAppointments ?? 0} />
-              <Stat label="Saved routes" value={t.savedRoutes ?? 0} />
-              <Stat
-                label="Share links"
-                value={t.shareLinks ?? 0}
-                sub={`${t.activeShareLinks ?? 0} still active`}
-              />
-            </div>
-          </section>
+          {/* The Data section is gone with the tables behind it. Staff records,
+              appointments, routes and share links lived in the database; they
+              now live in each customer's own browser, where we cannot count
+              them and have no business trying. */}
 
           <section className="mb-8">
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-slate-400">

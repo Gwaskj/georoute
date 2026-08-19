@@ -54,22 +54,18 @@ export async function GET() {
   const now = Date.now();
   const daysAgo = (n: number) => new Date(now - n * 86400000).toISOString();
 
-  const [profilesRes, staffRes, apptsRes, logsRes, sharesRes, routesRes] =
-    await Promise.all([
-      db.from("profiles").select("user_id, email, is_pro, is_admin, plan, owner_user_id, stripe_customer_id, stripe_subscription_id, subscription_renewal, pro_ended_at, created_at"),
-      db.from("staff").select("id, user_id, name, home_postcode, office_postcode, auth_user_id"),
-      db.from("appointments").select("id, user_id, name, postcode, archived, starts_on, recur_freq"),
-      db.from("activity_logs").select("id, action, details, created_at, actor_id").order("created_at", { ascending: false }).limit(400),
-      db.from("shared_schedules").select("id, expires_at, revoked, schedule_on"),
-      db.from("routes").select("id, date"),
-    ]);
+  // Staff, appointments, routes and share links are no longer read here --
+  // the tables are gone, and this dashboard was listing client names and
+  // postcodes back at an admin, which is precisely the custody the product
+  // now avoids. What is left is account and billing health, which is our own
+  // data about our own customers.
+  const [profilesRes, logsRes] = await Promise.all([
+    db.from("profiles").select("user_id, email, is_pro, is_admin, plan, owner_user_id, stripe_customer_id, stripe_subscription_id, subscription_renewal, pro_ended_at, created_at"),
+    db.from("activity_logs").select("id, action, details, created_at, actor_id").order("created_at", { ascending: false }).limit(400),
+  ]);
 
   const profiles = profilesRes.data ?? [];
-  const staff = staffRes.data ?? [];
-  const appts = apptsRes.data ?? [];
   const logs = logsRes.data ?? [];
-  const shares = sharesRes.data ?? [];
-  const routes = routesRes.data ?? [];
 
   // Owners only -- staff logins are not customers and would inflate every count.
   const owners = profiles.filter((p) => !p.owner_user_id);
@@ -136,37 +132,18 @@ export async function GET() {
     });
   }
 
-  const noPostcodeAppts = appts.filter((a) => !a.archived && !a.postcode?.trim());
-  if (noPostcodeAppts.length > 0) {
+  // Carer logins were removed along with the staff-accounts API. Any profile
+  // still carrying an owner_user_id is a leftover from before that, with no
+  // route left to manage it -- so it surfaces here rather than sitting
+  // invisible in the auth table.
+  if (staffAccounts.length > 0) {
     issues.push({
-      id: "appt-no-postcode",
+      id: "orphaned-staff-logins",
       severity: "warn",
-      title: `${noPostcodeAppts.length} appointment${noPostcodeAppts.length === 1 ? "" : "s"} with no postcode`,
-      detail: "These cannot be routed and will be reported as unplaceable every time a schedule runs.",
-    });
-  }
-
-  const noPostcodeStaff = staff.filter(
-    (s) => !s.home_postcode?.trim() && !s.office_postcode?.trim()
-  );
-  if (noPostcodeStaff.length > 0) {
-    issues.push({
-      id: "staff-no-postcode",
-      severity: "warn",
-      title: `${noPostcodeStaff.length} staff member${noPostcodeStaff.length === 1 ? "" : "s"} with no start postcode`,
-      detail: "Their day has no origin, so travel to their first visit cannot be calculated.",
-    });
-  }
-
-  const expiringShares = shares.filter(
-    (s) => !s.revoked && s.expires_at > new Date().toISOString() && s.expires_at < daysAgo(-3)
-  );
-  if (expiringShares.length > 0) {
-    issues.push({
-      id: "shares-expiring",
-      severity: "info",
-      title: `${expiringShares.length} share link${expiringShares.length === 1 ? "" : "s"} expiring within 3 days`,
-      detail: "Staff holding these will lose access to their round.",
+      title: `${staffAccounts.length} carer login${staffAccounts.length === 1 ? "" : "s"} left over from staff accounts`,
+      detail:
+        "Staff logins no longer exist; carers get a per-day round link instead. These accounts can no longer sign in to anything useful and should be deleted in Supabase under Authentication → Users.",
+      href: "/admin/users",
     });
   }
 
@@ -190,16 +167,6 @@ export async function GET() {
       free: owners.filter((p) => !p.is_pro).length,
       admins: owners.filter((p) => p.is_admin).length,
       staffAccounts: staffAccounts.length,
-      staffRecords: staff.length,
-      staffWithLogin: staff.filter((s) => s.auth_user_id).length,
-      appointments: appts.filter((a) => !a.archived).length,
-      archivedAppointments: appts.filter((a) => a.archived).length,
-      recurring: appts.filter((a) => a.recur_freq && a.recur_freq !== "once").length,
-      savedRoutes: routes.length,
-      shareLinks: shares.length,
-      activeShareLinks: shares.filter(
-        (s) => !s.revoked && s.expires_at > new Date().toISOString()
-      ).length,
     },
     recent: {
       newOwners7: owners.filter((p) => p.created_at >= since7).length,
