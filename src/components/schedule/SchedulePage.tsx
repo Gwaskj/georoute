@@ -137,8 +137,8 @@ function ResultsView({ isFree }: { isFree: boolean }) {
   );
 
   useEffect(() => {
-    loadSettings(isFree);
-  }, [isFree, loadSettings]);
+    loadSettings();
+  }, [loadSettings]);
 
   // On mount: if the store is empty (page refresh), reload the last persisted result.
   // Guarded by a ref so this only ever runs once — otherwise clearing the result

@@ -201,6 +201,42 @@ describe("local scheduler storage", () => {
     expect(read?.appointments).toEqual([]);
   });
 
+  it("carries the office settings through an export", async () => {
+    // The office postcode used to live in business_settings on the server. A
+    // backup that restored the rounds but not the office they start from
+    // would send every carer out from nowhere.
+    const source = await freshModule();
+    await source.updateSchedulerData((d) => ({
+      ...d,
+      staff: [staff("Priya")],
+      settings: { officePostcode: "LS1 1UR", dayStart: "07:00", dayEnd: "21:00" },
+    }));
+    const backup = await source.exportSchedulerData();
+
+    const target = await freshModule();
+    await target.importSchedulerData(backup);
+
+    const read = await target.loadFreeSchedulerData();
+    expect(read?.settings?.officePostcode).toBe("LS1 1UR");
+    expect(read?.settings?.dayStart).toBe("07:00");
+  });
+
+  it("keeps settings when another store saves its own slice", async () => {
+    const s = await freshModule();
+
+    await Promise.all([
+      s.updateSchedulerData((d) => ({
+        ...d,
+        settings: { officePostcode: "LS1 1UR", dayStart: "06:00", dayEnd: "22:00" },
+      })),
+      s.updateSchedulerData((d) => ({ ...d, staff: [staff("Priya")] })),
+    ]);
+
+    const read = await s.loadFreeSchedulerData();
+    expect(read?.settings?.officePostcode).toBe("LS1 1UR");
+    expect(read?.staff).toHaveLength(1);
+  });
+
   it("clears everything on request", async () => {
     const s = await freshModule();
     await s.saveFreeSchedulerData({

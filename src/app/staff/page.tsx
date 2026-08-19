@@ -64,7 +64,7 @@ export default function StaffPage() {
         .maybeSingle();
       setIsFree(!data?.is_pro);
       setAuthChecking(false);
-      loadGlobalSettings(!data?.is_pro);
+      loadGlobalSettings();
     }
     check();
   }, [loadGlobalSettings]);

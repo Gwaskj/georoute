@@ -71,11 +71,11 @@ export default function GenerateSchedule({
   // Load settings on mount
   useEffect(() => {
     if (!settingsLoaded) {
-      loadSettings(isFree);
+      loadSettings();
     }
     // Skipped and moved occurrences must be known before filtering by date.
     loadExceptions();
-  }, [isFree, settingsLoaded, loadSettings, loadExceptions]);
+  }, [settingsLoaded, loadSettings, loadExceptions]);
 
   const handleRun = async () => {
     if (algorithm !== "default") return;

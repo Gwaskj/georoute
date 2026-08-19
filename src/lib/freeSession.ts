@@ -4,6 +4,7 @@ import type { Staff } from "@/store/staffStore";
 import type { Appointment } from "@/store/appointmentStore";
 import type { Skill } from "@/store/skillsStore";
 import type { CustomWindow } from "@/store/customWindowStore";
+import type { GlobalSettings } from "@/store/settingsStore";
 import type { ScheduledVisit } from "@/lib/scheduler/types";
 
 /**
@@ -32,6 +33,14 @@ export type FreeSchedulerData = {
   visits?: ScheduledVisit[];
   /** Skipped or moved occurrences of recurring appointments. */
   exceptions?: unknown[];
+  /**
+   * Office postcode and working day.
+   *
+   * Kept in the same record as everything else so it survives a restart and
+   * travels with an export -- a backup that restored the rounds but not the
+   * office they start from would not be a backup.
+   */
+  settings?: GlobalSettings;
 };
 
 const DB_NAME = "georoute";
@@ -69,6 +78,7 @@ function normalise(parsed: Partial<FreeSchedulerData> | null): FreeSchedulerData
     selectedStaffIds: parsed.selectedStaffIds ?? [],
     visits: parsed.visits ?? [],
     exceptions: parsed.exceptions ?? [],
+    settings: parsed.settings,
   };
 }
 
@@ -80,10 +90,44 @@ function normalise(parsed: Partial<FreeSchedulerData> | null): FreeSchedulerData
  * rejecting, so a refusal degrades to localStorage instead of losing work.
  * ------------------------------------------------------------------ */
 
+/**
+ * Ask the browser not to evict this data.
+ *
+ * IndexedDB is "best-effort" by default, which means a browser may clear it
+ * when the disk runs low -- fine for a cache, not fine when it is the only
+ * copy of tomorrow's rounds. Persistent storage is exempt from that.
+ *
+ * Chrome grants it silently based on engagement signals such as the site
+ * being installed or bookmarked; Firefox prompts; Safari decides on its own.
+ * A refusal is not an error and nothing here depends on the answer -- it
+ * simply leaves the data evictable, which is where it was before.
+ */
+async function requestPersistence(): Promise<void> {
+  try {
+    if (!navigator.storage?.persist) return;
+    if (await navigator.storage.persisted()) return;
+    await navigator.storage.persist();
+  } catch {
+    // Not supported, or blocked by policy. Neither is worth reporting.
+  }
+}
+
+/** Whether the browser has promised not to evict this data. */
+export async function isStoragePersistent(): Promise<boolean> {
+  try {
+    return (await navigator.storage?.persisted?.()) ?? false;
+  } catch {
+    return false;
+  }
+}
+
 let dbPromise: Promise<IDBDatabase | null> | null = null;
 
 function openDb(): Promise<IDBDatabase | null> {
   if (dbPromise) return dbPromise;
+
+  // Once per session, alongside the first open rather than awaited by it.
+  void requestPersistence();
 
   dbPromise = new Promise((resolve) => {
     if (typeof indexedDB === "undefined") return resolve(null);
