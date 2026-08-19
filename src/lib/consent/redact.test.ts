@@ -1,29 +1,41 @@
 import { describe, it, expect } from "vitest";
+import { redact } from "./redact";
 
 /**
- * The share-token redaction used before an error report is stored.
+ * URL redaction, used before an error report is stored.
  *
- * Kept as its own test because the consequence of getting it wrong is a live
- * credential sitting in the database in plain text: the token in /r/<token>
- * is all that protects a carer's round, which lists client names and home
- * addresses.
+ * This used to test a copy of the implementation pasted into the test file,
+ * which is how it kept passing while the thing it guarded moved: it checked
+ * that /r/<token> was stripped long after /r/ had been deleted. It imports the
+ * real function now.
+ *
+ * The consequence of getting this wrong is a carer's whole round -- client
+ * names, home addresses, visit times -- sitting in the database in plain text
+ * and on the admin errors screen.
  */
-function redact(href: string): string {
-  return href.replace(/\/r\/[A-Za-z0-9_-]+/, "/r/[redacted]");
-}
-
-describe("share token redaction", () => {
-  it("removes the token but keeps the path", () => {
-    expect(redact("https://www.georoutes.co.uk/r/aGrkxIUUJR8jvvtStyAYkuosLZ-0DH-q8dBbgyK1Zpc"))
-      .toBe("https://www.georoutes.co.uk/r/[redacted]");
+describe("URL redaction", () => {
+  it("drops the fragment, which is where a round lives", () => {
+    expect(
+      redact("https://www.georoutes.co.uk/my-round#1c3RhZmZOYW1lIjoiUHJpeWEi")
+    ).toBe("https://www.georoutes.co.uk/my-round");
   });
 
-  it("handles the base64url characters a token can contain", () => {
-    // Real tokens are base64url, so hyphens and underscores must not end the match early.
-    expect(redact("https://x/r/abc-def_GHI123")).toBe("https://x/r/[redacted]");
+  it("leaves nothing of the round behind", () => {
+    const round = "1c3RhZmZOYW1lIjoiUHJpeWEiLCJzdG9wcyI6W3siY2xpZW50TmFtZSI6Ik1hcmdhcmV0";
+    const out = redact(`https://www.georoutes.co.uk/my-round#${round}`);
+
+    expect(out.includes(round)).toBe(false);
+    expect(out.includes(round.slice(0, 8))).toBe(false);
+    expect(out.includes("#")).toBe(false);
   });
 
-  it("leaves other pages untouched", () => {
+  it("keeps the query string, which says which page failed", () => {
+    expect(redact("https://www.georoutes.co.uk/scheduler?tab=results#x")).toBe(
+      "https://www.georoutes.co.uk/scheduler?tab=results"
+    );
+  });
+
+  it("leaves ordinary pages untouched", () => {
     for (const url of [
       "https://www.georoutes.co.uk/scheduler",
       "https://www.georoutes.co.uk/help/care-planning",
@@ -33,10 +45,13 @@ describe("share token redaction", () => {
     }
   });
 
-  it("does not leave any part of the token behind", () => {
-    const token = "aGrkxIUUJR8jvvtStyAYkuosLZ-0DH-q8dBbgyK1Zpc";
-    const out = redact(`https://www.georoutes.co.uk/r/${token}?x=1`);
-    expect(out.includes(token)).toBe(false);
-    expect(out.includes(token.slice(0, 8))).toBe(false);
+  it("handles a bare fragment marker", () => {
+    expect(redact("https://www.georoutes.co.uk/my-round#")).toBe(
+      "https://www.georoutes.co.uk/my-round"
+    );
+  });
+
+  it("strips everything after the first #, including further ones", () => {
+    expect(redact("https://x/my-round#abc#def")).toBe("https://x/my-round");
   });
 });

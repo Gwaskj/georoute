@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { redact } from "@/lib/consent/redact";
 
 /**
  * Catches errors that would otherwise only exist in a user's console.
@@ -16,19 +17,16 @@ import { useEffect } from "react";
  */
 
 /**
- * Strips a share token out of a URL before it is recorded.
+ * Strips the fragment out of a URL before it is recorded.
  *
- * The token in /r/<token> is the entire security of a share link -- it grants
- * a stranger the ability to read a carer's round, with client names and home
- * addresses. Storing it in an error report would put a live credential into
- * the database in plain text, and into any screen that displays those reports.
+ * A round link carries the whole round in its fragment -- client names, home
+ * addresses and visit times. Storing that in an error report would put it into
+ * the database in plain text, and onto any screen that displays those reports,
+ * which is the one thing this product no longer takes custody of.
  *
  * Which page it was is still worth keeping, so the path is preserved and only
- * the secret is removed.
+ * the fragment is dropped. See lib/consent/redact.
  */
-function redact(href: string): string {
-  return href.replace(/\/r\/[A-Za-z0-9_-]+/, "/r/[redacted]");
-}
 
 /** Reports are fire-and-forget. A failure to report must never break a page. */
 export function reportError(

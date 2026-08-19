@@ -90,17 +90,31 @@ function bootstrap(id: string): void {
 /**
  * Paths that must never be measured.
  *
- * A share link's token is the whole of its security: anyone holding it can
- * read a staff member's round, which lists client names and home addresses.
- * Sending the page URL to Analytics put that token into a third party's
- * systems and into any report an Analytics user could open -- a credential
- * copied somewhere it can never be withdrawn from.
+ * A round link carries the round itself -- every client name, postcode and
+ * visit time -- in the URL fragment. Measuring the page would hand all of it
+ * to a third party and put it into any report an Analytics user could open:
+ * personal data copied somewhere it can never be withdrawn from, and the one
+ * way this product could still become a data processor.
  *
- * These pages are already noindex and are for one carer to read on a phone;
- * there was never anything to learn from measuring them.
+ * This list previously named /r/, which held a share token rather than the
+ * round. That route is gone; the sensitive path is now /my-round.
  */
 function isPrivatePath(pathname: string): boolean {
-  return pathname.startsWith("/r/");
+  return pathname.startsWith("/my-round");
+}
+
+/**
+ * The page URL with any fragment removed.
+ *
+ * page_location took location.href, which includes the fragment. The
+ * exclusion above should mean a round never reaches this line, but a URL is
+ * the wrong place to be relying on a single check: stripping the fragment
+ * everywhere means an ordinary page that happens to grow one cannot leak it
+ * either.
+ */
+function measurableUrl(): string {
+  const { origin, pathname, search } = window.location;
+  return `${origin}${pathname}${search}`;
 }
 
 export default function GoogleAnalytics() {
@@ -111,7 +125,7 @@ export default function GoogleAnalytics() {
     if (!GA_ID || started.current) return;
     // Checked before the tag loads at all, not merely before sending a
     // page_view: gtag reads location itself on config, so loading it here at
-    // all would send the token regardless.
+    // all would send the round regardless.
     if (isPrivatePath(window.location.pathname)) return;
     started.current = true;
     bootstrap(GA_ID);
@@ -123,13 +137,13 @@ export default function GoogleAnalytics() {
   // root layout into dynamic rendering.
   useEffect(() => {
     if (!GA_ID || !started.current || !window.gtag) return;
-    // A client-side navigation can reach a share link from an ordinary page,
+    // A client-side navigation can reach a round link from an ordinary page,
     // where the tag is already running -- so the same exclusion is needed
     // here, not only at start-up.
     if (isPrivatePath(pathname)) return;
     window.gtag("event", "page_view", {
       page_path: `${pathname}${window.location.search}`,
-      page_location: window.location.href,
+      page_location: measurableUrl(),
       page_title: document.title,
     });
   }, [pathname]);
