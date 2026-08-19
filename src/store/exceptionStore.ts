@@ -3,7 +3,7 @@
 
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase/client";
-import { loadFreeSchedulerData, saveFreeSchedulerData } from "@/lib/freeSession";
+import { loadFreeSchedulerData, updateSchedulerData } from "@/lib/freeSession";
 import type { RecurrenceException } from "@/lib/recurrence/occurrences";
 
 export interface AppointmentException extends RecurrenceException {
@@ -41,11 +41,7 @@ async function isPro(): Promise<boolean> {
 }
 
 async function persistFree(exceptions: AppointmentException[]) {
-  const existing = await loadFreeSchedulerData();
-  await saveFreeSchedulerData({
-    ...(existing ?? { staff: [], appointments: [], routes: [] }),
-    exceptions,
-  });
+  await updateSchedulerData((d) => ({ ...d, exceptions }));
 }
 
 /**

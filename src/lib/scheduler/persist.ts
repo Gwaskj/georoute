@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase/client";
 import {
   loadFreeSchedulerData,
   saveFreeSchedulerData,
+  updateSchedulerData,
   FreeSchedulerData,
 } from "@/lib/freeSession";
 import { ScheduledVisit, SchedulerContext, SchedulerResult } from "./types";
@@ -60,26 +61,16 @@ export async function saveSchedulerResult({
   const { visits } = result;
 
   if (isFree) {
-    const existing: FreeSchedulerData = (await loadFreeSchedulerData()) ?? {
-      staff: [],
-      appointments: [],
-      routes: [],
-    };
-
-    const updated: FreeSchedulerData = {
-      ...existing,
+    await updateSchedulerData((d) => ({
+      ...d,
       staff: ctx.staff,
       appointments: ctx.appointments,
-      routes: existing.routes ?? [],
       officePostcode: ctx.officePostcode ?? undefined,
-      selectedStaffIds: existing.selectedStaffIds ?? [],
-      // Free mode keeps visits only so the results tab survives a tab switch.
-      // This was assigned through an `as any` cast because FreeSchedulerData
-      // did not declare the field; it does now.
+      // Visits are kept only so the results tab survives a tab switch. This
+      // was assigned through an `as any` cast because FreeSchedulerData did
+      // not declare the field; it does now.
       visits,
-    };
-
-    await saveFreeSchedulerData(updated);
+    }));
     return;
   }
 
@@ -110,12 +101,7 @@ export async function saveSchedulerResult({
 
 export async function clearSchedulerResult(isFree: boolean) {
   if (isFree) {
-    const existing: FreeSchedulerData = (await loadFreeSchedulerData()) ?? {
-      staff: [],
-      appointments: [],
-      routes: [],
-    };
-    await saveFreeSchedulerData({ ...existing, visits: [] });
+    await updateSchedulerData((d) => ({ ...d, visits: [] }));
     return;
   }
 

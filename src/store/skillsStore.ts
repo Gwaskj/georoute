@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import {
   loadFreeSchedulerData,
-  saveFreeSchedulerData,
+  updateSchedulerData,
 } from "@/lib/freeSession";
 import { supabase } from "@/lib/supabase/client";
 
@@ -32,27 +32,7 @@ async function isPro(): Promise<boolean> {
 }
 
 async function persistFree(skills: Skill[]) {
-  const data = (await loadFreeSchedulerData()) ?? {
-    staff: [],
-    appointments: [],
-    routes: [],
-    windows: [],
-    skills: [],
-    officePostcode: "",
-    selectedStaffIds: [],
-    visits: [],
-  };
-
-  await saveFreeSchedulerData({
-    staff: data.staff ?? [],
-    appointments: data.appointments ?? [],
-    routes: data.routes ?? [],
-    windows: data.windows ?? [],
-    skills,
-    officePostcode: data.officePostcode ?? "",
-    selectedStaffIds: data.selectedStaffIds ?? [],
-    visits: data.visits ?? [],
-  });
+  await updateSchedulerData((d) => ({ ...d, skills }));
 }
 
 async function persistPro(skills: Skill[]) {

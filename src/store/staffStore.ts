@@ -1,11 +1,7 @@
 // src/store/staffStore.ts
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase/client";
-import {
-  loadFreeSchedulerData,
-  saveFreeSchedulerData,
-  FreeSchedulerData,
-} from "@/lib/freeSession";
+import { loadFreeSchedulerData, updateSchedulerData } from "@/lib/freeSession";
 import { logActivity } from "@/lib/logsClient";
 
 export type Gender = "Male" | "Female" | "Other";
@@ -42,7 +38,7 @@ interface StaffRow {
   name: string | null;
   home_postcode: string | null;
   office_postcode: string | null;
-  start_location: string | null;
+  start_location: string | null;
   // Narrower than the column, which is plain text. Only this app writes it,
   // and it only ever writes a Gender or an empty string -- typing it as bare
   // string instead pushes an unchecked cast onto every read.
@@ -60,7 +56,7 @@ export interface Staff {
   name: string;
   homePostcode: string;
   officePostcode: string;
-  startLocation: StartLocation;
+  startLocation: StartLocation;
   gender: Gender | "";
   skills: string[];
   colour: string;
@@ -117,21 +113,7 @@ async function isPro(): Promise<boolean> {
 }
 
 async function persistFree(staff: Staff[], selectedStaffIds: string[]) {
-  const existing: FreeSchedulerData =
-    (await loadFreeSchedulerData()) ?? {
-      staff: [],
-      appointments: [],
-      routes: [],
-      visits: [],
-      officePostcode: null,
-      selectedStaffIds: [],
-    };
-
-  await saveFreeSchedulerData({
-    ...existing,
-    staff,
-    selectedStaffIds,
-  });
+  await updateSchedulerData((d) => ({ ...d, staff, selectedStaffIds }));
 }
 
 async function persistPro(staff: Staff[], selectedStaffIds: string[]) {
@@ -149,7 +131,7 @@ async function persistPro(staff: Staff[], selectedStaffIds: string[]) {
       user_id: user.id,
       name: s.name,
       home_postcode: s.homePostcode,
-      office_postcode: s.officePostcode,
+      office_postcode: s.officePostcode,
       gender: s.gender,
       skills: s.skills,
       colour: s.colour,
@@ -311,7 +293,7 @@ export const useStaffStore = create<StaffState>((set, get) => ({
         name: row.name ?? "",
         homePostcode: row.home_postcode ?? "",
         officePostcode: row.office_postcode ?? "",
-        startLocation: row.start_location === "home" ? "home" : "office",
+        startLocation: row.start_location === "home" ? "home" : "office",
         gender: row.gender ?? "",
         skills: row.skills ?? [],
         colour: row.colour ?? generateColour(),

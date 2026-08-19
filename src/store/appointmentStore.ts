@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import {
   loadFreeSchedulerData,
-  saveFreeSchedulerData,
+  updateSchedulerData,
 } from "@/lib/freeSession";
 import { supabase } from "@/lib/supabase/client";
 import { logActivity } from "@/lib/logsClient";
@@ -68,22 +68,7 @@ async function isPro(): Promise<boolean> {
 }
 
 async function persistFree(appointments: Appointment[]) {
-  const data = (await loadFreeSchedulerData()) ?? {
-    staff: [],
-    routes: [],
-    appointments: [],
-  };
-
-  await saveFreeSchedulerData({
-    staff: data.staff ?? [],
-    routes: data.routes ?? [],
-    appointments,
-    windows: data.windows ?? [],
-    skills: data.skills ?? [],
-    officePostcode: data.officePostcode ?? "",
-    selectedStaffIds: data.selectedStaffIds ?? [],
-    visits: data.visits ?? [],
-  });
+  await updateSchedulerData((d) => ({ ...d, appointments }));
 }
 
 // Debounce: collapses rapid successive saves into one Supabase call.
