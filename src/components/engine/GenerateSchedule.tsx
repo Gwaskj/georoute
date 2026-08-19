@@ -74,7 +74,7 @@ export default function GenerateSchedule({
       loadSettings(isFree);
     }
     // Skipped and moved occurrences must be known before filtering by date.
-    loadExceptions(isFree);
+    loadExceptions();
   }, [isFree, settingsLoaded, loadSettings, loadExceptions]);
 
   const handleRun = async () => {

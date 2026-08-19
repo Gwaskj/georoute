@@ -104,9 +104,7 @@ export default async function CalendarPage() {
           </p>
         </header>
 
-        {/* isFree is false here by construction -- the gate above returns for
-            everyone else, so the view always reads from the cloud. */}
-        <CalendarView isFree={false} />
+        <CalendarView />
       </div>
     </div>
   );

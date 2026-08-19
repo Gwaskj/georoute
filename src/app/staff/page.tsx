@@ -5,7 +5,6 @@ import { useStaffStore, Staff, Gender, StartLocation } from "@/store/staffStore"
 import { useSkillsStore, Skill } from "@/store/skillsStore";
 import { useSettingsStore } from "@/store/settingsStore";
 import { supabase } from "@/lib/supabase/client";
-import StaffLoginManager from "@/components/engine/staff/StaffLoginManager";
 
 function cleanPostcode(p: string) {
   return p.trim().toUpperCase();
@@ -36,7 +35,6 @@ export default function StaffPage() {
     addStaff,
     updateStaff,
     deleteStaff,
-    loadFromSupabase,
   } = useStaffStore();
 
   const { skills, addSkill } = useSkillsStore();
@@ -67,14 +65,9 @@ export default function StaffPage() {
       setIsFree(!data?.is_pro);
       setAuthChecking(false);
       loadGlobalSettings(!data?.is_pro);
-
-      // If pro, load from Supabase
-      if (data?.is_pro) {
-        loadFromSupabase();
-      }
     }
     check();
-  }, [loadFromSupabase, loadGlobalSettings]);
+  }, [loadGlobalSettings]);
 
   const canAddMore = useMemo(() => {
     if (!isFree) return true;
@@ -286,15 +279,6 @@ export default function StaffPage() {
                       Delete
                     </button>
                   </div>
-                  </div>
-
-                  <div className="mt-2 border-t border-slate-800 pt-2">
-                    <StaffLoginManager
-                      staffLocalId={s.id}
-                      staffName={s.name}
-                      hasLogin={!!s.authUserId}
-                      onChanged={loadFromSupabase}
-                    />
                   </div>
                 </div>
               );

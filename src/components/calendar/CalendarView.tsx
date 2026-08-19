@@ -28,7 +28,7 @@ function ruleFor(a: Appointment): RecurrenceRule {
   };
 }
 
-export default function CalendarView({ isFree }: { isFree: boolean }) {
+export default function CalendarView() {
   const { appointments } = useAppointmentStore();
   const { exceptions, forAppointment, skipOccurrence, moveOccurrence, clearException, load } =
     useExceptionStore();
@@ -42,8 +42,8 @@ export default function CalendarView({ isFree }: { isFree: boolean }) {
   const [moveTarget, setMoveTarget] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    load(isFree);
-  }, [isFree, load]);
+    load();
+  }, [load]);
 
   const baseCells = useMemo(
     () => buildCells(view, anchor, todayIso),
