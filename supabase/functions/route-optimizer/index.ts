@@ -75,7 +75,7 @@ serve(async (req: Request) => {
     // ---- STEP 1: Check cache ----
     const { data: cached, error: cacheError } = await supabase
       .from("route_cache")
-      .select("id, origin_postcode, destination_postcode, distance_km, duration_minutes, polyline")
+      .select("id, origin_postcode, destination_postcode, distance_km, duration_minutes, polyline, last_used_at")
       .eq("origin_postcode", origin)
       .eq("destination_postcode", destination)
       .maybeSingle();
@@ -86,6 +86,29 @@ serve(async (req: Request) => {
 
     if (cached) {
       console.log(`Cache hit: ${origin} → ${destination}`);
+
+      // Record the use, so the nightly purge expires pairs nobody asks for any
+      // more rather than pairs that merely happen to be old.
+      //
+      // At most once a day per pair: a single scheduling run looks up hundreds
+      // of pairs, and a write on every hit would turn a read-only cache into a
+      // write-heavy one to gain accuracy the purge does not need. A day's
+      // resolution against a month's window is ample.
+      const STAMP_AFTER_MS = 24 * 60 * 60 * 1000;
+      const lastUsed = cached.last_used_at ? Date.parse(cached.last_used_at) : 0;
+
+      if (!lastUsed || Date.now() - lastUsed > STAMP_AFTER_MS) {
+        // Deliberately not awaited: the caller is waiting on a travel time,
+        // and a slow or failed bookkeeping write must not delay or break that.
+        supabase
+          .from("route_cache")
+          .update({ last_used_at: new Date().toISOString() })
+          .eq("id", cached.id)
+          .then(({ error }: { error: unknown }) => {
+            if (error) console.error("last_used_at stamp failed:", error);
+          });
+      }
+
       return new Response(
         JSON.stringify({
           distance_km: cached.distance_km,

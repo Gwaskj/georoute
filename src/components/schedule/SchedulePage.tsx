@@ -20,7 +20,6 @@ import { useScheduleResultStore } from "@/store/scheduleResultStore";
 
 // PERSISTENCE
 import { loadFreeSchedulerData } from "@/lib/freeSession";
-import { loadProScheduledVisits } from "@/lib/scheduler/persist";
 
 // MAP / TRAVEL-TIME
 import { useStaffLegSchedule } from "@/lib/map/useStaffLegSchedule";
@@ -39,8 +38,8 @@ export default function SchedulePage({ isFree, cmsBlocks = [] }: SchedulePagePro
   const headerData = (headerBlock?.data ?? {}) as Partial<SchedulerHeaderData>;
   const pageTitle = headerData.title ?? "GeoRoutes Scheduler";
   const pageSubtitle = isFree
-    ? (headerData.freeSubtitle ?? "Free mode — data stored in this browser session only.")
-    : (headerData.proSubtitle ?? "Pro mode — data stored in your GeoRoutes workspace.");
+    ? (headerData.freeSubtitle ?? "Free mode — your data stays on this device.")
+    : (headerData.proSubtitle ?? "Pro mode — your data stays on this device.");
 
   const sectionIntros = cmsBlocks.filter((b) => b.type === "section_intro");
 
@@ -138,8 +137,8 @@ function ResultsView({ isFree }: { isFree: boolean }) {
   );
 
   useEffect(() => {
-    loadSettings(isFree);
-  }, [isFree, loadSettings]);
+    loadSettings();
+  }, [loadSettings]);
 
   // On mount: if the store is empty (page refresh), reload the last persisted result.
   // Guarded by a ref so this only ever runs once — otherwise clearing the result
@@ -149,20 +148,10 @@ function ResultsView({ isFree }: { isFree: boolean }) {
     if (hasAttemptedRestore.current) return;
     if (hasResult) return;
     hasAttemptedRestore.current = true;
-    if (isFree) {
-      loadFreeSchedulerData().then((data) => {
-        // FreeSchedulerData declares visits now, so this no longer needs a
-        // cast to reach it.
-        if (data?.visits?.length) {
-          setResult(data.visits, [], []);
-        }
-      });
-    } else {
-      loadProScheduledVisits().then((loaded) => {
-        if (loaded.length) setResult(loaded, [], []);
-      });
-    }
-  }, [hasResult, isFree, setResult]);
+    loadFreeSchedulerData().then((data) => {
+      if (data?.visits?.length) setResult(data.visits, [], []);
+    });
+  }, [hasResult, setResult]);
 
   const selectedStaff =
     selectedStaffId ? staff.find((s) => s.id === selectedStaffId) || null : null;

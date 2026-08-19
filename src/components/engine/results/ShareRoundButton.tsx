@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { ScheduledVisit, ScheduledBreak } from "@/lib/scheduler/types";
 import { SharedSchedulePayload } from "@/lib/share/types";
+import { roundLink } from "@/lib/share/fragment";
 import type { NavStop } from "@/lib/navigation/mapLinks";
 
 interface ShareRoundButtonProps {
-  staffId: string;
   staffName: string;
   origin: NavStop | null;
   destination: NavStop | null;
@@ -15,7 +15,6 @@ interface ShareRoundButtonProps {
 }
 
 export default function ShareRoundButton({
-  staffId,
   staffName,
   origin,
   destination,
@@ -29,6 +28,14 @@ export default function ShareRoundButton({
 
   if (!origin || !destination || visits.length === 0) return null;
 
+  /**
+   * Build the link here, in the browser.
+   *
+   * This used to POST the round to /api/share, which wrote it to a table and
+   * handed back a short token. The round now travels in the URL fragment,
+   * which is never sent to a server -- so the carer's phone gets the names and
+   * addresses without them passing through us on the way.
+   */
   const create = async () => {
     setBusy(true);
     setError(null);
@@ -51,48 +58,9 @@ export default function ShareRoundButton({
     };
 
     try {
-      // Local date, matching how the engine builds times from local midnight.
-      // Using the ISO string's date part would be a day early in BST evenings.
-      const first = visits[0] ? new Date(visits[0].start) : null;
-      const scheduleOn = first
-        ? [
-            first.getFullYear(),
-            String(first.getMonth() + 1).padStart(2, "0"),
-            String(first.getDate()).padStart(2, "0"),
-          ].join("-")
-        : undefined;
-
-      const res = await fetch("/api/share", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          staffLocalId: staffId,
-          scheduleOn,
-          scheduleDate: visits[0]
-            ? new Date(visits[0].start).toLocaleDateString("en-GB", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              })
-            : undefined,
-          payload,
-        }),
-      });
-
-      const json = await res.json();
-
-      if (!res.ok) {
-        setError(
-          res.status === 401
-            ? "Sharing needs an account — free mode keeps everything in this browser."
-            : json.error ?? "Could not create link"
-        );
-        return;
-      }
-
-      setUrl(json.url);
+      setUrl(await roundLink(window.location.origin, payload));
     } catch {
-      setError("Could not create link");
+      setError("Could not build the link for this round.");
     } finally {
       setBusy(false);
     }
@@ -109,6 +77,17 @@ export default function ShareRoundButton({
     }
   };
 
+  // Local date, matching how the engine builds times from local midnight.
+  // Using the ISO string's date part would be a day early on BST evenings.
+  const first = visits[0] ? new Date(visits[0].start) : null;
+  const dayLabel = first
+    ? first.toLocaleDateString("en-GB", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      })
+    : null;
+
   return (
     <div className="mt-2 border-t border-slate-700/60 pt-2" onClick={(e) => e.stopPropagation()}>
       {!url ? (
@@ -119,7 +98,7 @@ export default function ShareRoundButton({
             disabled={busy}
             className="rounded border border-slate-700 bg-slate-800 px-2.5 py-1 text-[11px] font-medium text-slate-100 transition-colors hover:border-slate-600 hover:bg-slate-700 disabled:opacity-50"
           >
-            {busy ? "Creating link…" : "Share with staff"}
+            {busy ? "Building link…" : "Share with staff"}
           </button>
           {error && <p className="mt-1 text-[10px] text-amber-300">{error}</p>}
         </>
@@ -141,8 +120,11 @@ export default function ShareRoundButton({
             </button>
           </div>
           <p className="mt-1 text-[10px] leading-relaxed text-slate-500">
-            Read-only, expires in 14 days. It contains client names and
-            addresses, so send it only to the person doing the round.
+            The round{dayLabel ? ` for ${dayLabel}` : ""} is carried inside this
+            link, not stored on our servers. That also means it{" "}
+            <strong className="text-slate-400">cannot be withdrawn</strong> once
+            sent — send a fresh link each day, and only to the person doing the
+            round.
           </p>
         </div>
       )}

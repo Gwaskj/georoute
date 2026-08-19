@@ -206,13 +206,13 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!authChecking && !loaded) {
-      loadSettings(isFree);
+      loadSettings();
     }
-  }, [isFree, authChecking, loaded, loadSettings]);
+  }, [authChecking, loaded, loadSettings]);
 
   async function handleSave() {
     setSaving(true);
-    await saveSettings(isFree);
+    await saveSettings();
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);

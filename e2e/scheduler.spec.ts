@@ -1,16 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { watchErrors } from "./watchErrors";
 
 test.describe("Scheduler page — pro user", () => {
   test("loads without errors", async ({ page }) => {
-    const errors: string[] = [];
-    page.on("console", (msg) => {
-      if (msg.type() === "error") errors.push(msg.text());
-    });
-
-    const failed: string[] = [];
-    page.on("response", (res) => {
-      if (res.status() >= 400) failed.push(`${res.status()} ${res.url()}`);
-    });
+    const { errors, failed } = watchErrors(page);
 
     await page.goto("/scheduler");
 

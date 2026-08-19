@@ -71,11 +71,11 @@ export default function GenerateSchedule({
   // Load settings on mount
   useEffect(() => {
     if (!settingsLoaded) {
-      loadSettings(isFree);
+      loadSettings();
     }
     // Skipped and moved occurrences must be known before filtering by date.
-    loadExceptions(isFree);
-  }, [isFree, settingsLoaded, loadSettings, loadExceptions]);
+    loadExceptions();
+  }, [settingsLoaded, loadSettings, loadExceptions]);
 
   const handleRun = async () => {
     if (algorithm !== "default") return;
@@ -247,11 +247,7 @@ export default function GenerateSchedule({
 
       setResult(result.visits, result.warnings, result.hints, result.breaks);
 
-      await saveSchedulerResult({
-        isFree,
-        ctx,
-        result,
-      });
+      await saveSchedulerResult({ ctx, result });
 
       logActivity("schedule_generated", null, {
         isFree,

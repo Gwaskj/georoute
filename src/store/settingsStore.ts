@@ -1,6 +1,6 @@
 // src/store/settingsStore.ts
 import { create } from "zustand";
-import { supabase } from "@/lib/supabase/client";
+import { loadFreeSchedulerData, updateSchedulerData } from "@/lib/freeSession";
 
 export interface GlobalSettings {
   officePostcode: string;
@@ -14,11 +14,9 @@ interface SettingsState {
   setOfficePostcode: (postcode: string) => void;
   setDayStart: (time: string) => void;
   setDayEnd: (time: string) => void;
-  loadSettings: (isFree: boolean) => Promise<void>;
-  saveSettings: (isFree: boolean) => Promise<void>;
+  loadSettings: () => Promise<void>;
+  saveSettings: () => Promise<void>;
 }
-
-const STORAGE_KEY = "georoute_global_settings";
 
 const defaultSettings: GlobalSettings = {
   officePostcode: "",
@@ -26,25 +24,13 @@ const defaultSettings: GlobalSettings = {
   dayEnd: "22:00",
 };
 
-function loadFromSession(): GlobalSettings {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...defaultSettings };
-    const parsed = JSON.parse(raw);
-    return {
-      officePostcode: parsed.officePostcode ?? defaultSettings.officePostcode,
-      dayStart: parsed.dayStart ?? defaultSettings.dayStart,
-      dayEnd: parsed.dayEnd ?? defaultSettings.dayEnd,
-    };
-  } catch {
-    return { ...defaultSettings };
-  }
-}
-
-function saveToSession(settings: GlobalSettings) {
-  try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch {}
+function withDefaults(parsed: Partial<GlobalSettings> | null | undefined): GlobalSettings {
+  if (!parsed) return { ...defaultSettings };
+  return {
+    officePostcode: parsed.officePostcode ?? defaultSettings.officePostcode,
+    dayStart: parsed.dayStart ?? defaultSettings.dayStart,
+    dayEnd: parsed.dayEnd ?? defaultSettings.dayEnd,
+  };
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -64,62 +50,23 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set((s) => ({ settings: { ...s.settings, dayEnd: time } }));
   },
 
-  loadSettings: async (isFree) => {
-    if (isFree) {
-      const sessionData = loadFromSession();
-      set({ settings: sessionData, loaded: true });
-      return;
-    }
-
-    // Pro/logged-in: load from Supabase (per-user row)
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      set({ settings: loadFromSession(), loaded: true });
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("business_settings")
-      .select("office_postcode, day_start, day_end")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (!error && data) {
-      set({
-        settings: {
-          officePostcode: data.office_postcode ?? "",
-          dayStart: data.day_start ?? defaultSettings.dayStart,
-          dayEnd: data.day_end ?? defaultSettings.dayEnd,
-        },
-        loaded: true,
-      });
-    } else {
-      // Fallback to session if Supabase fails
-      const sessionData = loadFromSession();
-      set({ settings: sessionData, loaded: true });
-    }
+  /**
+   * Pro users used to read this from business_settings, keyed by user_id. It
+   * was the last thing a customer typed that we still held: an office
+   * postcode is their own address rather than a client's, but there was no
+   * reason to keep it once everything around it went local.
+   *
+   * Nothing is carried over from the old sessionStorage key. That copy died
+   * with the tab anyway, and starting blank is the honest state now that the
+   * row it mirrored no longer exists.
+   */
+  loadSettings: async () => {
+    const data = await loadFreeSchedulerData();
+    set({ settings: withDefaults(data?.settings), loaded: true });
   },
 
-  saveSettings: async (isFree) => {
+  saveSettings: async () => {
     const { settings } = get();
-
-    if (isFree) {
-      saveToSession(settings);
-      return;
-    }
-
-    // Pro: save to Supabase (per-user row keyed by user_id)
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    await supabase.from("business_settings").upsert(
-      {
-        user_id: user.id,
-        office_postcode: settings.officePostcode,
-        day_start: settings.dayStart,
-        day_end: settings.dayEnd,
-      },
-      { onConflict: "user_id" }
-    );
+    await updateSchedulerData((d) => ({ ...d, settings }));
   },
 }));

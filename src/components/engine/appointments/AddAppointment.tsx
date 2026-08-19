@@ -212,7 +212,7 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                   if (window.confirm(`Remove all ${count} appointment${count !== 1 ? "s" : ""}?`)) {
                     clearAllAppointments();
                     clearScheduleResult();
-                    clearSchedulerResult(isFree);
+                    clearSchedulerResult();
                   }
                 }}
                 className="rounded border border-red-600 px-3 py-1.5 text-xs text-red-400 hover:bg-red-950"

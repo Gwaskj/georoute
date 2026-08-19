@@ -1,10 +1,6 @@
 // src/store/customWindowStore.ts
 import { create } from "zustand";
-import {
-  loadFreeSchedulerData,
-  saveFreeSchedulerData,
-} from "@/lib/freeSession";
-import { supabase } from "@/lib/supabase/client";
+import { loadFreeSchedulerData, updateSchedulerData } from "@/lib/freeSession";
 
 export interface CustomWindow {
   id: string;
@@ -20,92 +16,23 @@ interface CustomWindowState {
   addWindow: (data: Omit<CustomWindow, "id">) => CustomWindow;
   updateWindow: (id: string, updates: Partial<CustomWindow>) => void;
   deleteWindow: (id: string) => void;
-  loadFromSupabase: () => Promise<void>;
 }
 
-async function isPro(): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return false;
-  const { data } = await supabase
-    .from("profiles")
-    .select("is_pro")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  return data?.is_pro === true;
-}
-
-async function persistFree(windows: CustomWindow[]) {
-  const data = (await loadFreeSchedulerData()) ?? {
-    staff: [],
-    appointments: [],
-    routes: [],
-    windows: [],
-  };
-
-  await saveFreeSchedulerData({
-    staff: data.staff ?? [],
-    appointments: data.appointments ?? [],
-    routes: data.routes ?? [],
-    windows,
-    skills: data.skills ?? [],
-    officePostcode: data.officePostcode ?? "",
-    selectedStaffIds: data.selectedStaffIds ?? [],
-    visits: data.visits ?? [],
-  });
-}
-
-let _syncTimer: ReturnType<typeof setTimeout> | null = null;
-let _pendingSync: CustomWindow[] | null = null;
-
-function scheduleSyncPro(windows: CustomWindow[]) {
-  _pendingSync = windows;
-  if (_syncTimer) return;
-  _syncTimer = setTimeout(async () => {
-    _syncTimer = null;
-    const wins = _pendingSync!;
-    _pendingSync = null;
-    const pro = await isPro();
-    if (pro) await persistPro(wins);
-  }, 300);
-}
-
-async function persistPro(windows: CustomWindow[]) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-
-  const { error: delError } = await supabase
-    .from("user_windows")
-    .delete()
-    .eq("user_id", user.id);
-
-  if (delError) {
-    console.error("Failed to clear pro windows:", delError);
-    return;
-  }
-
-  if (windows.length === 0) return;
-
-  const { error: insError } = await supabase.from("user_windows").insert(
-    windows.map((w) => ({
-      user_id: user.id,
-      local_id: w.id,
-      name: w.name,
-      start_time: w.start,
-      end_time: w.end,
-      min_gap_to_next: w.minGapToNext,
-    }))
-  );
-
-  if (insError) {
-    console.error("Failed to insert pro windows:", insError);
-  }
+/**
+ * Windows used to be debounced on their way to Supabase, to keep a slider
+ * drag from firing a round trip per frame. Writing to the local store is cheap
+ * enough that the timer only added a window in which the last edit was still
+ * unsaved, so it has gone.
+ */
+async function persist(windows: CustomWindow[]) {
+  await updateSchedulerData((d) => ({ ...d, windows }));
 }
 
 export const useCustomWindowStore = create<CustomWindowState>((set, get) => ({
   windows: [],
 
   setWindows: (windows) => {
-    persistFree(windows);
+    persist(windows);
     set({ windows });
   },
 
@@ -116,8 +43,7 @@ export const useCustomWindowStore = create<CustomWindowState>((set, get) => ({
     };
 
     const windows = [...get().windows, windowObj];
-    persistFree(windows);
-    scheduleSyncPro(windows);
+    persist(windows);
     set({ windows });
     return windowObj;
   },
@@ -127,49 +53,14 @@ export const useCustomWindowStore = create<CustomWindowState>((set, get) => ({
       w.id === id ? { ...w, ...updates } : w
     );
 
-    persistFree(windows);
-    scheduleSyncPro(windows);
+    persist(windows);
     set({ windows });
   },
 
   deleteWindow: (id) => {
     const windows = get().windows.filter((w) => w.id !== id);
-    persistFree(windows);
-    scheduleSyncPro(windows);
+    persist(windows);
     set({ windows });
-  },
-
-  loadFromSupabase: async () => {
-    const pro = await isPro();
-    if (!pro) return;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data } = await supabase
-      .from("user_windows")
-      .select("*")
-      .eq("user_id", user.id);
-
-    if (!data) return;
-
-    const seen = new Set<string>();
-    const mapped: CustomWindow[] = data
-      .filter((row) => {
-        const id = row.local_id;
-        if (!id || seen.has(id)) return false;
-        seen.add(id);
-        return true;
-      })
-      .map((row) => ({
-        id: row.local_id,
-        name: row.name ?? "",
-        start: row.start_time ?? "00:00",
-        end: row.end_time ?? "00:00",
-        minGapToNext: row.min_gap_to_next ?? 0,
-      }));
-
-    set({ windows: mapped });
   },
 }));
 
@@ -182,25 +73,18 @@ const DEFAULT_WINDOWS: Omit<CustomWindow, "id">[] = [
 
 // INITIAL LOAD
 if (typeof window !== "undefined") {
-  loadFreeSchedulerData().then(async (data) => {
+  loadFreeSchedulerData().then((data) => {
     const store = useCustomWindowStore.getState();
 
-    // Pro users: load from Supabase
-    const pro = await isPro();
-    if (pro) {
-      await store.loadFromSupabase();
-      // Re-read current state — store snapshot above is stale after set()
-      if (useCustomWindowStore.getState().windows.length === 0) {
-        DEFAULT_WINDOWS.forEach((w) => useCustomWindowStore.getState().addWindow(w));
-      }
+    if (data?.windows?.length) {
+      store.setWindows(data.windows);
       return;
     }
 
-    // Free users: load from session, seed defaults if empty
-    if (data?.windows?.length) {
-      store.setWindows(data.windows);
-    } else {
-      DEFAULT_WINDOWS.forEach((w) => store.addWindow(w));
-    }
+    // Seed the defaults in one write. Adding them one at a time meant four
+    // saves where the last one had to win, which is a race worth not having.
+    store.setWindows(
+      DEFAULT_WINDOWS.map((w) => ({ id: crypto.randomUUID(), ...w }))
+    );
   });
 }

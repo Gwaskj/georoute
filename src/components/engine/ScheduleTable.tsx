@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
 import { useHighlightStore } from "@/lib/map/highlightStore";
 import { loadFreeSchedulerData } from "@/lib/freeSession";
 
 type ScheduleTableProps = {
-  isFree: boolean;
   showTimes?: boolean;
 };
 
@@ -52,95 +50,42 @@ function hasConflict(a: AppointmentRow, b: AppointmentRow): boolean {
   return b.staff.some((s) => aStaffIds.has(s.id));
 }
 
-export default function ScheduleTable({ isFree, showTimes = true }: ScheduleTableProps) {
+export default function ScheduleTable({ showTimes = true }: ScheduleTableProps) {
   const highlightedAppointmentId = useHighlightStore((s) => s.highlightedAppointmentId);
   const setHighlightedAppointment = useHighlightStore((s) => s.setHighlightedAppointment);
 
   const [rows, setRows] = useState<AppointmentRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function loadFreeAppointments(): Promise<AppointmentRow[]> {
-    const data = await loadFreeSchedulerData();
-    const freeAppts = data?.appointments ?? [];
-
-    // Map free-session Appointment objects to AppointmentRow format
-    return freeAppts.map((a) => ({
-      id: a.id ?? crypto.randomUUID(),
-      start_time: a.strictStartTime ?? null,
-      end_time: null,
-      staff: [],
-      clients: [{ id: a.id ?? "unknown", name: a.name ?? "Unknown" }],
-    }));
-  }
-
   useEffect(() => {
+    /**
+     * Read the generated visits from local storage.
+     *
+     * Pro users used to read scheduled_visits from Supabase, with a realtime
+     * subscription so a second tab stayed in step. Neither the table nor the
+     * subscription exists now -- there is one copy of the schedule and it is
+     * on this machine.
+     */
     async function load() {
       setLoading(true);
 
-      if (isFree) {
-        const local = await loadFreeAppointments();
-        setRows(local);
-        setLoading(false);
-        return;
-      }
+      const data = await loadFreeSchedulerData();
+      const visits = data?.visits ?? [];
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setRows([]); setLoading(false); return; }
-
-      const { data, error } = await supabase
-        .from("scheduled_visits")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("start_time", { ascending: true });
-
-      if (error) {
-        console.error("Error loading schedule:", error);
-        setRows([]);
-        setLoading(false);
-        return;
-      }
-
-      // The scheduled_visits row shape, in the database's own spelling.
-      interface VisitRow {
-        visit_id: string;
-        start_time: string | null;
-        end_time: string | null;
-        staff_id: string | null;
-        staff_name: string | null;
-        appointment_id: string | null;
-        client_name: string | null;
-        postcode: string | null;
-      }
-
-      const normalized: AppointmentRow[] = (data as VisitRow[] ?? []).map((row) => ({
-        id: row.visit_id,
-        start_time: row.start_time,
-        end_time: row.end_time,
-        staff: row.staff_name ? [{ id: row.staff_id, name: row.staff_name }] : [],
-        clients: row.client_name ? [{ id: row.appointment_id, name: row.client_name }] : [],
-      }));
-
-      setRows(normalized);
+      setRows(
+        visits.map((v) => ({
+          id: v.id,
+          start_time: v.start ?? null,
+          end_time: v.end ?? null,
+          staff: v.staffName ? [{ id: v.staffId, name: v.staffName }] : [],
+          clients: v.clientName ? [{ id: v.appointmentId, name: v.clientName }] : [],
+        }))
+      );
       setLoading(false);
     }
 
     load();
-
-    if (!isFree) {
-      const channel = supabase
-        .channel("schedule-table-engine")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "scheduled_visits" },
-          () => load()
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [isFree]);
+  }, []);
 
   const conflictIds = useMemo(() => {
     const ids = new Set<string>();
