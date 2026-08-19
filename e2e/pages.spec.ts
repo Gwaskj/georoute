@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { watchErrors } from "./watchErrors";
 
 // Smoke tests: each page should load, not redirect to /login, and produce no
 // console errors or failed network requests.
@@ -7,15 +8,7 @@ function smokeTest(name: string, path: string) {
     // The /_vercel/ stub that used to live here is gone with Vercel itself.
     // Nothing requests those paths any more, so stubbing them would only hide
     // a request that should not be happening.
-    const errors: string[] = [];
-    page.on("console", (msg) => {
-      if (msg.type() === "error") errors.push(msg.text());
-    });
-
-    const failed: string[] = [];
-    page.on("response", (res) => {
-      if (res.status() >= 400) failed.push(`${res.status()} ${res.url()}`);
-    });
+    const { errors, failed } = watchErrors(page);
 
     await page.goto(path);
     await expect(page).not.toHaveURL(/\/login/);

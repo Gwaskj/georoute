@@ -56,14 +56,22 @@ export async function middleware(req: NextRequest) {
   // would be wrong behind a TLS-terminating proxy, where the worker sees a
   // plain-http URL for a request the visitor made over https -- and redirecting
   // those to https would loop forever.
+  const host = req.headers.get("host")?.split(":")[0].toLowerCase();
+
+  // Loopback is exempt. `next start` sets x-forwarded-proto: http on a plain
+  // local connection, so without this the upgrade fires on localhost and sends
+  // the browser to an https://localhost that nothing is listening on -- which
+  // made the app impossible to run or end-to-end test locally, and is why the
+  // suite had only ever been pointed at production.
+  const isLoopback = host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+
   const proto = req.headers.get("x-forwarded-proto");
-  if (proto === "http") {
+  if (proto === "http" && !isLoopback) {
     const url = new URL(req.url);
     url.protocol = "https:";
     return NextResponse.redirect(url, 308);
   }
 
-  const host = req.headers.get("host")?.split(":")[0].toLowerCase();
   if (host === "georoutes.co.uk") {
     const url = new URL(req.url);
     url.protocol = "https:";
