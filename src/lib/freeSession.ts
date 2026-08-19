@@ -7,12 +7,17 @@ import type { CustomWindow } from "@/store/customWindowStore";
 import type { ScheduledVisit } from "@/lib/scheduler/types";
 
 /**
- * Everything free mode keeps, held in sessionStorage rather than the database.
+ * Everything the scheduler keeps, held on the user's own machine.
  *
- * These were all `any[]`, which meant the free path had no type checking at
- * all -- the one path where a mistake is hardest to notice, because nothing is
- * persisted for anyone to inspect afterwards. They are the same shapes the Pro
- * path stores in Supabase; only the destination differs.
+ * This used to be sessionStorage, and only for free users -- Pro data went to
+ * Supabase. Now it is IndexedDB for everyone, which is what lets the product
+ * hold no client data at all: names, addresses and rounds never leave the
+ * browser that entered them.
+ *
+ * IndexedDB rather than localStorage for two reasons. Its quota is measured in
+ * hundreds of megabytes rather than five, so a large round with cached routing
+ * geometry cannot silently hit a ceiling; and it stores structured values, so
+ * this file stays the only place that knows the data is serialised at all.
  */
 export type FreeSchedulerData = {
   staff: Staff[];
@@ -29,66 +34,240 @@ export type FreeSchedulerData = {
   exceptions?: unknown[];
 };
 
-const STORAGE_KEY = "free_scheduler_data";
+const DB_NAME = "georoute";
+const DB_VERSION = 1;
+const STORE = "scheduler";
+const RECORD_KEY = "current";
 
-export async function loadFreeSchedulerData(): Promise<FreeSchedulerData | null> {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return {
-        staff: [],
-        appointments: [],
-        routes: [],
-        windows: [],
-        skills: [],              // ← ADDED
-        officePostcode: "",
-        selectedStaffIds: [],
-        visits: [],
-      };
+/** The pre-IndexedDB sessionStorage key, read once during migration. */
+const LEGACY_KEY = "free_scheduler_data";
+
+function emptyData(): FreeSchedulerData {
+  return {
+    staff: [],
+    appointments: [],
+    routes: [],
+    windows: [],
+    skills: [],
+    officePostcode: "",
+    selectedStaffIds: [],
+    visits: [],
+    exceptions: [],
+  };
+}
+
+/** Fill in every optional field, so callers never have to branch on undefined. */
+function normalise(parsed: Partial<FreeSchedulerData> | null): FreeSchedulerData {
+  if (!parsed) return emptyData();
+  return {
+    staff: parsed.staff ?? [],
+    appointments: parsed.appointments ?? [],
+    routes: parsed.routes ?? [],
+    windows: parsed.windows ?? [],
+    skills: parsed.skills ?? [],
+    officePostcode: parsed.officePostcode ?? "",
+    selectedStaffIds: parsed.selectedStaffIds ?? [],
+    visits: parsed.visits ?? [],
+    exceptions: parsed.exceptions ?? [],
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * IndexedDB, with localStorage as a fallback.
+ *
+ * Private browsing modes and locked-down enterprise profiles can refuse
+ * IndexedDB outright. Every failure path below resolves to null rather than
+ * rejecting, so a refusal degrades to localStorage instead of losing work.
+ * ------------------------------------------------------------------ */
+
+let dbPromise: Promise<IDBDatabase | null> | null = null;
+
+function openDb(): Promise<IDBDatabase | null> {
+  if (dbPromise) return dbPromise;
+
+  dbPromise = new Promise((resolve) => {
+    if (typeof indexedDB === "undefined") return resolve(null);
+
+    let req: IDBOpenDBRequest;
+    try {
+      req = indexedDB.open(DB_NAME, DB_VERSION);
+    } catch {
+      return resolve(null);
     }
 
-    const parsed = JSON.parse(raw);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+    req.onblocked = () => resolve(null);
+  });
 
-    return {
-      staff: parsed.staff ?? [],
-      appointments: parsed.appointments ?? [],
-      routes: parsed.routes ?? [],
-      windows: parsed.windows ?? [],
-      skills: parsed.skills ?? [],       // ← ADDED
-      officePostcode: parsed.officePostcode ?? "",
-      selectedStaffIds: parsed.selectedStaffIds ?? [],
-      visits: parsed.visits ?? [],
-      exceptions: parsed.exceptions ?? [],
-    };
+  return dbPromise;
+}
+
+function idbRead(db: IDBDatabase): Promise<FreeSchedulerData | null> {
+  return new Promise((resolve) => {
+    try {
+      const req = db.transaction(STORE, "readonly").objectStore(STORE).get(RECORD_KEY);
+      req.onsuccess = () => resolve((req.result as FreeSchedulerData) ?? null);
+      req.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+function idbWrite(db: IDBDatabase, value: FreeSchedulerData): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).put(value, RECORD_KEY);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+      tx.onabort = () => resolve(false);
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+function lsRead(): FreeSchedulerData | null {
+  try {
+    const raw = localStorage.getItem(LEGACY_KEY);
+    return raw ? (JSON.parse(raw) as FreeSchedulerData) : null;
   } catch {
-    return {
-      staff: [],
-      appointments: [],
-      routes: [],
-      windows: [],
-      skills: [],                // ← ADDED
-      officePostcode: "",
-      selectedStaffIds: [],
-      visits: [],
-    };
+    return null;
   }
 }
 
-export async function saveFreeSchedulerData(payload: FreeSchedulerData): Promise<void> {
+function lsWrite(value: FreeSchedulerData): void {
   try {
-    sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        staff: payload.staff ?? [],
-        appointments: payload.appointments ?? [],
-        routes: payload.routes ?? [],
-        windows: payload.windows ?? [],
-        skills: payload.skills ?? [],     // ← ADDED
-        officePostcode: payload.officePostcode ?? "",
-        selectedStaffIds: payload.selectedStaffIds ?? [],
-        visits: payload.visits ?? [],
-        exceptions: payload.exceptions ?? [],
-      })
-    );
+    localStorage.setItem(LEGACY_KEY, JSON.stringify(value));
   } catch {}
+}
+
+/* ------------------------------------------------------------------ *
+ * Serialised access.
+ *
+ * Callers such as persistFree read the whole record, change one field and
+ * write it back. Against synchronous sessionStorage that was safe; against an
+ * async store two overlapping edits would both read the same starting value
+ * and the second would discard the first. Funnelling every operation through
+ * one chain makes each read-modify-write atomic with respect to the others.
+ * ------------------------------------------------------------------ */
+
+let chain: Promise<unknown> = Promise.resolve();
+
+function serialise<T>(op: () => Promise<T>): Promise<T> {
+  const next = chain.then(op, op);
+  chain = next.catch(() => undefined);
+  return next;
+}
+
+/**
+ * Adopt anything left in sessionStorage by the previous build.
+ *
+ * Runs once. Someone mid-session when the new version deploys would otherwise
+ * find an empty scheduler, which looks exactly like data loss even though
+ * their old copy is still sitting there untouched.
+ */
+let migrated = false;
+
+function takeLegacySession(): FreeSchedulerData | null {
+  if (migrated) return null;
+  migrated = true;
+  try {
+    const raw = sessionStorage.getItem(LEGACY_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(LEGACY_KEY);
+    return JSON.parse(raw) as FreeSchedulerData;
+  } catch {
+    return null;
+  }
+}
+
+/* The unserialised primitives. Only call these from inside serialise(). */
+
+async function readCurrent(): Promise<FreeSchedulerData> {
+  const db = await openDb();
+  const stored = db ? await idbRead(db) : lsRead();
+  if (stored) return normalise(stored);
+
+  // Nothing stored yet -- this may be the first load after the upgrade.
+  const legacy = takeLegacySession();
+  if (legacy) {
+    const adopted = normalise(legacy);
+    await writeThrough(adopted);
+    return adopted;
+  }
+
+  return emptyData();
+}
+
+async function writeThrough(value: FreeSchedulerData): Promise<void> {
+  const db = await openDb();
+  // A failed IndexedDB write still has somewhere to go. Better a smaller store
+  // than a silent loss.
+  if (!db || !(await idbWrite(db, value))) lsWrite(value);
+}
+
+export async function loadFreeSchedulerData(): Promise<FreeSchedulerData | null> {
+  return serialise(readCurrent);
+}
+
+export async function saveFreeSchedulerData(payload: FreeSchedulerData): Promise<void> {
+  await serialise(async () => {
+    const value = normalise(payload);
+    await writeThrough(value);
+  });
+}
+
+/**
+ * Read, change and write back as one atomic step.
+ *
+ * The stores each own one slice of the record but have to save the whole
+ * thing, so they read it, replace their slice and write it back. Doing that as
+ * a separate load and save lets two stores read the same starting value and
+ * the second write drop the first one's slice -- add a staff member and an
+ * appointment in the same tick and one of them vanishes.
+ *
+ * Holding the chain for the whole cycle is what makes it safe. Callers should
+ * reach for this rather than load-then-save whenever the new value depends on
+ * the old one.
+ */
+export async function updateSchedulerData(
+  mutate: (current: FreeSchedulerData) => FreeSchedulerData
+): Promise<FreeSchedulerData> {
+  return serialise(async () => {
+    const current = await readCurrent();
+    const next = normalise(mutate(current));
+    await writeThrough(next);
+    return next;
+  });
+}
+
+/**
+ * The user's backup, and their route onto a new machine.
+ *
+ * With nothing held server-side this is the only way data survives a cleared
+ * browser or a replaced laptop, so it is a feature rather than a convenience.
+ */
+export async function exportSchedulerData(): Promise<string> {
+  const data = await loadFreeSchedulerData();
+  return JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), data }, null, 2);
+}
+
+export async function importSchedulerData(json: string): Promise<FreeSchedulerData> {
+  const parsed = JSON.parse(json);
+  // Accept both the wrapped export and a bare record, because someone will
+  // eventually paste just the inner object.
+  const data = normalise(parsed?.data ?? parsed);
+  await saveFreeSchedulerData(data);
+  return data;
+}
+
+export async function clearSchedulerData(): Promise<void> {
+  await saveFreeSchedulerData(emptyData());
 }
