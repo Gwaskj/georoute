@@ -38,7 +38,7 @@ describe("URL redaction", () => {
   it("leaves ordinary pages untouched", () => {
     for (const url of [
       "https://www.georoutes.co.uk/scheduler",
-      "https://www.georoutes.co.uk/help/care-planning",
+      "https://www.georoutes.co.uk/care-planning",
       "https://www.georoutes.co.uk/",
     ]) {
       expect(redact(url)).toBe(url);

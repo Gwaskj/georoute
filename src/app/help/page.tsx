@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SITE_URL } from "@/lib/siteUrl";
-import { BASICS, SECTORS, GUIDES } from "@/lib/help/guides";
+import { BASICS, SECTORS, GUIDES, guidePath, type Guide } from "@/lib/help/guides";
 
 export const metadata: Metadata = {
   title: "Help and Guides",
@@ -37,26 +37,19 @@ const jsonLd = [
       "@type": "TechArticle",
       headline: g.title,
       description: g.description,
-      url: `${SITE_URL}/help/${g.slug}`,
+      url: `${SITE_URL}${guidePath(g)}`,
     })),
   },
 ];
 
-function GuideCard({
-  slug,
-  title,
-  description,
-  minutes,
-}: {
-  slug: string;
-  title: string;
-  description: string;
-  minutes: number;
-}) {
+// Takes the whole guide rather than loose fields, so the card works out its
+// own destination -- the sector pages and the basics no longer share a prefix.
+function GuideCard({ guide }: { guide: Guide }) {
+  const { title, description, minutes } = guide;
   return (
     <li>
       <Link
-        href={`/help/${slug}`}
+        href={guidePath(guide)}
         className="group block rounded-2xl border border-slate-800 bg-slate-900/40 px-5 py-4 transition hover:border-teal-500/40 hover:bg-slate-900"
       >
         <div className="mb-1 flex items-baseline justify-between gap-3">
@@ -120,7 +113,7 @@ export default function HelpPage() {
           <h2 className="mb-5 text-xl font-semibold">Learning the basics</h2>
           <ul className="space-y-3">
             {BASICS.map((g) => (
-              <GuideCard key={g.slug} {...g} />
+              <GuideCard key={g.slug} guide={g} />
             ))}
           </ul>
         </section>
@@ -133,7 +126,7 @@ export default function HelpPage() {
           </p>
           <ul className="space-y-3">
             {SECTORS.map((g) => (
-              <GuideCard key={g.slug} {...g} />
+              <GuideCard key={g.slug} guide={g} />
             ))}
           </ul>
         </section>

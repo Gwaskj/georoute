@@ -7,13 +7,20 @@ import type { AnyBlock } from "@/lib/types/cms";
 
 export const dynamic = "force-dynamic";
 
+// 263 characters previously, which Google cut off mid-sentence at "Real road
+// distances, skills, dou…". Trimmed to fit, and the differentiator moved to
+// the end where a truncated result would still have shown the rest.
+const HOME_TITLE = "Route Scheduler for Repeat Home Visits – GeoRoutes";
+const HOME_DESCRIPTION =
+  "Route-optimised rounds for teams visiting people at home. Several visits a day to the same person, double-ups, skills and time windows. Free to start.";
+
 export const metadata: Metadata = {
-  title: "Multipurpose Route Scheduler for Repeat Visits – GeoRoutes",
-  description: "A multipurpose route scheduler for teams visiting people at home. Handles several visits a day to the same person with a minimum gap between them — or single visits, if that is all you need. Real road distances, skills, double-ups and time windows. Free to start.",
+  title: HOME_TITLE,
+  description: HOME_DESCRIPTION,
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Multipurpose Route Scheduler for Repeat Visits – GeoRoutes",
-    description: "A multipurpose route scheduler for teams visiting people at home. Handles several visits a day to the same person with a minimum gap between them — or single visits, if that is all you need. Real road distances, skills, double-ups and time windows. Free to start.",
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
     url: "/",
   },
 };

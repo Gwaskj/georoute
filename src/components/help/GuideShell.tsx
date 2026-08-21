@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SITE_URL } from "@/lib/siteUrl";
-import { GUIDES, Guide } from "@/lib/help/guides";
+import { GUIDES, Guide, guidePath } from "@/lib/help/guides";
 
 interface GuideShellProps {
   guide: Guide;
@@ -15,7 +15,12 @@ interface GuideShellProps {
  * how-to articles rather than a pile of unrelated pages.
  */
 export default function GuideShell({ guide, lead, children }: GuideShellProps) {
-  const url = `${SITE_URL}/help/${guide.slug}`;
+  const url = `${SITE_URL}${guidePath(guide)}`;
+
+  // Sector pages sit at the top level and are not part of the help section, so
+  // sending a reader "back" to /help via the breadcrumb would be a lie about
+  // where they are.
+  const isSector = guide.category === "sector";
 
   // Same-category siblings first, so a nurse reading a sector guide is offered
   // the other sector guides rather than being sent back to the basics.
@@ -27,11 +32,16 @@ export default function GuideShell({ guide, lead, children }: GuideShellProps) {
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
-        { "@type": "ListItem", position: 2, name: "Help", item: `${SITE_URL}/help` },
-        { "@type": "ListItem", position: 3, name: guide.title, item: url },
-      ],
+      itemListElement: isSector
+        ? [
+            { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+            { "@type": "ListItem", position: 2, name: guide.title, item: url },
+          ]
+        : [
+            { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+            { "@type": "ListItem", position: 2, name: "Help", item: `${SITE_URL}/help` },
+            { "@type": "ListItem", position: 3, name: guide.title, item: url },
+          ],
     },
     {
       "@context": "https://schema.org",
@@ -66,10 +76,14 @@ export default function GuideShell({ guide, lead, children }: GuideShellProps) {
             <li>
               <Link href="/" className="hover:text-slate-200">Home</Link>
             </li>
-            <li aria-hidden="true" className="text-slate-600">/</li>
-            <li>
-              <Link href="/help" className="hover:text-slate-200">Help</Link>
-            </li>
+            {!isSector && (
+              <>
+                <li aria-hidden="true" className="text-slate-600">/</li>
+                <li>
+                  <Link href="/help" className="hover:text-slate-200">Help</Link>
+                </li>
+              </>
+            )}
             <li aria-hidden="true" className="text-slate-600">/</li>
             <li className="text-slate-300">{guide.title}</li>
           </ol>
@@ -98,7 +112,7 @@ export default function GuideShell({ guide, lead, children }: GuideShellProps) {
               {related.map((g) => (
                 <li key={g.slug}>
                   <Link
-                    href={`/help/${g.slug}`}
+                    href={guidePath(g)}
                     className="group flex flex-col gap-1 rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3 transition hover:border-slate-700 hover:bg-slate-900"
                   >
                     <span className="text-sm font-medium text-slate-100 group-hover:text-teal-300">

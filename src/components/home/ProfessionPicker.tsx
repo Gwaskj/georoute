@@ -78,7 +78,7 @@ export default function ProfessionPicker() {
           {PROFESSIONS.map((p) => (
             <li key={p.slug}>
               <Link
-                href={`/help/${p.slug}`}
+                href={`/${p.slug}`}
                 className="group flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-900/40 px-5 py-5 transition hover:border-teal-500/40 hover:bg-slate-900"
               >
                 <h3 className="font-semibold text-slate-100 group-hover:text-teal-300">

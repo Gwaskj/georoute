@@ -51,7 +51,7 @@ export const GUIDES: Guide[] = [
     title: "Staff, skills and start locations",
     metaTitle: "Managing Staff, Skills and Start Locations",
     description:
-      "How to add staff, set individual working hours, choose whether someone starts from home or the office, and use skills so visits only go to people qualified to do them.",
+      "Add staff, set individual working hours, choose whether someone starts from home or the office, and use skills so visits reach qualified people only.",
     category: "basics",
     minutes: 7,
     updated: "2026-07-29",
@@ -69,9 +69,9 @@ export const GUIDES: Guide[] = [
   {
     slug: "multiple-visits-per-day",
     title: "Multiple visits a day to the same person",
-    metaTitle: "Scheduling Multiple Visits Per Day to the Same Client",
+    metaTitle: "Multiple Visits Per Day to the Same Client",
     description:
-      "How to schedule several visits a day to one person with a minimum gap between them — morning, lunch, tea and bed calls — and how to run the same scheduler without repeat visits at all.",
+      "Schedule several visits a day to one person with a minimum gap between them — morning, lunch, tea and bed calls — or run without repeat visits at all.",
     category: "basics",
     minutes: 8,
     updated: "2026-08-04",
@@ -81,7 +81,7 @@ export const GUIDES: Guide[] = [
     title: "Call purposes and time windows",
     metaTitle: "Call Purposes and Custom Time Windows",
     description:
-      "How to keep morning calls in the morning, pin time-critical visits to an exact time, and use call purposes and custom windows to control when each type of visit is scheduled.",
+      "Keep morning calls in the morning, pin time-critical visits to an exact time, and use call purposes and custom windows to control when visits happen.",
     category: "basics",
     minutes: 7,
     updated: "2026-07-29",
@@ -99,9 +99,9 @@ export const GUIDES: Guide[] = [
   {
     slug: "care-planning",
     title: "Care planning and domiciliary call rounds",
-    metaTitle: "Care Planning Software for Domiciliary Call Rounds",
+    metaTitle: "Care Planning Software for Home Care Rounds",
     description:
-      "Using GeoRoutes as care planning software for home care: building morning, lunch, tea and bed call rounds, handling double-up calls, and keeping continuity of carer.",
+      "Care planning software for home care: building morning, lunch, tea and bed call rounds, handling double-up calls, and keeping continuity of carer.",
     category: "sector",
     minutes: 9,
     updated: "2026-08-09",
@@ -111,7 +111,7 @@ export const GUIDES: Guide[] = [
     title: "Community and district nursing visits",
     metaTitle: "Community Nurse Scheduling and Visit Planning",
     description:
-      "A scheduling guide for district and community nursing teams: insulin and medication rounds with strict times, clinical skill matching, and caseloads that change daily.",
+      "Scheduling for district and community nursing: insulin and medication rounds with strict times, clinical skill matching, and caseloads that change daily.",
     category: "sector",
     minutes: 9,
     updated: "2026-08-09",
@@ -121,7 +121,7 @@ export const GUIDES: Guide[] = [
     title: "Occupational therapy caseloads",
     metaTitle: "Occupational Therapy Scheduling Software",
     description:
-      "How occupational therapy teams plan long assessment visits, equipment reviews and joint visits, where travel is a large share of a day with few appointments in it.",
+      "How occupational therapy teams plan long assessment visits, equipment reviews and joint visits, where travel dominates a day with few appointments.",
     category: "sector",
     minutes: 8,
     updated: "2026-08-09",
@@ -141,6 +141,29 @@ export const GUIDES: Guide[] = [
 export const BASICS = GUIDES.filter((g) => g.category === "basics");
 export const SECTORS = GUIDES.filter((g) => g.category === "sector");
 
+/**
+ * Where a guide lives.
+ *
+ * The two categories are different kinds of page and belong at different
+ * depths. The basics are documentation: someone reads them after signing up,
+ * with a problem in front of them, and /help is exactly where they expect to
+ * find them.
+ *
+ * The sector pages are not documentation at all. "Care planning software for
+ * home care rounds" is what someone types while deciding which product to buy,
+ * and they land on it having never heard of us. Serving that from /help told
+ * both the reader and Google it was a support article -- the wrong signal for
+ * the page carrying the most commercial intent on the site.
+ *
+ * Defined here rather than written out at each call site, because the sitemap,
+ * the breadcrumbs, the cross-links and the canonical tag all have to agree, and
+ * a path that disagrees with the canonical is worse than one that is merely
+ * ugly.
+ */
+export function guidePath(guide: Guide): string {
+  return guide.category === "sector" ? `/${guide.slug}` : `/help/${guide.slug}`;
+}
+
 export function getGuide(slug: string): Guide {
   const guide = GUIDES.find((g) => g.slug === slug);
   // Thrown at build time, not runtime: a typo'd slug fails `next build` rather
@@ -159,6 +182,6 @@ export function guideMetadata(slug: string) {
   return {
     title: guide.metaTitle,
     description: guide.description,
-    alternates: { canonical: `/help/${guide.slug}` },
+    alternates: { canonical: guidePath(guide) },
   };
 }

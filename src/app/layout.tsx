@@ -24,25 +24,47 @@ import ErrorNotice from "@/components/errors/ErrorNotice";
 
 import { SITE_URL } from "@/lib/siteUrl";
 
+/**
+ * One description, used for the meta tag, Open Graph and Twitter alike.
+ *
+ * They were three copies of the same string and had to be edited in step. Kept
+ * just under 160 characters so Google shows it whole rather than truncating
+ * mid-sentence.
+ */
+const SITE_DESCRIPTION =
+  "Plan route-optimised rounds for community care and nursing teams. Repeat visits, double-ups and skills matching — with client data that stays in your browser.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  // Names the sector and the differentiator rather than describing generic
+  // route planning, which every competitor's description also says. "Care
+  // rota" and "community nursing" are what people actually search for; "field
+  // team" is what software companies call them.
   title: {
-    default: "GeoRoutes – Smarter Route Planning",
+    default: "GeoRoutes – Route-Optimised Scheduling for Care Teams",
     template: "%s – GeoRoutes",
   },
-  description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start.",
+  description: SITE_DESCRIPTION,
   openGraph: {
     type: "website",
     siteName: "GeoRoutes",
-    title: "GeoRoutes – Smarter Route Planning",
-    description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start.",
+    title: "GeoRoutes – Route-Optimised Scheduling for Care Teams",
+    description: SITE_DESCRIPTION,
     url: SITE_URL,
-    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "GeoRoutes – Smarter Route Planning" }],
+    locale: "en_GB",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "GeoRoutes – route-optimised scheduling for care teams",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "GeoRoutes – Smarter Route Planning",
-    description: "Plan schedules, assign staff, and generate optimised routes for your field team — all in one tool. Free to start.",
+    title: "GeoRoutes – Route-Optimised Scheduling for Care Teams",
+    description: SITE_DESCRIPTION,
     images: ["/opengraph-image.png"],
   },
 };
@@ -51,29 +73,62 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="h-full">
       <body className="min-h-full">
+        {/* One @graph rather than separate blocks, so the Organization and the
+            SoftwareApplication can reference each other by @id. Without the
+            Organization, Google has no entity to attach the site to and the
+            publisher of every guide is anonymous. */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
-              name: "GeoRoutes",
-              applicationCategory: "BusinessApplication",
-              operatingSystem: "Web",
-              url: SITE_URL,
-              description: "Multipurpose route scheduler for teams visiting people at home. Handles several visits a day to the same person with a minimum gap between them, double-up visits, skills matching and recurring patterns — or single visits where that is all a round needs.",
-              offers: { "@type": "Offer", price: "0", priceCurrency: "GBP", name: "Free plan" },
-              featureList: [
-                "Route-optimised schedule generation",
-                "Multiple visits per day to the same client, with a minimum gap",
-                "Double-up visits requiring two staff",
-                "Recurring daily and weekly visit patterns",
-                "Real road distance calculations",
-                "Skills-based staff matching",
-                "Custom working windows and unpaid breaks",
-                "UK postcode geocoding",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  "@id": `${SITE_URL}/#organization`,
+                  name: "GeoRoutes",
+                  url: SITE_URL,
+                  logo: `${SITE_URL}/icon.svg`,
+                  email: "support@georoutes.co.uk",
+                  areaServed: { "@type": "Country", name: "United Kingdom" },
+                  contactPoint: {
+                    "@type": "ContactPoint",
+                    contactType: "customer support",
+                    email: "support@georoutes.co.uk",
+                    availableLanguage: "English",
+                  },
+                },
+                {
+                  "@type": "SoftwareApplication",
+                  "@id": `${SITE_URL}/#software`,
+                  name: "GeoRoutes",
+                  applicationCategory: "BusinessApplication",
+                  applicationSubCategory: "Scheduling and route planning",
+                  operatingSystem: "Web",
+                  url: SITE_URL,
+                  publisher: { "@id": `${SITE_URL}/#organization` },
+                  description:
+                    "Route-optimised scheduling for community health and care teams visiting people at home. Handles several visits a day to the same person with a minimum gap, double-up visits, skills matching and recurring patterns. Client details stay in your browser and never reach our servers.",
+                  offers: {
+                    "@type": "Offer",
+                    price: "0",
+                    priceCurrency: "GBP",
+                    name: "Free plan",
+                  },
+                  featureList: [
+                    "Route-optimised schedule generation",
+                    "Multiple visits per day to the same client, with a minimum gap",
+                    "Double-up visits requiring two staff",
+                    "Recurring daily and weekly visit patterns",
+                    "Real road distance calculations",
+                    "Skills-based staff matching",
+                    "Custom working windows and unpaid breaks",
+                    "UK postcode geocoding",
+                    "Client data held in the browser, never on our servers",
+                  ],
+                  inLanguage: "en-GB",
+                },
               ],
-              inLanguage: "en-GB",
             }),
           }}
         />

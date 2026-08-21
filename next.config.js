@@ -142,6 +142,22 @@ const nextConfig = {
       // gone with it. That project has been deleted, the hostname 404s at
       // Vercel's edge and never reaches this application, so the rule could
       // not fire even if the adapter handled it correctly.
+
+      // The four sector pages moved out of /help to the top level, because
+      // they are landing pages for people choosing software rather than
+      // documentation for people already using it.
+      //
+      // Permanent, and not optional. These URLs are indexed, linked from the
+      // home page and listed in the sitemap; dropping them would throw away
+      // whatever ranking they have earned and hand anyone following an old
+      // link a 404.
+      ...["care-planning", "community-nursing", "occupational-therapy", "physiotherapy"].map(
+        (slug) => ({
+          source: `/help/${slug}`,
+          destination: `/${slug}`,
+          permanent: true,
+        })
+      ),
     ];
   },
 };

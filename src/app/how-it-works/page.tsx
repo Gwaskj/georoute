@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "How It Works",
   description:
-    "Learn how GeoRoutes helps field teams plan smarter schedules, assign staff efficiently, and generate optimised routes — all in one tool.",
+    "Add staff and visits, set your rules, and generate an optimised round in five steps. Real road distances, and client data that never leaves your browser.",
   alternates: { canonical: "/how-it-works" },
 };
 
@@ -32,7 +32,7 @@ const steps = [
   {
     number: "05",
     title: "Review and export",
-    body: "View the full generated schedule broken down by staff member, with start and end times for every visit, and follow each route on the map. Open a round as a multi-stop route in Google Maps or Apple Maps, send it to a staff member as a read-only link, or give them a login that shows only their own day. Pro accounts keep your schedule history so you can retrieve a previous day.",
+    body: "View the full generated schedule broken down by staff member, with start and end times for every visit, and follow each route on the map. Open a round as a multi-stop route in Google Maps or Apple Maps, or send it to a carer as a read-only link that needs no account — the visits travel inside the link rather than being stored anywhere.",
   },
 ];
 
@@ -68,8 +68,49 @@ const faqs = [
 ];
 
 export default function HowItWorksPage() {
+  /**
+   * FAQPage and HowTo, generated from the same arrays the page renders.
+   *
+   * Built from `faqs` and `steps` rather than written out separately, so the
+   * markup cannot drift from what a visitor reads -- which is both the point
+   * of structured data and the thing Google penalises when it stops matching.
+   *
+   * This page had seven questions and five numbered steps and emitted no
+   * structured data at all, so it was competing for ordinary blue links while
+   * describing exactly the content these two formats exist for.
+   */
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "FAQPage",
+        mainEntity: faqs.map((f) => ({
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        })),
+      },
+      {
+        "@type": "HowTo",
+        name: "How to plan an optimised round with GeoRoutes",
+        description:
+          "Add staff and visits, set your scheduling rules, and generate a route-optimised daily schedule.",
+        step: steps.map((s, i) => ({
+          "@type": "HowToStep",
+          position: i + 1,
+          name: s.title,
+          text: s.body,
+        })),
+      },
+    ],
+  };
+
   return (
     <div className="bg-slate-950 min-h-screen text-slate-100">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <div className="mx-auto max-w-3xl px-4 py-16">
 
         <div className="mb-12 text-center">

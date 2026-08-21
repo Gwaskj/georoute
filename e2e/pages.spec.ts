@@ -47,7 +47,13 @@ test.describe("Public pages", () => {
   smokeTest("pricing", "/pricing");
   smokeTest("how it works", "/how-it-works");
   smokeTest("help hub", "/help");
-  smokeTest("help guide", "/help/care-planning");
+  smokeTest("help guide", "/help/getting-started");
+  // The sector pages moved out of /help to the top level. Covered here so a
+  // broken move shows up as a failing test rather than as four 404s.
+  smokeTest("care planning", "/care-planning");
+  smokeTest("community nursing", "/community-nursing");
+  smokeTest("occupational therapy", "/occupational-therapy");
+  smokeTest("physiotherapy", "/physiotherapy");
   // The only page that frames a third party, so the only one where a
   // Content-Security-Policy mistake shows up as a blank box rather than a
   // console warning. It was not covered before.

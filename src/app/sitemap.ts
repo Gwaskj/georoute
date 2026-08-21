@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/siteUrl";
-import { GUIDES } from "@/lib/help/guides";
+import { GUIDES, guidePath } from "@/lib/help/guides";
 
 // Only publicly useful, indexable pages belong here. Account, settings, staff
 // and admin are user-specific and are disallowed in robots.ts instead -- listing
@@ -68,10 +68,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   // Generated from the guide registry so a new guide appears in the sitemap
   // automatically -- the sitemap cannot fall behind the pages that exist.
+  // Sector pages outrank the how-to guides. They now sit at the top level and
+  // are the pages someone lands on while choosing software, so they carry more
+  // commercial weight than an article about configuring time windows.
   const guides = GUIDES.map((g) => ({
-    path: `/help/${g.slug}`,
+    path: guidePath(g),
     changeFrequency: "monthly" as const,
-    priority: 0.7,
+    priority: g.category === "sector" ? 0.9 : 0.7,
     updated: g.updated,
   }));
 
