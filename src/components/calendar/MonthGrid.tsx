@@ -104,7 +104,7 @@ export default function MonthGrid({
   return (
     <div>
       {view !== "day" && (
-        <div className={`mb-1 grid ${gridCols} gap-1 text-center text-[10px] uppercase tracking-widest text-slate-500`}>
+        <div className={`mb-1 grid ${gridCols} gap-1 text-center text-[10px] uppercase tracking-widest text-slate-400`}>
           {DAY_LABELS.slice(0, columns).map((d) => (
             <div key={d}>{d}</div>
           ))}
@@ -162,7 +162,7 @@ export default function MonthGrid({
                   </div>
                 ))}
                 {count > maxNames && (
-                  <div className="text-[10px] text-slate-500">
+                  <div className="text-[10px] text-slate-400">
                     +{count - maxNames} more
                   </div>
                 )}

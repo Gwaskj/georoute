@@ -27,7 +27,7 @@ export default function StaffList({ visibleIds, onEdit }: StaffListProps) {
   };
 
   if (visibleStaff.length === 0) {
-    return <p className="text-sm text-slate-500 py-2">No staff added yet.</p>;
+    return <p className="text-sm text-slate-400 py-2">No staff added yet.</p>;
   }
 
   return (

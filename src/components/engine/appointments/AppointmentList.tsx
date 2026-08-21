@@ -14,7 +14,7 @@ export default function AppointmentList({ onEdit }: AppointmentListProps) {
   const activeAppointments = appointments.filter((a) => !a.archived);
 
   if (activeAppointments.length === 0) {
-    return <p className="text-sm text-slate-500 py-2">No appointments added yet.</p>;
+    return <p className="text-sm text-slate-400 py-2">No appointments added yet.</p>;
   }
 
   return (
@@ -57,7 +57,7 @@ export default function AppointmentList({ onEdit }: AppointmentListProps) {
                     })}
                   </div>
                 ) : (
-                  <span className="text-xs text-slate-500">Any time</span>
+                  <span className="text-xs text-slate-400">Any time</span>
                 )}
               </td>
               <td className="py-2 text-right">

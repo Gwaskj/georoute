@@ -171,11 +171,11 @@ export default function Page() {
           can only be seen in the evening, or early supported discharge patients
           who need a morning session — express those as purposes with windows
           rather than fixed times. The guides on{" "}
-          <Link href="/help/time-windows" className="text-teal-400 hover:text-teal-300">
+          <Link href="/help/time-windows" className="text-teal-400 underline hover:text-teal-300">
             time windows
           </Link>{" "}
           and{" "}
-          <Link href="/help/reading-your-schedule" className="text-teal-400 hover:text-teal-300">
+          <Link href="/help/reading-your-schedule" className="text-teal-400 underline hover:text-teal-300">
             reading your schedule
           </Link>{" "}
           cover how to set those up and how to tell whether they are what is

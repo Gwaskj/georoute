@@ -39,7 +39,7 @@ const steps = [
 const faqs = [
   {
     q: "Do I need to create an account?",
-    a: "No. You can use GeoRoutes in free mode without registering — your data is stored only in your browser session. Creating an account (Pro) saves your staff, appointments, and schedule history to the cloud so you can access it from any device.",
+    a: "No. You can use GeoRoutes in free mode without registering, with up to 2 staff and 10 appointments. Creating a Pro account raises those limits and unlocks the calendar for recurring visits. Your scheduling data stays in your own browser on either plan.",
   },
   {
     q: "How does GeoRoutes calculate travel times?",
@@ -47,11 +47,15 @@ const faqs = [
   },
   {
     q: "How many appointments can I schedule?",
-    a: "Free mode supports a limited number of staff and appointments per session. Pro users have higher limits and cloud persistence, making GeoRoutes suitable for teams with large daily caseloads.",
+    a: "Free mode supports 2 staff and 10 appointments. Pro raises that to unlimited staff and up to 100 appointments a day, which suits teams with large daily caseloads.",
   },
   {
     q: "Is my data secure?",
-    a: "Yes. Pro account data is stored in a secure cloud database with row-level security — your records are only ever accessible to your own account. Free mode data never leaves your browser.",
+    a: "Your clients' names, addresses and visit times never reach us. They are held in your own browser, so there is no database of them for us to lose, be compelled to hand over, or read. That also means GeoRoutes is not a data processor under UK GDPR, so you do not need a data processing agreement with us in order to use it.",
+  },
+  {
+    q: "What happens if I clear my browser or change computer?",
+    a: "Because your data lives in your browser, clearing your browsing data removes it and there is no copy on our side to restore. Settings has an export that writes everything to a file — use it as a backup and to move to a new machine.",
   },
   {
     q: "Can I customise working hours for individual staff?",
@@ -59,7 +63,7 @@ const faqs = [
   },
   {
     q: "What happens to my data if I cancel my Pro subscription?",
-    a: "Your staff and appointment data is retained for 30 days after your subscription ends. If you resubscribe within that period, your data is fully restored. After 30 days, it is automatically and permanently deleted from our servers.",
+    a: "Nothing happens to it. Your staff and appointment data is in your browser rather than on our servers, so cancelling does not delete it — you simply return to the free tier's limits. Keep your own export as a backup.",
   },
 ];
 
@@ -136,7 +140,7 @@ export default function HowItWorksPage() {
               <span>
                 <strong className="text-slate-100">Start free, scale as you grow.</strong>{" "}
                 No credit card needed to try GeoRoutes. Upgrade to Pro when you
-                need cloud storage and higher appointment limits.
+                need recurring visits and higher appointment limits.
               </span>
             </li>
           </ul>

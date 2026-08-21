@@ -99,13 +99,13 @@ export default function ProfessionPicker() {
           Housing officers, support workers, mobile engineers and anyone else
           working from a list of addresses rather than a building use it the
           same way — start with{" "}
-          <Link href="/help/getting-started" className="text-teal-400 hover:text-teal-300">
+          <Link href="/help/getting-started" className="text-teal-400 underline hover:text-teal-300">
             building your first schedule
           </Link>
           , or read how{" "}
           <Link
             href="/help/multiple-visits-per-day"
-            className="text-teal-400 hover:text-teal-300"
+            className="text-teal-400 underline hover:text-teal-300"
           >
             several visits a day to the same person
           </Link>{" "}

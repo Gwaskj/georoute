@@ -75,3 +75,46 @@ body {
   justify-content: flex-end;
   gap: 0.5rem;
 }
+
+/* ─── Accessibility ──────────────────────────────────────────────────────
+ *
+ * Added as part of the launch audit. Each of these addresses something a
+ * person is actually blocked by, rather than a lint rule.
+ */
+
+/*
+ * A visible focus ring on anything reachable by keyboard.
+ *
+ * Tailwind's reset removes the browser default outline, and most controls here
+ * only restyled :hover -- so tabbing through the site gave no indication of
+ * where you were. focus-visible rather than focus, so a mouse click does not
+ * leave a ring behind on every button.
+ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid #2dd4bf;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* The skip link targets <main tabIndex={-1}>, which would otherwise draw a
+   ring around the entire page when focused programmatically. */
+main:focus {
+  outline: none;
+}
+
+/*
+ * Respect a request for less motion.
+ *
+ * The map pans, panels slide and the consent banner animates in. For someone
+ * with a vestibular disorder that is not decoration, it is a symptom trigger.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

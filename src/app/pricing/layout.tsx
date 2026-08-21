@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+const DESCRIPTION =
+  "Free to start, no sign-up. Pro adds unlimited staff, recurring visits and the calendar. Your client data stays in your browser on every plan.";
+
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "GeoRoutes is free to start. Upgrade to Pro for cloud storage, higher limits, and team features. Simple monthly pricing with no hidden fees.",
+  description: DESCRIPTION,
   alternates: { canonical: "/pricing" },
   openGraph: {
     title: "Pricing – GeoRoutes",
-    description: "GeoRoutes is free to start. Upgrade to Pro for cloud storage, higher limits, and team features. Simple monthly pricing with no hidden fees.",
+    description: DESCRIPTION,
     url: "/pricing",
   },
 };

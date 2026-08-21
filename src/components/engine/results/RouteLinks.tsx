@@ -37,7 +37,7 @@ export default function RouteLinks({ origin, stops, destination }: RouteLinksPro
       className="mt-2 border-t border-slate-700/60 pt-2"
       onClick={(e) => e.stopPropagation()}
     >
-      <p className="mb-1.5 text-[10px] uppercase tracking-widest text-slate-500">
+      <p className="mb-1.5 text-[10px] uppercase tracking-widest text-slate-400">
         Open route in
       </p>
 
@@ -65,14 +65,14 @@ export default function RouteLinks({ origin, stops, destination }: RouteLinksPro
       </div>
 
       {isSplit && (
-        <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500">
+        <p className="mt-1.5 text-[10px] leading-relaxed text-slate-400">
           Google Maps allows {GOOGLE_MAX_WAYPOINTS} stops per link, so this
           round is split into {parts.length} parts. Each part starts where the
           previous one ended — drive them in order.
         </p>
       )}
 
-      <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500">
+      <p className="mt-1.5 text-[10px] leading-relaxed text-slate-400">
         Waze has no multi-stop link, so use the Waze button on each stop to
         navigate one at a time.
       </p>

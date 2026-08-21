@@ -40,8 +40,9 @@ export default function ResetPasswordPage() {
 
         <form onSubmit={handleReset} className="mt-8 space-y-5">
           <div className="space-y-1">
-            <label className="text-sm text-slate-300">Email</label>
+            <label className="text-sm text-slate-300" htmlFor="reset-password-email">Email</label>
             <input
+              id="reset-password-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -65,7 +66,7 @@ export default function ResetPasswordPage() {
 
         <p className="mt-6 text-xs text-slate-400 text-center">
           Back to{" "}
-          <Link href="/login" className="text-teal-300 hover:text-teal-200">
+          <Link href="/login" className="text-teal-300 underline hover:text-teal-200">
             Login
           </Link>
         </p>

@@ -292,7 +292,7 @@ export default function AdminThemesPage() {
 
         {/* ── RIGHT: preview ── */}
         <aside className="w-72 flex-shrink-0 border-l border-slate-800 bg-slate-900 p-4 overflow-y-auto">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-4">
             Live Preview
           </p>
           <ThemePreview config={draft} draftName={draftName} />
@@ -487,7 +487,7 @@ function TypographyTab({
                 <span style={{ fontFamily: f.value }} className="text-base">
                   {f.label}
                 </span>
-                <span className="block text-xs text-slate-500" style={{ fontFamily: f.value }}>
+                <span className="block text-xs text-slate-400" style={{ fontFamily: f.value }}>
                   The quick brown fox — 0123456789
                 </span>
               </button>
@@ -540,7 +540,7 @@ function EffectsTab({
               onChange={(e) => patch("effectIntensity", parseInt(e.target.value))}
               className="w-full accent-indigo-500"
             />
-            <div className="flex justify-between text-xs text-slate-500 mt-1">
+            <div className="flex justify-between text-xs text-slate-400 mt-1">
               <span>Subtle</span>
               <span>Heavy</span>
             </div>
@@ -598,7 +598,7 @@ function DoodleTab({
               {d.value !== "none" ? (
                 <SeasonalDoodle doodle={d.value} color={draft.logoDoodleColor} />
               ) : (
-                <span className="text-slate-500 text-lg">○</span>
+                <span className="text-slate-400 text-lg">○</span>
               )}
             </div>
             {d.label}
@@ -708,7 +708,7 @@ function ScheduleTab({
           onChange={(e) => onPriority(parseInt(e.target.value))}
           className="w-full accent-indigo-500"
         />
-        <div className="flex justify-between text-xs text-slate-500 mt-1">
+        <div className="flex justify-between text-xs text-slate-400 mt-1">
           <span>0 — low</span>
           <span>20 — high</span>
         </div>
@@ -734,7 +734,7 @@ function ScheduleTab({
               className="w-full text-left rounded border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 flex justify-between"
             >
               <span>{s.icon} {s.name}</span>
-              <span className="text-slate-500 text-xs">{s.start.slice(5)} → {s.end.slice(5)}</span>
+              <span className="text-slate-400 text-xs">{s.start.slice(5)} → {s.end.slice(5)}</span>
             </button>
           ))}
         </div>

@@ -309,7 +309,7 @@ export default function CalendarView() {
             </ul>
           )}
 
-          <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+          <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
             Skipping or moving affects only this one occurrence. The rest of the
             series is unchanged.
           </p>

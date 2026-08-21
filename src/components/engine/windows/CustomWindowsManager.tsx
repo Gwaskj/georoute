@@ -102,7 +102,7 @@ export default function CustomWindowsManager({ isFree }: CustomWindowsManagerPro
                 {w.start} – {w.end}
               </span>
               {w.minGapToNext > 0 && (
-                <span className="text-slate-500">
+                <span className="text-slate-400">
                   Min gap to next: {w.minGapToNext} mins
                 </span>
               )}

@@ -19,12 +19,14 @@ import { GUIDES } from "@/lib/help/guides";
  * while a page is untouched is the accurate answer, not a stale one.
  */
 const PAGE_UPDATED: Record<string, string> = {
-  "/": "2026-08-13",
-  "/how-it-works": "2026-08-13",
-  "/help": "2026-08-13",
-  "/pricing": "2026-08-02",
-  "/privacy": "2026-08-13",
-  "/terms": "2026-08-13",
+  "/": "2026-08-20",
+  "/how-it-works": "2026-08-20",
+  "/help": "2026-08-20",
+  "/pricing": "2026-08-20",
+  "/privacy": "2026-08-20",
+  "/terms": "2026-08-20",
+  "/security": "2026-08-20",
+  "/accessibility": "2026-08-20",
 };
 
 // Noon UTC so a date cannot land on the wrong day once serialised through a
@@ -55,8 +57,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     //
     // /feedback is absent because it is 61 words wrapping an embedded Google
     // Form: content from a third party with nothing added around it.
+    // Security is listed above the other policy pages on purpose. "Is our data
+    // safe" is the first question a care provider asks, and the answer here is
+    // the product's strongest argument rather than boilerplate.
+    { path: "/security", changeFrequency: "monthly", priority: 0.7 },
     { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
     { path: "/terms", changeFrequency: "monthly", priority: 0.3 },
+    { path: "/accessibility", changeFrequency: "yearly", priority: 0.2 },
   ];
 
   // Generated from the guide registry so a new guide appears in the sitemap

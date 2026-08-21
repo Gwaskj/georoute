@@ -37,7 +37,7 @@ function Stat({ label, value, sub }: { label: string; value: number; sub?: strin
     <div className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3">
       <div className="text-2xl font-semibold tabular-nums text-slate-100">{value}</div>
       <div className="mt-0.5 text-xs text-slate-400">{label}</div>
-      {sub && <div className="mt-0.5 text-[11px] text-slate-500">{sub}</div>}
+      {sub && <div className="mt-0.5 text-[11px] text-slate-400">{sub}</div>}
     </div>
   );
 }
@@ -86,7 +86,7 @@ export default function AdminDashboardPage() {
       <header className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">Admin dashboard</h1>
         {data && (
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-400">
             as of{" "}
             {new Date(data.generatedAt).toLocaleTimeString("en-GB", {
               hour: "2-digit",
@@ -211,7 +211,7 @@ export default function AdminDashboardPage() {
                         }`}
                       >
                         {action}{" "}
-                        <span className="tabular-nums text-slate-500">{count}</span>
+                        <span className="tabular-nums text-slate-400">{count}</span>
                       </span>
                     ))}
                 </div>
@@ -224,7 +224,7 @@ export default function AdminDashboardPage() {
               <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400">
                 Recent activity
               </h2>
-              <Link href="/admin/logs" className="text-xs text-teal-400 hover:text-teal-300">
+              <Link href="/admin/logs" className="text-xs text-teal-400 underline hover:text-teal-300">
                 All logs →
               </Link>
             </div>
@@ -238,9 +238,9 @@ export default function AdminDashboardPage() {
                     className="flex flex-wrap items-baseline gap-x-3 px-4 py-2 text-xs"
                   >
                     <span className="font-medium text-slate-200">{a.action}</span>
-                    <span className="text-slate-500">{fmtWhen(a.created_at)}</span>
+                    <span className="text-slate-400">{fmtWhen(a.created_at)}</span>
                     {a.detail && (
-                      <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-slate-500">
+                      <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-slate-400">
                         {a.detail}
                       </span>
                     )}

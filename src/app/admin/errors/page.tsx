@@ -104,12 +104,12 @@ export default function AdminErrorsPage() {
         </label>
       </header>
 
-      {loading && <p className="text-sm text-slate-500">Loading…</p>}
+      {loading && <p className="text-sm text-slate-400">Loading…</p>}
 
       {!loading && rows.length === 0 && (
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 px-6 py-10 text-center">
           <p className="text-sm text-slate-300">Nothing has broken.</p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-slate-400">
             Errors appear here automatically, with a notice on the site when
             there are new ones.
           </p>
@@ -127,7 +127,7 @@ export default function AdminErrorsPage() {
                 <p className="truncate text-sm font-medium text-slate-100">
                   {r.message}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-slate-400">
                   {when(r.last_seen_at)}
                   {r.occurrences > 1 && ` · ${r.occurrences} times`}
                   {` · ${r.source}`}

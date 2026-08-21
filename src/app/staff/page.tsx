@@ -184,7 +184,7 @@ export default function StaffPage() {
           <h2 className="mb-2 text-sm font-semibold text-slate-200">Skills</h2>
           <div className="mb-2 flex flex-wrap gap-2">
             {skills.length === 0 && (
-              <span className="text-xs text-slate-500">No skills yet.</span>
+              <span className="text-xs text-slate-400">No skills yet.</span>
             )}
             {skills.map((skill: Skill) => (
               <span
@@ -223,7 +223,7 @@ export default function StaffPage() {
         {staff.length === 0 ? (
           <div className="rounded border border-slate-800 bg-slate-900 p-8 text-center">
             <p className="text-slate-400">No staff added yet.</p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-400">
               {isFree
                 ? "Free tier allows up to 2 staff members saved in your browser."
                 : 'Click "Add staff" to get started.'}
@@ -320,7 +320,7 @@ export default function StaffPage() {
                 <div>
                   <label className="mb-1 block font-medium text-slate-200">
                     Home postcode{" "}
-                    <span className="text-slate-500">(optional)</span>
+                    <span className="text-slate-400">(optional)</span>
                   </label>
                   <input
                     type="text"
@@ -339,7 +339,7 @@ export default function StaffPage() {
                 <div>
                   <label className="mb-1 block font-medium text-slate-200">
                     Office postcode{" "}
-                    <span className="text-slate-500">(optional)</span>
+                    <span className="text-slate-400">(optional)</span>
                   </label>
                   <input
                     type="text"
@@ -389,7 +389,7 @@ export default function StaffPage() {
                 <div>
                   <label className="mb-1 block font-medium text-slate-200">
                     Gender{" "}
-                    <span className="text-slate-500">(optional)</span>
+                    <span className="text-slate-400">(optional)</span>
                   </label>
                   <select
                     value={form.gender}

@@ -177,7 +177,7 @@ export default function Page() {
         <p>
           Specialist competencies are handled the same way as anywhere else in
           the tool — see{" "}
-          <Link href="/help/staff-and-skills" className="text-teal-400 hover:text-teal-300">
+          <Link href="/help/staff-and-skills" className="text-teal-400 underline hover:text-teal-300">
             staff, skills and start locations
           </Link>
           . If your therapists work from home rather than a base, setting start

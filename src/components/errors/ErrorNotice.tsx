@@ -72,7 +72,7 @@ export default function ErrorNotice() {
           </p>
           <Link
             href="/admin/errors"
-            className="mt-2 inline-block text-xs font-medium text-teal-400 hover:text-teal-300"
+            className="mt-2 inline-block text-xs font-medium text-teal-400 underline hover:text-teal-300"
           >
             See what broke →
           </Link>
@@ -81,7 +81,7 @@ export default function ErrorNotice() {
           type="button"
           onClick={() => setDismissed(true)}
           aria-label="Hide until next page load"
-          className="text-slate-500 hover:text-slate-300"
+          className="text-slate-400 hover:text-slate-300"
         >
           ×
         </button>

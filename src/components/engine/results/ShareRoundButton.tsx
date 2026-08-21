@@ -119,7 +119,7 @@ export default function ShareRoundButton({
               {copied ? "Copied" : "Copy"}
             </button>
           </div>
-          <p className="mt-1 text-[10px] leading-relaxed text-slate-500">
+          <p className="mt-1 text-[10px] leading-relaxed text-slate-400">
             The round{dayLabel ? ` for ${dayLabel}` : ""} is carried inside this
             link, not stored on our servers. That also means it{" "}
             <strong className="text-slate-400">cannot be withdrawn</strong> once

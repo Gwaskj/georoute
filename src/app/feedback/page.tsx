@@ -33,7 +33,7 @@ export default function FeedbackPage() {
           </iframe>
         </div>
 
-        <p className="mt-4 text-xs text-slate-500">
+        <p className="mt-4 text-xs text-slate-400">
           Form not loading?{" "}
           <a
             href={FORM_URL.replace("?embedded=true", "")}

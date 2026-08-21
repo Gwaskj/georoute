@@ -1,0 +1,10 @@
+# Vulnerability disclosure for georoutes.co.uk
+#
+# RFC 9116. If you have found a security issue, please tell us before telling
+# anyone else, and we will not pursue you for finding it in good faith.
+
+Contact: mailto:support@georoutes.co.uk
+Expires: 2027-08-20T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://www.georoutes.co.uk/.well-known/security.txt
+Policy: https://www.georoutes.co.uk/security

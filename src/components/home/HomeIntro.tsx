@@ -64,7 +64,7 @@ export default function HomeIntro() {
             twenty on one is an ordinary day.{" "}
             <Link
               href="/help/multiple-visits-per-day"
-              className="text-teal-400 hover:text-teal-300"
+              className="text-teal-400 underline hover:text-teal-300"
             >
               How repeat visits are set up
             </Link>{" "}
@@ -147,29 +147,29 @@ export default function HomeIntro() {
         </h3>
         <div className="mt-4 space-y-4 text-sm leading-relaxed text-slate-300">
           <p>
-            You can build a schedule without creating an account. Free mode runs
-            entirely in your browser session, supports up to 2 staff and 10
-            appointments, and never sends your data to our servers — closing the
-            tab clears it. That is enough to test the behaviour against a real
+            You can build a schedule without creating an account. Free mode
+            supports up to 2 staff and 10 appointments and never sends your data
+            to our servers — it stays in this browser, and is still here when
+            you come back. That is enough to test the behaviour against a real
             day you have already planned by hand, which is the fairest
             comparison.
           </p>
           <p>
-            A Pro account removes those limits, saves your staff and
-            appointments to the cloud, and adds the calendar for recurring
-            visits and future dates. If you cancel, your data is kept for 30
-            days and then permanently deleted.
+            A Pro account removes those limits and adds the calendar for
+            recurring visits and future dates. It does not change where your
+            data lives — that stays in your browser either way, so cancelling
+            never deletes it.
           </p>
           <p>
             The{" "}
-            <Link href="/help" className="text-teal-400 hover:text-teal-300">
+            <Link href="/help" className="text-teal-400 underline hover:text-teal-300">
               help guides
             </Link>{" "}
             walk through setting up staff and skills, double-up calls and repeat
             visits, and time windows — plus how home care, district nursing,
             occupational therapy and physiotherapy services each tend to
             configure things.{" "}
-            <Link href="/how-it-works" className="text-teal-400 hover:text-teal-300">
+            <Link href="/how-it-works" className="text-teal-400 underline hover:text-teal-300">
               How it works
             </Link>{" "}
             covers the process end to end.

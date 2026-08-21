@@ -131,7 +131,7 @@ export default function PricingPage() {
           <div className="mt-10 text-center space-x-6">
             <Link
               href="/admin/pricing"
-              className="text-teal-400 hover:text-teal-300 text-sm underline"
+              className="text-teal-400 underline hover:text-teal-300 text-sm underline"
             >
               Edit pricing
             </Link>

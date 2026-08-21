@@ -182,7 +182,7 @@ export default function ScheduleTable({ showTimes = true }: ScheduleTableProps) 
                       ))}
                     </div>
                   ) : (
-                    <span className="text-slate-500">—</span>
+                    <span className="text-slate-400">—</span>
                   )}
                 </td>
 
@@ -190,7 +190,7 @@ export default function ScheduleTable({ showTimes = true }: ScheduleTableProps) 
                   {row.clients.length > 0 ? (
                     row.clients.map((c) => c.name).join(", ")
                   ) : (
-                    <span className="text-slate-500">—</span>
+                    <span className="text-slate-400">—</span>
                   )}
                 </td>
 

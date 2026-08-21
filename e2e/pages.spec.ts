@@ -48,6 +48,12 @@ test.describe("Public pages", () => {
   smokeTest("how it works", "/how-it-works");
   smokeTest("help hub", "/help");
   smokeTest("help guide", "/help/care-planning");
+  // The only page that frames a third party, so the only one where a
+  // Content-Security-Policy mistake shows up as a blank box rather than a
+  // console warning. It was not covered before.
+  smokeTest("feedback", "/feedback");
+  smokeTest("privacy", "/privacy");
+  smokeTest("terms", "/terms");
 });
 
 test.describe("Pro pages", () => {

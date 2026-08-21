@@ -66,8 +66,9 @@ export default function UpdatePasswordPage() {
         {sessionReady && (
           <form onSubmit={handleUpdate} className="mt-8 space-y-5">
             <div className="space-y-1">
-              <label className="text-sm text-slate-300">New Password</label>
+              <label className="text-sm text-slate-300" htmlFor="update-password-new-password">New Password</label>
               <input
+              id="update-password-new-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -77,8 +78,9 @@ export default function UpdatePasswordPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm text-slate-300">Confirm Password</label>
+              <label className="text-sm text-slate-300" htmlFor="update-password-confirm-password">Confirm Password</label>
               <input
+              id="update-password-confirm-password"
                 type="password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}

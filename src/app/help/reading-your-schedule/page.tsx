@@ -48,7 +48,7 @@ const faqs = [
   },
   {
     q: "Can I save or share the schedule?",
-    a: "Pro accounts save schedule history to the cloud, so a generated round can be retrieved later from any device. In free mode the schedule lives in your browser session and is lost when the tab closes.",
+    a: "A generated schedule is kept in your browser, so it is still there when you come back. To send a carer their round, use Share with staff — it produces a read-only link that works without an account, with the visits carried inside the link rather than stored anywhere. Send a fresh link each day, as an old one cannot be withdrawn.",
   },
 ];
 

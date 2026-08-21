@@ -49,8 +49,9 @@ export default function SignupPage() {
 
         <form onSubmit={handleSignup} className="mt-8 space-y-5">
           <div className="space-y-1">
-            <label className="text-sm text-slate-300">Email</label>
+            <label className="text-sm text-slate-300" htmlFor="signup-email">Email</label>
             <input
+              id="signup-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -60,8 +61,9 @@ export default function SignupPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm text-slate-300">Password</label>
+            <label className="text-sm text-slate-300" htmlFor="signup-password">Password</label>
             <input
+              id="signup-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -71,8 +73,9 @@ export default function SignupPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm text-slate-300">Confirm Password</label>
+            <label className="text-sm text-slate-300" htmlFor="signup-confirm-password">Confirm Password</label>
             <input
+              id="signup-confirm-password"
               type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
@@ -96,7 +99,7 @@ export default function SignupPage() {
 
         <p className="mt-6 text-xs text-slate-400 text-center">
           Already have an account{" "}
-          <Link href="/login" className="text-teal-300 hover:text-teal-200">
+          <Link href="/login" className="text-teal-300 underline hover:text-teal-200">
             Log in
           </Link>
         </p>

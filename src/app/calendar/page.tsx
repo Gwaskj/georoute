@@ -58,7 +58,7 @@ export default async function CalendarPage() {
     return (
       <Gate
         title="Calendar is a Pro feature"
-        body="Planning visits across future dates needs somewhere to keep them, so the calendar requires an account. Free mode holds your data in the browser session only, which cannot carry a round from one day to the next."
+        body="The calendar is where recurring visits and future dates are planned — daily or weekly patterns, end dates, and skipping or moving a single occurrence. It comes with a Pro account. Your data still stays in your own browser."
         cta={[
           { href: "/signup", label: "Create an account" },
           { href: "/pricing", label: "See pricing" },

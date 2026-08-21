@@ -82,7 +82,7 @@ export default function GuideShell({ guide, lead, children }: GuideShellProps) {
           <p className="mt-4 text-sm leading-relaxed text-slate-300 sm:text-base">
             {lead}
           </p>
-          <p className="mt-3 text-xs uppercase tracking-widest text-slate-500">
+          <p className="mt-3 text-xs uppercase tracking-widest text-slate-400">
             {guide.minutes} min read
           </p>
         </header>

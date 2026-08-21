@@ -308,7 +308,7 @@ export function HeaderStructure({
                     if (item.id === "admin") {
                       return (
                         <div key={item.id} className="mt-1 border-t border-slate-800 pt-1">
-                          <p className="px-4 py-1 text-[10px] uppercase tracking-widest text-slate-500">
+                          <p className="px-4 py-1 text-[10px] uppercase tracking-widest text-slate-400">
                             {item.text}
                           </p>
                           {[
@@ -395,7 +395,7 @@ export function HeaderStructure({
                 if (item.id === "admin") {
                   return (
                     <div key={item.id} className="mt-1 border-t border-slate-800 pt-2">
-                      <p className="py-1 text-[10px] uppercase tracking-widest text-slate-500">
+                      <p className="py-1 text-[10px] uppercase tracking-widest text-slate-400">
                         {item.text}
                       </p>
                       {ADMIN_LINKS.map(([href, label]) => (

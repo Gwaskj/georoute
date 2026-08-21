@@ -4,9 +4,10 @@ import { wazeUrl } from "@/lib/navigation/mapLinks";
 /**
  * The stop-by-stop list of a shared round.
  *
- * Shared by the tokenised link page and the staff login page, which rendered
- * near-identical markup and had already begun to drift -- the note above this
- * list told staff to use the Waze button on each stop, and there were none.
+ * Rendered by the round-link page. It was once shared by two pages carrying
+ * near-identical markup which had already begun to drift -- the note above
+ * this list told staff to use the Waze button on each stop, and there were
+ * none.
  *
  * No client directives: every stop is a plain anchor, so this renders on the
  * server and works before any JavaScript loads. That matters for someone

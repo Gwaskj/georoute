@@ -17,27 +17,29 @@ export default function PricingDetail() {
       <div className="mt-4 space-y-4 text-sm leading-relaxed text-slate-300">
         <p>
           Free mode exists so you can test GeoRoutes against a real day before
-          deciding anything. It runs entirely in your browser session: your
-          staff, appointments and generated schedule are held in the tab you
-          are working in and are never sent to our servers. Closing the tab
-          clears them. That is also why free mode cannot carry a round from one
-          day to the next — there is nowhere for it to be kept.
+          deciding anything. No sign-up, no card: your staff, appointments and
+          generated schedule are held in your own browser and are never sent to
+          our servers.
         </p>
         <p>
-          Within a session you can add up to 2 staff and 10 appointments, which
-          is enough to see how the scheduler splits work between people and how
-          it handles travel between real postcodes. Every scheduling feature is
-          available: skills matching, double-up calls, repeat visits with a
-          minimum gap, call purposes, custom time windows and breaks.
+          You can add up to 2 staff and 10 appointments, which is enough to see
+          how the scheduler splits work between people and how it handles travel
+          between real postcodes. Every scheduling feature is available: skills
+          matching, double-up calls, repeat visits with a minimum gap, call
+          purposes, custom time windows and breaks.
         </p>
         <p>
           Pro removes the limits — unlimited staff and up to 100 appointments a
-          day — and saves everything to the cloud, so your staff list and
-          client visits are there next time on any device. It also adds the
-          calendar, which is what makes recurring visits and future dates
-          possible: daily or weekly patterns, an end date, and the ability to
-          skip or move a single occurrence without disturbing the rest of the
-          series.
+          day — and adds the calendar, which is what makes recurring visits and
+          future dates possible: daily or weekly patterns, an end date, and the
+          ability to skip or move a single occurrence without disturbing the
+          rest of the series.
+        </p>
+        <p>
+          What Pro does <em>not</em> change is where your data lives. On every
+          plan, your clients&rsquo; names and addresses stay in your browser.
+          Paying more does not move them onto our servers, because we would
+          rather not have them.
         </p>
       </div>
 
@@ -46,15 +48,16 @@ export default function PricingDetail() {
       </h2>
       <div className="mt-4 space-y-4 text-sm leading-relaxed text-slate-300">
         <p>
-          Pro accounts can send a generated round to the person doing it, either
-          as a read-only link that works without an account, or as a login that
-          shows that staff member their own day and nothing else. Staff logins
-          are included at no extra cost and there is no limit on how many you
-          create — they are read-only, so they cannot change your data.
+          You can send a carer their round as a read-only link that works
+          without an account. The visits are carried inside the link itself
+          rather than stored anywhere, so the round travels from your device to
+          theirs without passing through us.
         </p>
         <p>
-          Either way, the round can be opened as a multi-stop route in Google
-          Maps or Apple Maps, or navigated stop by stop in Waze.
+          That also means a link cannot be withdrawn once sent, so send a fresh
+          one each day rather than relying on an old one expiring. The round can
+          be opened as a multi-stop route in Google Maps or Apple Maps, or
+          navigated stop by stop in Waze.
         </p>
       </div>
 
@@ -69,22 +72,22 @@ export default function PricingDetail() {
           details.
         </p>
         <p>
-          If you cancel, your staff and appointment data is retained for 30
-          days. Resubscribe within that period and everything is restored as it
-          was. After 30 days it is permanently deleted from our servers. You
-          can read the full detail in our{" "}
-          <Link href="/privacy" className="text-teal-400 hover:text-teal-300">
+          Cancelling does not delete your schedules, because they were never on
+          our servers — they stay in your browser either way. Keep your own
+          backup using the export in Settings, since we have no copy to restore
+          for you. You can read the full detail in our{" "}
+          <Link href="/privacy" className="text-teal-400 underline hover:text-teal-300">
             privacy policy
           </Link>{" "}
           and{" "}
-          <Link href="/terms" className="text-teal-400 hover:text-teal-300">
+          <Link href="/terms" className="text-teal-400 underline hover:text-teal-300">
             terms of service
           </Link>
           .
         </p>
         <p>
           Not sure which you need? The{" "}
-          <Link href="/help" className="text-teal-400 hover:text-teal-300">
+          <Link href="/help" className="text-teal-400 underline hover:text-teal-300">
             help guides
           </Link>{" "}
           walk through setting up a round, and free mode is enough to follow

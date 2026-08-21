@@ -507,7 +507,7 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                       })}
                     </div>
                     {form.recurWeekdays.length === 0 && (
-                      <p className="mt-1 text-[11px] text-slate-500">
+                      <p className="mt-1 text-[11px] text-slate-400">
                         No days chosen — it will repeat on the same weekday as
                         the first date.
                       </p>
@@ -611,12 +611,12 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                 })()}
 
                 {windows.length === 0 && (
-                  <p className="text-xs text-slate-500 mb-2">
+                  <p className="text-xs text-slate-400 mb-2">
                     No time windows set. Add them in Settings to restrict when visits can be scheduled.
                   </p>
                 )}
 
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-400">
                   If strict time is set, it overrides required windows.
                 </p>
               </div>

@@ -103,7 +103,7 @@ export default function RoundFromFragment() {
           {payload.staffName || "Your round"}
         </h1>
         {dayLabel && <p className="mt-1 text-sm text-slate-400">{dayLabel}</p>}
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-slate-400">
           {stops.length} visit{stops.length === 1 ? "" : "s"}
           {breaks.length > 0 &&
             ` · ${breaks.length} break${breaks.length === 1 ? "" : "s"}`}

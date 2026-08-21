@@ -63,7 +63,7 @@ function GuideCard({
           <h3 className="font-semibold text-slate-100 group-hover:text-teal-300">
             {title}
           </h3>
-          <span className="shrink-0 text-[10px] uppercase tracking-widest text-slate-500">
+          <span className="shrink-0 text-[10px] uppercase tracking-widest text-slate-400">
             {minutes} min
           </span>
         </div>
@@ -141,8 +141,8 @@ export default function HelpPage() {
         <div className="rounded-2xl border border-teal-500/40 bg-gradient-to-br from-teal-900/30 to-slate-900/60 p-8 text-center">
           <h2 className="mb-2 text-xl font-semibold">Start with a real round</h2>
           <p className="mb-6 text-sm text-slate-300">
-            You can build a schedule without creating an account. Free mode
-            keeps everything in your browser session.
+            You can build a schedule without creating an account. Your data
+            stays in your own browser, on every plan.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link

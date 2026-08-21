@@ -197,7 +197,7 @@ export default function Page() {
         <p>
           If you are looking for the mechanics of double-ups, repeat calls and
           gaps in more detail, the guide on{" "}
-          <Link href="/help/appointments-and-visits" className="text-teal-400 hover:text-teal-300">
+          <Link href="/help/appointments-and-visits" className="text-teal-400 underline hover:text-teal-300">
             appointments, double-ups and repeat visits
           </Link>{" "}
           covers each field in turn.

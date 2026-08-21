@@ -12,8 +12,8 @@ const FALLBACK_BLOCKS: AnyBlock[] = [
     visible: true,
     data: {
       title: "GeoRoutes Scheduler",
-      freeSubtitle: "Free mode — data stored in this browser session only.",
-      proSubtitle: "Pro mode — data stored in your GeoRoutes workspace.",
+      freeSubtitle: "Free mode — your data stays on this device.",
+      proSubtitle: "Pro mode — your data stays on this device.",
     },
   },
   {

@@ -133,12 +133,12 @@ export default function Page() {
           The field-by-field reference is in{" "}
           <Link
             href="/help/appointments-and-visits"
-            className="text-teal-400 hover:text-teal-300"
+            className="text-teal-400 underline hover:text-teal-300"
           >
             appointments, double-ups and repeat visits
           </Link>
           , and{" "}
-          <Link href="/help/time-windows" className="text-teal-400 hover:text-teal-300">
+          <Link href="/help/time-windows" className="text-teal-400 underline hover:text-teal-300">
             call purposes and time windows
           </Link>{" "}
           covers keeping each call in the right part of the day.

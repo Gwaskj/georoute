@@ -37,10 +37,12 @@ function fmtTime(d: Date | null): string {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-const iconUrl =
-  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png";
-const iconShadow =
-  "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
+// Served from public/leaflet rather than unpkg. These came from a CDN, which
+// put a third party in the critical path of the map for two small PNGs -- if
+// unpkg is slow or blocked, every marker renders as a broken image. Copied
+// from the leaflet package at the version in package.json.
+const iconUrl = "/leaflet/marker-icon.png";
+const iconShadow = "/leaflet/marker-shadow.png";
 
 const DefaultIcon = L.icon({ iconUrl, shadowUrl: iconShadow });
 L.Marker.prototype.options.icon = DefaultIcon;

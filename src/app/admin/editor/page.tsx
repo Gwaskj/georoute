@@ -328,7 +328,7 @@ function FeaturesEditForm({
             ],
           })
         }
-        className="mt-2 w-full text-xs text-teal-400 hover:text-teal-300 border border-teal-500/30 hover:border-teal-500/60 rounded-lg py-2 transition-colors"
+        className="mt-2 w-full text-xs text-teal-400 underline hover:text-teal-300 border border-teal-500/30 hover:border-teal-500/60 rounded-lg py-2 transition-colors"
       >
         + Add Item
       </button>
@@ -745,7 +745,7 @@ export default function EditorPage() {
               </p>
               <Link
                 href="/admin/pricing"
-                className="mt-1.5 inline-block text-xs font-medium text-teal-400 hover:text-teal-300 underline"
+                className="mt-1.5 inline-block text-xs font-medium text-teal-400 underline hover:text-teal-300 underline"
               >
                 Open plan &amp; Stripe editor →
               </Link>
@@ -757,14 +757,14 @@ export default function EditorPage() {
         <div className="flex-1 overflow-y-auto">
           {/* Block list */}
           <div className="p-3 border-b border-slate-800">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">
+            <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
               Blocks
             </p>
 
             {loading ? (
-              <p className="text-xs text-slate-500 py-2">Loading…</p>
+              <p className="text-xs text-slate-400 py-2">Loading…</p>
             ) : blocks.length === 0 ? (
-              <p className="text-xs text-slate-500 py-2">
+              <p className="text-xs text-slate-400 py-2">
                 No blocks yet. Add one below.
               </p>
             ) : (
@@ -829,7 +829,7 @@ export default function EditorPage() {
 
             {/* Add block */}
             <div className="mt-3">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">
+              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">
                 Add Block
               </p>
               <div className="flex flex-wrap gap-1.5">
@@ -856,7 +856,7 @@ export default function EditorPage() {
           {/* Edit form */}
           <div className="p-4">
           {!selectedBlock ? (
-            <p className="text-xs text-slate-500 text-center mt-6">
+            <p className="text-xs text-slate-400 text-center mt-6">
               Select a block above to edit it.
             </p>
           ) : (
@@ -864,7 +864,7 @@ export default function EditorPage() {
               <p className="text-sm font-semibold text-slate-200 mb-1">
                 {BLOCK_LABELS[selectedBlock.type]}
               </p>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-slate-400 mb-4">
                 {BLOCK_DESCRIPTIONS[selectedBlock.type]}
               </p>
 

@@ -24,7 +24,7 @@ function SectionCard({
     <div className="rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm p-6">
       <h2 className="text-base font-semibold text-slate-100 mb-1">{title}</h2>
       {description && (
-        <p className="text-xs text-slate-500 mb-4">{description}</p>
+        <p className="text-xs text-slate-400 mb-4">{description}</p>
       )}
       {children}
     </div>
@@ -282,7 +282,7 @@ export default function SettingsPage() {
         </div>
 
         {!loaded ? (
-          <div className="flex items-center gap-3 text-sm text-slate-500">
+          <div className="flex items-center gap-3 text-sm text-slate-400">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-700 border-t-teal-400" />
             Loading your settings…
           </div>
@@ -340,7 +340,7 @@ export default function SettingsPage() {
               description="Define named delivery/visit windows like Breakfast or Evening. Staff routes are constrained to fit within these."
             >
               {windows.length === 0 ? (
-                <p className="text-xs text-slate-500 mb-4">
+                <p className="text-xs text-slate-400 mb-4">
                   No windows yet. Add Breakfast, Lunch, Tea, Bedtime…
                 </p>
               ) : (
@@ -354,7 +354,7 @@ export default function SettingsPage() {
                         <p className="text-sm font-medium text-slate-200">
                           {w.name}
                         </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className="text-xs text-slate-400 mt-0.5">
                           {w.start} – {w.end}
                           {w.minGapToNext > 0 && (
                             <span className="ml-2 text-slate-600">

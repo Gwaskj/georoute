@@ -109,7 +109,7 @@ export default function Page() {
           efficient on paper and useless in practice. With a gap of, say, three
           hours, the calls spread naturally across the day. Combine it with call
           purposes — covered in{" "}
-          <Link href="/help/time-windows" className="text-teal-400 hover:text-teal-300">
+          <Link href="/help/time-windows" className="text-teal-400 underline hover:text-teal-300">
             call purposes and time windows
           </Link>{" "}
           — when the calls also need to sit in particular parts of the day.

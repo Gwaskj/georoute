@@ -37,11 +37,11 @@ const steps = [
 const faqs = [
   {
     q: "Do I need an account to try it?",
-    a: "No. Free mode runs entirely in your browser session and needs no sign-up. You can add up to 2 staff and 10 appointments to see how it behaves on your own postcodes. Creating a Pro account raises that to unlimited staff and up to 100 appointments a day, and saves your data to the cloud so it is there next time.",
+    a: "No. Free mode needs no sign-up. You can add up to 2 staff and 10 appointments to see how it behaves on your own postcodes. Creating a Pro account raises that to unlimited staff and up to 100 appointments a day, and adds the calendar for recurring visits.",
   },
   {
-    q: "What happens to my data in free mode?",
-    a: "It stays in your browser's session storage and is never sent to our servers. Closing the tab clears it. That also means free mode cannot carry a round over from one day to the next — for that you need a Pro account.",
+    q: "Where is my data stored?",
+    a: "In your own browser, on every plan, and never on our servers. It stays there when you close the tab or restart your computer, so your staff list and clients are waiting next time. It does not sync between devices, and clearing your browsing data removes it — use the export in Settings to keep a backup.",
   },
   {
     q: "Do I have to enter full addresses?",
@@ -100,11 +100,11 @@ export default function Page() {
         </p>
         <p>
           Once the basics are working, the guides on{" "}
-          <Link href="/help/time-windows" className="text-teal-400 hover:text-teal-300">
+          <Link href="/help/time-windows" className="text-teal-400 underline hover:text-teal-300">
             call purposes and time windows
           </Link>{" "}
           and{" "}
-          <Link href="/help/appointments-and-visits" className="text-teal-400 hover:text-teal-300">
+          <Link href="/help/appointments-and-visits" className="text-teal-400 underline hover:text-teal-300">
             double-ups and repeat visits
           </Link>{" "}
           cover the constraints that make real rounds harder than a simple list

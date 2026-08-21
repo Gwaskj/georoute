@@ -81,26 +81,50 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ThemeProvider>
           <div className="flex min-h-screen flex-col">
 
+            {/* Hidden until focused. Without it, reaching the page content by
+                keyboard means tabbing through the whole navigation on every
+                single page -- and the help section alone is nine links. */}
+            <a
+              href="#main"
+              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-teal-500 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-slate-950"
+            >
+              Skip to main content
+            </a>
+
             <HeaderLoader />
 
             {/* Wraps only the page, not the header and footer: a render error
                 in one route should leave the site navigable rather than
                 replacing everything with an apology. */}
-            <main className="flex-1">
+            <main id="main" tabIndex={-1} className="flex-1">
               <ErrorBoundary>{children}</ErrorBoundary>
             </main>
 
             <footer className="border-t border-slate-800 bg-slate-950/80">
-              <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-4 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-                <span>© {new Date().getFullYear()} GeoRoutes. All rights reserved.</span>
-                <div className="flex items-center gap-4">
-                  <span className="hidden sm:inline">Smarter route planning for teams that don’t slow down.</span>
-                  <Link href="/how-it-works" className="hover:text-slate-200">How It Works</Link>
+              <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-5 text-xs text-slate-400">
+                <nav
+                  aria-label="Footer"
+                  className="flex flex-wrap items-center gap-x-4 gap-y-2"
+                >
+                  <Link href="/how-it-works" className="hover:text-slate-200">How it works</Link>
                   <Link href="/help" className="hover:text-slate-200">Help</Link>
+                  <Link href="/pricing" className="hover:text-slate-200">Pricing</Link>
                   <Link href="/calendar" className="hover:text-slate-200">Calendar</Link>
-                  <Link href="/privacy" className="hover:text-slate-200">Privacy Policy</Link>
-                  <Link href="/terms" className="hover:text-slate-200">Terms of Service</Link>
+                  <Link href="/security" className="hover:text-slate-200">Security</Link>
+                  <Link href="/privacy" className="hover:text-slate-200">Privacy</Link>
+                  <Link href="/terms" className="hover:text-slate-200">Terms</Link>
+                  <Link href="/accessibility" className="hover:text-slate-200">Accessibility</Link>
                   <ConsentSettingsLink />
+                </nav>
+
+                <div className="flex flex-col gap-1 border-t border-slate-800/80 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span>© {new Date().getFullYear()} GeoRoutes. All rights reserved.</span>
+                  {/* Your clients' data never reaching us is the single most
+                      useful thing a visitor can learn, so it says so on every
+                      page rather than only in the policy nobody opens. */}
+                  <span className="text-slate-400">
+                    Client data stays in your browser — it never reaches our servers.
+                  </span>
                 </div>
               </div>
             </footer>

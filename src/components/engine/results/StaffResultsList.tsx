@@ -27,7 +27,7 @@ const fmtClock = (d: Date) => d.toLocaleTimeString([], { hour: "2-digit", minute
 
 function TravelRow({ leg }: { leg: StaffLeg }) {
   return (
-    <div className="flex items-center justify-between px-2 py-0.5 text-[10px] text-slate-500">
+    <div className="flex items-center justify-between px-2 py-0.5 text-[10px] text-slate-400">
       <span>
         🚗 {leg.travelMinutes != null ? `${leg.travelMinutes} min · ${leg.distanceMiles} mi` : "calculating…"} from {leg.fromLabel}
       </span>
@@ -159,7 +159,7 @@ export default function StaffResultsList({
                   </div>
 
                   {count === 0 ? (
-                    <p className="mt-1 text-[11px] text-slate-500">
+                    <p className="mt-1 text-[11px] text-slate-400">
                       No appointments allocated.
                     </p>
                   ) : hasBigGap ? (
@@ -219,7 +219,7 @@ export default function StaffResultsList({
                             </div>
                           </li>
                           {legScheduleLoading && (
-                            <li className="px-2 text-[10px] text-slate-500">
+                            <li className="px-2 text-[10px] text-slate-400">
                               Calculating travel times…
                             </li>
                           )}

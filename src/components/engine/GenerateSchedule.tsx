@@ -289,14 +289,14 @@ export default function GenerateSchedule({
           className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
         />
         <div className="mt-1 flex items-center justify-between gap-2">
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] text-slate-400">
             {dueAppointments.length} appointment
             {dueAppointments.length === 1 ? "" : "s"} due
           </p>
           {/* Pro-only page; free users get an explanation rather than the grid. */}
           <Link
             href="/calendar"
-            className="text-[11px] text-teal-400 hover:text-teal-300"
+            className="text-[11px] text-teal-400 underline hover:text-teal-300"
           >
             Open calendar →
           </Link>

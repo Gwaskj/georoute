@@ -57,8 +57,9 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="mt-8 space-y-5">
           <div className="space-y-1">
-            <label className="text-sm text-slate-300">Email</label>
+            <label className="text-sm text-slate-300" htmlFor="login-email">Email</label>
             <input
+              id="login-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -68,8 +69,9 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm text-slate-300">Password</label>
+            <label className="text-sm text-slate-300" htmlFor="login-password">Password</label>
             <input
+              id="login-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -93,7 +95,7 @@ export default function LoginPage() {
 
         <p className="mt-6 text-xs text-slate-400 text-center">
           Don’t have an account?{" "}
-          <Link href="/signup" className="text-teal-300 hover:text-teal-200">
+          <Link href="/signup" className="text-teal-300 underline hover:text-teal-200">
             Create one
           </Link>
         </p>

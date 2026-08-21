@@ -184,7 +184,7 @@ export default function Page() {
         </p>
         <p>
           If several visits share a clinical window, the guide on{" "}
-          <Link href="/help/time-windows" className="text-teal-400 hover:text-teal-300">
+          <Link href="/help/time-windows" className="text-teal-400 underline hover:text-teal-300">
             call purposes and time windows
           </Link>{" "}
           explains how to define that window once and apply it by tagging rather
