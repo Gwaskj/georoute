@@ -44,7 +44,7 @@ export const GUIDES: Guide[] = [
       "A step-by-step walkthrough for building your first optimised schedule in GeoRoutes, from adding staff to reading the finished route.",
     category: "basics",
     minutes: 6,
-    updated: "2026-07-29",
+    updated: "2026-08-20",
   },
   {
     slug: "staff-and-skills",
@@ -54,7 +54,7 @@ export const GUIDES: Guide[] = [
       "Add staff, set individual working hours, choose whether someone starts from home or the office, and use skills so visits reach qualified people only.",
     category: "basics",
     minutes: 7,
-    updated: "2026-07-29",
+    updated: "2026-08-20",
   },
   {
     slug: "appointments-and-visits",
@@ -74,7 +74,7 @@ export const GUIDES: Guide[] = [
       "Schedule several visits a day to one person with a minimum gap between them — morning, lunch, tea and bed calls — or run without repeat visits at all.",
     category: "basics",
     minutes: 8,
-    updated: "2026-08-04",
+    updated: "2026-08-20",
   },
   {
     slug: "time-windows",
@@ -84,7 +84,7 @@ export const GUIDES: Guide[] = [
       "Keep morning calls in the morning, pin time-critical visits to an exact time, and use call purposes and custom windows to control when visits happen.",
     category: "basics",
     minutes: 7,
-    updated: "2026-07-29",
+    updated: "2026-08-20",
   },
   {
     slug: "reading-your-schedule",
@@ -94,7 +94,7 @@ export const GUIDES: Guide[] = [
       "How to interpret the generated schedule, follow each staff member's route on the map, and act on the warnings and hints the scheduler produces.",
     category: "basics",
     minutes: 6,
-    updated: "2026-07-29",
+    updated: "2026-08-20",
   },
   {
     slug: "care-planning",
@@ -104,7 +104,7 @@ export const GUIDES: Guide[] = [
       "Care planning software for home care: building morning, lunch, tea and bed call rounds, handling double-up calls, and keeping continuity of carer.",
     category: "sector",
     minutes: 9,
-    updated: "2026-08-09",
+    updated: "2026-08-20",
   },
   {
     slug: "community-nursing",
@@ -114,7 +114,7 @@ export const GUIDES: Guide[] = [
       "Scheduling for district and community nursing: insulin and medication rounds with strict times, clinical skill matching, and caseloads that change daily.",
     category: "sector",
     minutes: 9,
-    updated: "2026-08-09",
+    updated: "2026-08-20",
   },
   {
     slug: "occupational-therapy",
@@ -124,7 +124,7 @@ export const GUIDES: Guide[] = [
       "How occupational therapy teams plan long assessment visits, equipment reviews and joint visits, where travel dominates a day with few appointments.",
     category: "sector",
     minutes: 8,
-    updated: "2026-08-09",
+    updated: "2026-08-20",
   },
   {
     slug: "physiotherapy",
@@ -134,7 +134,7 @@ export const GUIDES: Guide[] = [
       "Scheduling community physiotherapy and rehab: treatment blocks, repeat visits across a course of treatment, and balancing home visits against clinic sessions.",
     category: "sector",
     minutes: 8,
-    updated: "2026-08-09",
+    updated: "2026-08-20",
   },
 ];
 
