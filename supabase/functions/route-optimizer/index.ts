@@ -13,8 +13,13 @@ const corsHeaders = {
 };
 
 interface RouteRequest {
-  originPostcode: string;
-  destinationPostcode: string;
+  originPostcode?: string;
+  destinationPostcode?: string;
+  /** ISO 3166-1 alpha-2. Defaults to GB, so existing callers are unaffected. */
+  country?: string;
+  /** Look a single postcode up rather than route between two. */
+  geocodeOnly?: boolean;
+  postcode?: string;
 }
 
 interface CacheEntry {
@@ -42,6 +47,32 @@ serve(async (req: Request) => {
     }
 
     const body: RouteRequest = await req.json();
+
+    // Defaults to GB so every existing caller keeps working unchanged.
+    const SUPPORTED = ["GB", "US", "CA", "IE", "AU", "NZ"];
+    const country = SUPPORTED.includes((body.country ?? "").toUpperCase())
+      ? (body.country as string).toUpperCase()
+      : "GB";
+
+    // A lookup on its own, for checking a postcode as it is typed. Same
+    // provider and same country scoping as routing uses, so "valid" keeps
+    // meaning "the router will be able to place this".
+    if (body.geocodeOnly) {
+      const key = Deno.env.get("DENO_ORS_API_KEY");
+      if (!body.postcode || !key) {
+        return new Response(JSON.stringify({ found: null }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const hit = await geocode(body.postcode.trim().toUpperCase(), country, key);
+      return new Response(
+        JSON.stringify(
+          hit ? { found: true, place: hit.place } : { found: false }
+        ),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!body.originPostcode || !body.destinationPostcode) {
       return new Response(
@@ -76,6 +107,9 @@ serve(async (req: Request) => {
     const { data: cached, error: cacheError } = await supabase
       .from("route_cache")
       .select("id, origin_postcode, destination_postcode, distance_km, duration_minutes, polyline, last_used_at")
+      // Country is part of the key. Postcode formats repeat across countries,
+      // so a pair only identifies a journey alongside the country it is in.
+      .eq("country", country)
       .eq("origin_postcode", origin)
       .eq("destination_postcode", destination)
       .maybeSingle();
@@ -128,10 +162,12 @@ serve(async (req: Request) => {
       throw new Error("ORS API key not configured (DENO_ORS_API_KEY)");
     }
 
-    const [originCoords, destCoords] = await Promise.all([
-      geocodePostcode(origin),
-      geocodePostcode(destination),
+    const [originHit, destHit] = await Promise.all([
+      geocode(origin, country, orsKey),
+      geocode(destination, country, orsKey),
     ]);
+    const originCoords = originHit?.coords ?? null;
+    const destCoords = destHit?.coords ?? null;
 
     if (!originCoords || !destCoords) {
       const message = `Could not geocode one or both postcodes: ${origin}, ${destination}`;
@@ -161,6 +197,7 @@ serve(async (req: Request) => {
 
     // ---- STEP 4: Store in cache ----
     const cachePayload = {
+      country,
       origin_postcode: origin,
       destination_postcode: destination,
       distance_km: routeResult.distance_km,
@@ -173,7 +210,7 @@ serve(async (req: Request) => {
     const { error: upsertError } = await supabase
       .from("route_cache")
       .upsert(cachePayload, {
-        onConflict: "origin_postcode, destination_postcode",
+        onConflict: "country, origin_postcode, destination_postcode",
         ignoreDuplicates: false,
       });
 
@@ -220,8 +257,24 @@ async function logRoutingEvent(
   }
 }
 
-// ── Geocode a UK postcode to [lng, lat] using postcodes.io ──
-async function geocodePostcode(postcode: string): Promise<[number, number] | null> {
+// ── Geocoding ───────────────────────────────────────────────────────────
+//
+// Two providers, chosen by country. The UK keeps postcodes.io: free, no key,
+// no quota, and more accurate for UK postcodes than any general geocoder.
+// Everywhere else uses ORS, which is global.
+//
+// Every lookup names its country. Asked as free text, a geocoder placed the
+// Canadian postal code K1A 0B1 in Pike County, Kentucky -- a confident answer,
+// a thousand miles wrong. In a tool that tells a carer where to drive, a wrong
+// country has to be impossible to express rather than merely unlikely.
+
+interface GeocodeResult {
+  coords: [number, number];
+  /** A human-readable place, shown back to confirm the right thing was found. */
+  place: string | null;
+}
+
+async function geocodePostcodesIo(postcode: string): Promise<GeocodeResult | null> {
   const url = `https://api.postcodes.io/postcodes/${encodeURIComponent(postcode)}`;
 
   const res = await fetch(url);
@@ -237,7 +290,72 @@ async function geocodePostcode(postcode: string): Promise<[number, number] | nul
   }
 
   // postcodes.io returns { latitude, longitude }; ORS needs [lng, lat]
-  return [data.result.longitude, data.result.latitude] as [number, number];
+  return {
+    coords: [data.result.longitude, data.result.latitude],
+    place: data.result.admin_district ?? data.result.region ?? null,
+  };
+}
+
+async function geocodeOrs(
+  postcode: string,
+  country: string,
+  apiKey: string
+): Promise<GeocodeResult | null> {
+  const url =
+    `https://api.openrouteservice.org/geocode/search` +
+    `?api_key=${encodeURIComponent(apiKey)}` +
+    `&text=${encodeURIComponent(postcode)}` +
+    // The country filter is the whole point. Without it the same query can
+    // resolve to a similarly-shaped code on another continent.
+    `&boundary.country=${encodeURIComponent(country)}` +
+    `&size=1`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.error(`ORS geocode failed for ${postcode} (${country}): ${res.status}`);
+    return null;
+  }
+
+  const data = await res.json();
+  const feature = data?.features?.[0];
+  if (!feature?.geometry?.coordinates) {
+    console.error(`No ORS geocode result for ${postcode} (${country})`);
+    return null;
+  }
+
+  // Refuse an answer from the wrong country even when one comes back. The
+  // filter should prevent it; this is what makes it a guarantee rather than a
+  // parameter we hope was honoured.
+  const got = feature.properties?.country_a;
+  if (got && !sameCountry(got, country)) {
+    console.error(`ORS returned ${got} for a ${country} lookup: ${postcode}`);
+    return null;
+  }
+
+  const p = feature.properties ?? {};
+  return {
+    coords: feature.geometry.coordinates as [number, number],
+    place: p.region ?? p.county ?? p.locality ?? p.label ?? null,
+  };
+}
+
+/** ORS reports ISO 3166-1 alpha-3; our country codes are alpha-2. */
+const ALPHA3: Record<string, string> = {
+  GB: "GBR", US: "USA", CA: "CAN", IE: "IRL", AU: "AUS", NZ: "NZL",
+};
+
+function sameCountry(alpha3: string, alpha2: string): boolean {
+  return ALPHA3[alpha2] === alpha3;
+}
+
+async function geocode(
+  postcode: string,
+  country: string,
+  apiKey: string
+): Promise<GeocodeResult | null> {
+  return country === "GB"
+    ? await geocodePostcodesIo(postcode)
+    : await geocodeOrs(postcode, country, apiKey);
 }
 
 // ── Call ORS directions API ──

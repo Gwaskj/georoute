@@ -64,6 +64,8 @@ export default function GenerateSchedule({
   const { windows } = useCustomWindowStore();
   const { settings, loaded: settingsLoaded, loadSettings } = useSettingsStore();
   const officePostcode = settings.officePostcode;
+  // Decides which geocoder answers and forms part of the routing cache key.
+  const country = settings.country;
 
   const { visits, warnings, hints, setResult } = useScheduleResultStore();
   const [isRunning, setIsRunning] = useState(false);
@@ -161,7 +163,7 @@ export default function GenerateSchedule({
           continue;
         }
         fetchPromises.push(
-          getRouteBatched(from, to).then((route) => {
+          getRouteBatched(from, to, country).then((route) => {
             if (route === null) {
               failedPairs.push(`${from} → ${to}`);
             } else {
@@ -194,7 +196,10 @@ export default function GenerateSchedule({
       // "one or both", so it does not resolve it either.
       const norm = (p: string) => p.trim().toUpperCase();
       const checked = await Promise.all(
-        postcodes.map(async (pc) => ({ pc: norm(pc), result: await checkPostcode(pc) }))
+        postcodes.map(async (pc) => ({
+          pc: norm(pc),
+          result: await checkPostcode(pc, country),
+        }))
       );
       const culprits = checked
         .filter((c) => c.result.status === "not-found" || c.result.status === "malformed")

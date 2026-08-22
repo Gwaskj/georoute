@@ -5,16 +5,20 @@
 // carries the typo. Checking at the point of entry catches it while they are
 // still looking at the field that caused it.
 //
-// postcodes.io is the same service the routing Edge Function geocodes with, so
-// "valid" here means "the router will be able to place this" rather than
-// merely "well formed" -- a postcode of the right shape that does not exist,
-// which is what a typo usually produces, is exactly the case a regex misses.
+// The UK path still goes to postcodes.io, which is free, fast, needs no key and
+// is more accurate for UK postcodes than any general geocoder. Everywhere else
+// goes through the routing function, which geocodes scoped to one country --
+// asked without a country, a public geocoder places the Canadian postal code
+// K1A 0B1 in Kentucky.
+
+import { countryConfig, type CountryCode, DEFAULT_COUNTRY } from "@/lib/geo/countries";
+import { supabase } from "@/lib/supabase/client";
 
 export type PostcodeCheck =
   | { status: "empty" }
   /** Wrong shape -- no point asking the network about it. */
   | { status: "malformed" }
-  /** Correct shape and a real postcode. `place` is the district, shown back as confirmation. */
+  /** Correct shape and a real postcode. `place` is shown back as confirmation. */
   | { status: "valid"; place: string | null }
   /** Correct shape but no such postcode. Nearly always a typo. */
   | { status: "not-found" }
@@ -24,25 +28,28 @@ export type PostcodeCheck =
 /**
  * Shape check for a UK postcode, including the GIR 0AA special case.
  *
- * Used only to avoid pointless network calls while someone is mid-type; the
- * authority on whether a postcode exists is the lookup, not this pattern.
+ * Kept exported because several callers still use it directly for UK-only
+ * paths; new code should prefer looksLikePostcode with a country.
  */
 export function looksLikeUkPostcode(value: string): boolean {
-  const v = value.trim().toUpperCase().replace(/\s+/g, " ");
-  if (v === "GIR 0AA" || v === "GIR0AA") return true;
-  return /^[A-Z]{1,2}[0-9][A-Z0-9]?\s?[0-9][A-Z]{2}$/.test(v);
+  return looksLikePostcode(value, "GB");
 }
 
-/** Uppercase, single space before the inward code. */
-export function normalisePostcode(value: string): string {
-  const v = value.trim().toUpperCase().replace(/\s+/g, "");
-  if (v.length < 5) return v;
-  return `${v.slice(0, v.length - 3)} ${v.slice(-3)}`;
+export function looksLikePostcode(value: string, country: CountryCode): boolean {
+  const cfg = countryConfig(country);
+  return cfg.pattern.test(cfg.normalise(value));
+}
+
+/** Uppercase, single space before the inward code. UK shape. */
+export function normalisePostcode(value: string, country: CountryCode = DEFAULT_COUNTRY): string {
+  return countryConfig(country).normalise(value);
 }
 
 // Postcodes do not change while a form is open, so a result is worth keeping:
 // editing the surrounding fields, or reopening the dialog to correct something
-// else, should not re-ask the network about a postcode already confirmed.
+// else, should not re-ask the network about one already confirmed. Keyed by
+// country as well as value, because "3000" is a real postcode in more than one
+// place and they are not the same place.
 const cache = new Map<string, PostcodeCheck>();
 
 export function clearPostcodeCache(): void {
@@ -51,55 +58,96 @@ export function clearPostcodeCache(): void {
 
 export async function checkPostcode(
   value: string,
+  country: CountryCode = DEFAULT_COUNTRY,
   signal?: AbortSignal
 ): Promise<PostcodeCheck> {
   const raw = value.trim();
   if (!raw) return { status: "empty" };
 
-  const normalised = normalisePostcode(raw);
-  if (!looksLikeUkPostcode(normalised)) return { status: "malformed" };
+  const cfg = countryConfig(country);
+  const normalised = cfg.normalise(raw);
+  if (!cfg.pattern.test(normalised)) return { status: "malformed" };
 
-  const cached = cache.get(normalised);
+  const key = `${cfg.code}:${normalised}`;
+  const cached = cache.get(key);
   if (cached) return cached;
 
-  let result: PostcodeCheck;
+  const result =
+    cfg.code === "GB"
+      ? await checkViaPostcodesIo(normalised, signal)
+      : await checkViaGeocoder(normalised, cfg.code);
+
+  // An unavailable lookup is a fact about the network right now, not about the
+  // postcode, so it must not be remembered as a verdict.
+  if (result.status !== "unavailable") cache.set(key, result);
+  return result;
+}
+
+async function checkViaPostcodesIo(
+  normalised: string,
+  signal?: AbortSignal
+): Promise<PostcodeCheck> {
   try {
     const res = await fetch(
       `https://api.postcodes.io/postcodes/${encodeURIComponent(normalised)}`,
       { signal }
     );
-    if (res.status === 404) {
-      result = { status: "not-found" };
-    } else if (!res.ok) {
+    if (res.status === 404) return { status: "not-found" };
+    if (!res.ok) {
       // Rate limited, 5xx, anything else -- not the person's fault, so it must
       // not read as "your postcode is wrong".
       return { status: "unavailable" };
-    } else {
-      const json = await res.json();
-      const r = json?.result;
-      result = {
-        status: "valid",
-        place: r?.admin_district ?? r?.parish ?? r?.region ?? null,
-      };
     }
+    const json = await res.json();
+    const r = json?.result;
+    return {
+      status: "valid",
+      place: r?.admin_district ?? r?.parish ?? r?.region ?? null,
+    };
   } catch {
     // Offline, blocked, or aborted. Never block submission on this.
     return { status: "unavailable" };
   }
+}
 
-  cache.set(normalised, result);
-  return result;
+/**
+ * Everywhere except the UK, via the routing function.
+ *
+ * Done there rather than from the browser because that is where the geocoding
+ * key lives, and because it is the same lookup the router will perform -- so
+ * "valid" keeps meaning "the router will be able to place this" rather than
+ * dropping to "looks about right".
+ */
+async function checkViaGeocoder(
+  normalised: string,
+  country: CountryCode
+): Promise<PostcodeCheck> {
+  try {
+    const { data, error } = await supabase.functions.invoke("route-optimizer", {
+      body: { geocodeOnly: true, postcode: normalised, country },
+    });
+    if (error) return { status: "unavailable" };
+    if (data?.found === false) return { status: "not-found" };
+    if (!data?.found) return { status: "unavailable" };
+    return { status: "valid", place: data.place ?? null };
+  } catch {
+    return { status: "unavailable" };
+  }
 }
 
 /** Message shown under the field, or null where saying nothing is better. */
-export function postcodeMessage(check: PostcodeCheck): string | null {
+export function postcodeMessage(
+  check: PostcodeCheck,
+  country: CountryCode = DEFAULT_COUNTRY
+): string | null {
+  const label = countryConfig(country).postcodeLabel.toLowerCase();
   switch (check.status) {
     case "malformed":
-      return "That does not look like a UK postcode.";
+      return `That does not look like a ${countryConfig(country).name} ${label}.`;
     case "not-found":
-      return "No such UK postcode — check for a typo.";
+      return `No such ${label} — check for a typo.`;
     case "valid":
-      return check.place ? `Recognised — ${check.place}` : "Recognised postcode";
+      return check.place ? `Recognised — ${check.place}` : `Recognised ${label}`;
     // "empty" and "unavailable" both stay silent: nothing has been typed yet,
     // or the checker is the thing that failed, and neither is worth a warning.
     default:

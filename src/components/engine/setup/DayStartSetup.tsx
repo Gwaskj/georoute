@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSettingsStore } from "@/store/settingsStore";
+import {
+  COUNTRY_LIST,
+  countryConfig,
+  type CountryCode,
+} from "@/lib/geo/countries";
 
 /**
  * Where the working day starts, shown on the Setup tab.
@@ -24,9 +29,12 @@ export default function DayStartSetup() {
     setOfficePostcode,
     setDayStart,
     setDayEnd,
+    setCountry,
     loadSettings,
     saveSettings,
   } = useSettingsStore();
+
+  const country = countryConfig(settings.country);
 
   const [saved, setSaved] = useState(false);
 
@@ -67,13 +75,40 @@ export default function DayStartSetup() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_1fr]">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.2fr_2fr_1fr_1fr]">
+        <div>
+          <label
+            htmlFor="setup-country"
+            className="mb-1 block text-xs font-medium text-slate-400"
+          >
+            Country
+          </label>
+          <select
+            id="setup-country"
+            value={settings.country}
+            onChange={(e) => {
+              setCountry(e.target.value as CountryCode);
+              // Committed immediately rather than on blur: a select has no
+              // meaningful blur for a keyboard user, and every label on the
+              // page changes as a result of this one.
+              void commit();
+            }}
+            className={field}
+          >
+            {COUNTRY_LIST.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div>
           <label
             htmlFor="setup-office-postcode"
             className="mb-1 block text-xs font-medium text-slate-400"
           >
-            Office postcode
+            Office {country.postcodeLabel.toLowerCase()}
           </label>
           <input
             id="setup-office-postcode"
@@ -81,7 +116,7 @@ export default function DayStartSetup() {
             value={settings.officePostcode}
             onChange={(e) => setOfficePostcode(e.target.value)}
             onBlur={commit}
-            placeholder="e.g. LS1 1UR"
+            placeholder={`e.g. ${country.example}`}
             aria-describedby="setup-office-help"
             className={field}
           />

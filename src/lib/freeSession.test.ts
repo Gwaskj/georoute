@@ -209,7 +209,7 @@ describe("local scheduler storage", () => {
     await source.updateSchedulerData((d) => ({
       ...d,
       staff: [staff("Priya")],
-      settings: { officePostcode: "LS1 1UR", dayStart: "07:00", dayEnd: "21:00" },
+      settings: { officePostcode: "LS1 1UR", dayStart: "07:00", dayEnd: "21:00", country: "GB" },
     }));
     const backup = await source.exportSchedulerData();
 
@@ -227,7 +227,7 @@ describe("local scheduler storage", () => {
     await Promise.all([
       s.updateSchedulerData((d) => ({
         ...d,
-        settings: { officePostcode: "LS1 1UR", dayStart: "06:00", dayEnd: "22:00" },
+        settings: { officePostcode: "LS1 1UR", dayStart: "06:00", dayEnd: "22:00", country: "GB" },
       })),
       s.updateSchedulerData((d) => ({ ...d, staff: [staff("Priya")] })),
     ]);

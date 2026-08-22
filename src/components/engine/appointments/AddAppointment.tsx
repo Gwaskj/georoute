@@ -9,6 +9,8 @@ import {
 } from "@/store/appointmentStore";
 
 import { useSkillsStore, Skill } from "@/store/skillsStore";
+import { useSettingsStore } from "@/store/settingsStore";
+import { countryConfig } from "@/lib/geo/countries";
 import PostcodeHint from "@/components/common/PostcodeHint";
 import type { RecurFreq } from "@/lib/recurrence/occurrences";
 import { useCustomWindowStore } from "@/store/customWindowStore";   // ⭐ FIXED
@@ -73,6 +75,10 @@ const emptyForm: AppointmentFormState = {
 export default function AddAppointment({ isFree }: AddAppointmentProps) {
   const { appointments, addAppointment, updateAppointment, clearAllAppointments } = useAppointmentStore();
   const { skills } = useSkillsStore();
+  // "Postcode", "ZIP code" or "Postal code", following the workspace country.
+  const postcodeLabel = useSettingsStore((s) =>
+    countryConfig(s.settings.country).postcodeLabel
+  );
   const clearScheduleResult = useScheduleResultStore((s) => s.clearResult);
 
   const canAddMore = useMemo(() => {
@@ -297,7 +303,7 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-medium" htmlFor="addappointment-postcode">Postcode</label>
+                  <label className="mb-1 block font-medium" htmlFor="addappointment-postcode">{postcodeLabel}</label>
                   <input id="addappointment-postcode"
                     type="text"
                     value={form.postcode}

@@ -3,6 +3,7 @@
 // which handles ORS API calls with Supabase caching.
 
 import { supabase } from "@/lib/supabase/client";
+import { type CountryCode, DEFAULT_COUNTRY } from "@/lib/geo/countries";
 
 export interface RouteResult {
   distance_km: number;
@@ -28,7 +29,8 @@ export function getRouteErrors(): Map<string, string> {
  */
 export async function getRoute(
   originPostcode: string,
-  destinationPostcode: string
+  destinationPostcode: string,
+  country: CountryCode = DEFAULT_COUNTRY
 ): Promise<RouteResult | null> {
   const origin = originPostcode.trim().toUpperCase();
   const destination = destinationPostcode.trim().toUpperCase();
@@ -49,7 +51,10 @@ export async function getRoute(
 
   try {
     const { data, error } = await supabase.functions.invoke("route-optimizer", {
-      body: { originPostcode: origin, destinationPostcode: destination },
+      // Country decides which geocoder answers, and is part of the cache
+      // key: postcode formats repeat across countries, so a pair only
+      // identifies a journey alongside the country it belongs to.
+      body: { originPostcode: origin, destinationPostcode: destination, country },
     });
 
     if (error) {
@@ -91,8 +96,11 @@ export function clearLocalCache() {
   lastRouteErrors.clear();
 }
 
-function cacheKey(from: string, to: string): string {
-  return `${from}→${to}`;
+// Country is part of the key here too. Without it, switching country mid-
+// session would serve travel times from the previous one out of memory,
+// which the server-side cache would have refused.
+function cacheKey(from: string, to: string, country: string): string {
+  return `${country}:${from}→${to}`;
 }
 
 /**
@@ -101,17 +109,18 @@ function cacheKey(from: string, to: string): string {
  */
 export async function getRouteBatched(
   originPostcode: string,
-  destinationPostcode: string
+  destinationPostcode: string,
+  country: CountryCode = DEFAULT_COUNTRY
 ): Promise<RouteResult | null> {
   const origin = originPostcode.trim().toUpperCase();
   const destination = destinationPostcode.trim().toUpperCase();
-  const key = cacheKey(origin, destination);
+  const key = cacheKey(origin, destination, country);
 
   // Check local cache first
   const local = localRouteCache.get(key);
   if (local) return local;
 
-  const result = await getRoute(origin, destination);
+  const result = await getRoute(origin, destination, country);
   if (!result) return null;
 
   localRouteCache.set(key, result);

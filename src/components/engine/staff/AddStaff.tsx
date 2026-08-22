@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useStaffStore, Staff, Gender, StartLocation, StaffBreak } from "@/store/staffStore";
 import { useSkillsStore, Skill } from "@/store/skillsStore";
 import { useSettingsStore } from "@/store/settingsStore";
+import { countryConfig } from "@/lib/geo/countries";
 import PostcodeHint from "@/components/common/PostcodeHint";
 import { normalisePostcode } from "@/lib/postcode/validate";
 
@@ -408,6 +409,12 @@ function StaffForm({
   handleAddSkillFromInput,
   errors,
 }: StaffFormProps) {
+  // Read here rather than threaded down as a prop: every postcode field should
+  // follow the workspace country without each caller remembering to pass it.
+  const postcodeLabel = useSettingsStore((s) =>
+    countryConfig(s.settings.country).postcodeLabel
+  );
+
   return (
     <>
       <div>
@@ -421,7 +428,7 @@ function StaffForm({
       </div>
 
       <div>
-        <label className="mb-1 block font-medium text-slate-200" htmlFor="addstaff-home-postcode">Home postcode</label>
+        <label className="mb-1 block font-medium text-slate-200" htmlFor="addstaff-home-postcode">Home {postcodeLabel.toLowerCase()}</label>
         <input id="addstaff-home-postcode"
           type="text"
           value={form.homePostcode}
@@ -441,14 +448,14 @@ function StaffForm({
       </div>
 
       <div>
-        <label className="mb-1 block font-medium text-slate-200" htmlFor="addstaff-office-postcode">Office postcode</label>
+        <label className="mb-1 block font-medium text-slate-200" htmlFor="addstaff-office-postcode">Office {postcodeLabel.toLowerCase()}</label>
         <input id="addstaff-office-postcode"
           type="text"
           value={form.officePostcode}
           onChange={(e) =>
             setForm((f) => ({ ...f, officePostcode: e.target.value }))
           }
-          placeholder="Leave blank to use global office postcode"
+          placeholder={`Leave blank to use the global office ${postcodeLabel.toLowerCase()}`}
           className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-100"
         />
         {errors.office ? (

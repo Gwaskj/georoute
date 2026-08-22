@@ -2,6 +2,7 @@
 
 import { usePostcodeCheck } from "@/lib/postcode/usePostcodeCheck";
 import { postcodeMessage } from "@/lib/postcode/validate";
+import { useSettingsStore } from "@/store/settingsStore";
 
 /**
  * Inline feedback under a postcode field.
@@ -13,8 +14,11 @@ import { postcodeMessage } from "@/lib/postcode/validate";
  * catching the ordinary typo at the moment it is made rather than at the end.
  */
 export default function PostcodeHint({ value }: { value: string }) {
-  const check = usePostcodeCheck(value);
-  const message = postcodeMessage(check);
+  // Read from the store rather than passed in, so every field using this hint
+  // follows the workspace's country without each caller having to remember.
+  const country = useSettingsStore((s) => s.settings.country);
+  const check = usePostcodeCheck(value, country);
+  const message = postcodeMessage(check, country);
   if (!message) return null;
 
   const tone =
