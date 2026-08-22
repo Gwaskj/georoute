@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 const CONTACT_EMAIL = "support@georoutes.co.uk";
-const LAST_UPDATED = "20 August 2026";
+const LAST_UPDATED = "22 August 2026";
 
 function Section({
   title,
@@ -93,6 +93,21 @@ export default function AccessibilityPage() {
                 Text can be resized and the layout reflows down to a narrow
                 phone screen without horizontal scrolling.
               </li>
+              <li>
+                Every interactive element shows a visible focus ring, and a
+                &ldquo;skip to main content&rdquo; link appears on first tab so
+                the navigation does not have to be traversed on every page.
+              </li>
+              <li>
+                Each staff member&rsquo;s round in the results list is a
+                standard expand-and-collapse control, announcing whether it is
+                open, with the round itself outside the button rather than
+                nested inside it.
+              </li>
+              <li>
+                A request for reduced motion is respected: animations and
+                transitions are effectively disabled.
+              </li>
             </ul>
           </Section>
 
@@ -102,14 +117,6 @@ export default function AccessibilityPage() {
               than a statement that implies there are none.
             </p>
             <ul className="list-disc space-y-1 pl-5">
-              <li>
-                <strong className="text-slate-200">
-                  The results list nests controls inside a control.
-                </strong>{" "}
-                Each staff member&rsquo;s row is itself clickable and contains
-                further buttons. This is confusing to navigate with a keyboard
-                or screen reader, and is the issue we most want to fix.
-              </li>
               <li>
                 <strong className="text-slate-200">The map is visual.</strong>{" "}
                 Route lines and pins convey information that is only available

@@ -126,20 +126,33 @@ export default function StaffResultsList({
 
             return (
               <li key={s.id}>
+                {/* A disclosure, not a clickable card.
+                 *
+                 * The whole card used to be one div with role="button", and the
+                 * expanded round -- with its own Waze links and a Share button
+                 * -- sat inside it. Nesting controls inside a control is
+                 * ambiguous to a screen reader and awkward from the keyboard,
+                 * and it meant every child had to stopPropagation to avoid
+                 * collapsing the panel it lived in.
+                 *
+                 * Only the summary is the control now. A real <button> also
+                 * brings Enter and Space handling with it, so the hand-rolled
+                 * onKeyDown is gone, and aria-expanded announces the state
+                 * rather than leaving it to be inferred from the layout. */}
                 <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onSelectStaff(isSelected ? null : s.id)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      onSelectStaff(isSelected ? null : s.id);
-                    }
-                  }}
-                  className={`flex w-full flex-col rounded border px-3 py-2 text-left transition-colors cursor-pointer ${
+                  className={`overflow-hidden rounded border transition-colors ${
                     isSelected
                       ? "border-sky-500/70 bg-sky-500/10"
-                      : "border-slate-800 bg-slate-900 hover:bg-slate-800/80"
+                      : "border-slate-800 bg-slate-900"
+                  }`}
+                >
+                <button
+                  type="button"
+                  onClick={() => onSelectStaff(isSelected ? null : s.id)}
+                  aria-expanded={isSelected}
+                  aria-controls={`staff-round-${s.id}`}
+                  className={`flex w-full flex-col px-3 py-2 text-left transition-colors ${
+                    isSelected ? "" : "hover:bg-slate-800/80"
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -171,7 +184,9 @@ export default function StaffResultsList({
                       Fully utilised.
                     </p>
                   )}
+                </button>
 
+                <div id={`staff-round-${s.id}`} className="px-3 pb-2">
                   {isSelected && count > 0 && (() => {
                     const staffLegs = staffLegSchedule ?? [];
                     const firstLeg = staffLegs[0];
@@ -281,10 +296,9 @@ export default function StaffResultsList({
                                 <li key={v.id} className="flex items-stretch gap-1">
                                   <button
                                     type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onSelectVisit(isVisitSelected ? null : v.id);
-                                    }}
+                                    onClick={() =>
+                                      onSelectVisit(isVisitSelected ? null : v.id)
+                                    }
                                     style={{ borderLeftColor: legColor }}
                                     className={`flex min-w-0 flex-1 items-center justify-between rounded border-l-[3px] px-2 py-1 text-[11px] text-left transition-colors ${
                                       isVisitSelected
@@ -305,7 +319,6 @@ export default function StaffResultsList({
                                       href={wazeUrl({ label: v.clientName, postcode: v.postcode })}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      onClick={(e) => e.stopPropagation()}
                                       title={`Navigate to ${v.clientName} in Waze`}
                                       className="flex flex-shrink-0 items-center rounded border border-slate-700 bg-slate-800 px-1.5 text-[10px] text-slate-300 transition-colors hover:border-slate-600 hover:bg-slate-700 hover:text-slate-100"
                                     >
@@ -338,10 +351,9 @@ export default function StaffResultsList({
                             <li>
                               <button
                                 type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onSelectVisit(isReturnSelected ? null : RETURN_TO_BASE_ID);
-                                }}
+                                onClick={() =>
+                                  onSelectVisit(isReturnSelected ? null : RETURN_TO_BASE_ID)
+                                }
                                 style={{ borderLeftColor: LEG_COLORS[staffVisits.length % LEG_COLORS.length] }}
                                 className={`flex w-full items-center justify-between rounded border-l-[3px] px-2 py-1 text-left text-[11px] transition-colors ${
                                   isReturnSelected
@@ -379,6 +391,7 @@ export default function StaffResultsList({
                       </>
                     );
                   })()}
+                </div>
                 </div>
               </li>
             );

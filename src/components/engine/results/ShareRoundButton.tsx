@@ -89,7 +89,7 @@ export default function ShareRoundButton({
     : null;
 
   return (
-    <div className="mt-2 border-t border-slate-700/60 pt-2" onClick={(e) => e.stopPropagation()}>
+    <div className="mt-2 border-t border-slate-700/60 pt-2">
       {!url ? (
         <>
           <button

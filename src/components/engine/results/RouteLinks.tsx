@@ -33,10 +33,7 @@ export default function RouteLinks({ origin, stops, destination }: RouteLinksPro
   const isSplit = parts.length > 1;
 
   return (
-    <div
-      className="mt-2 border-t border-slate-700/60 pt-2"
-      onClick={(e) => e.stopPropagation()}
-    >
+    <div className="mt-2 border-t border-slate-700/60 pt-2">
       <p className="mb-1.5 text-[10px] uppercase tracking-widest text-slate-400">
         Open route in
       </p>
