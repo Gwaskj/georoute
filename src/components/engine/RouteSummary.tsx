@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { useEffect, useState } from "react";
 import { loadFreeSchedulerData } from "@/lib/freeSession";
-import { useUserTier } from "@/lib/hooks/useUserTier";
 
 type RouteSummaryData = {
   total_jobs: number;

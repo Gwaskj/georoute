@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useSkillsStore } from "@/store/skillsStore";
 import { useCustomWindowStore, CustomWindow } from "@/store/customWindowStore";
+import DataBackup from "@/components/settings/DataBackup";
 
 // ─── Input / label primitives ────────────────────────────────
 
@@ -70,10 +71,8 @@ function WindowModal({
 
         <div className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-400">
-              Name
-            </label>
-            <input
+            <label className="mb-1.5 block text-xs font-medium text-slate-400" htmlFor="page-name">Name</label>
+            <input id="page-name"
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -86,10 +85,8 @@ function WindowModal({
 
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="mb-1.5 block text-xs font-medium text-slate-400">
-                Start
-              </label>
-              <input
+              <label className="mb-1.5 block text-xs font-medium text-slate-400" htmlFor="page-start">Start</label>
+              <input id="page-start"
                 type="time"
                 value={form.start}
                 onChange={(e) => setForm({ ...form, start: e.target.value })}
@@ -97,10 +94,8 @@ function WindowModal({
               />
             </div>
             <div className="flex-1">
-              <label className="mb-1.5 block text-xs font-medium text-slate-400">
-                End
-              </label>
-              <input
+              <label className="mb-1.5 block text-xs font-medium text-slate-400" htmlFor="page-end">End</label>
+              <input id="page-end"
                 type="time"
                 value={form.end}
                 onChange={(e) => setForm({ ...form, end: e.target.value })}
@@ -110,10 +105,8 @@ function WindowModal({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-slate-400">
-              Min gap to next appointment (minutes)
-            </label>
-            <input
+            <label className="mb-1.5 block text-xs font-medium text-slate-400" htmlFor="page-min-gap-to-next-appointment-minutes">Min gap to next appointment (minutes)</label>
+            <input id="page-min-gap-to-next-appointment-minutes"
               type="number"
               min={0}
               value={form.minGapToNext}
@@ -289,10 +282,20 @@ export default function SettingsPage() {
         ) : (
           <div className="space-y-6">
 
+            {/* First, because it is the answer to "what happens if I lose
+                this laptop" -- and nothing is held on our servers to answer it
+                for them. */}
+            <SectionCard
+              title="Your data and backups"
+              description="Save your workspace to a file — in OneDrive or SharePoint if you use them — so you can open it on another computer."
+            >
+              <DataBackup />
+            </SectionCard>
+
             {/* ── Office Postcode ── */}
             <SectionCard
               title="Office Postcode"
-              description="Used as the starting and ending point for all staff routes when no per-staff postcode is set."
+              description="Used as the starting and ending point for all staff routes when no per-staff postcode is set. Also editable on the scheduler's Setup tab."
             >
               <input
                 type="text"
@@ -310,10 +313,8 @@ export default function SettingsPage() {
             >
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <label className="mb-1.5 block text-xs font-medium text-slate-400">
-                    Day start
-                  </label>
-                  <input
+                  <label className="mb-1.5 block text-xs font-medium text-slate-400" htmlFor="page-day-start">Day start</label>
+                  <input id="page-day-start"
                     type="time"
                     value={settings.dayStart}
                     onChange={(e) => setDayStart(e.target.value)}
@@ -321,10 +322,8 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="mb-1.5 block text-xs font-medium text-slate-400">
-                    Day end
-                  </label>
-                  <input
+                  <label className="mb-1.5 block text-xs font-medium text-slate-400" htmlFor="page-day-end">Day end</label>
+                  <input id="page-day-end"
                     type="time"
                     value={settings.dayEnd}
                     onChange={(e) => setDayEnd(e.target.value)}

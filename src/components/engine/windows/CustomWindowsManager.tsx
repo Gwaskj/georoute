@@ -139,8 +139,8 @@ export default function CustomWindowsManager({ isFree }: CustomWindowsManagerPro
 
             <div className="space-y-3 text-sm">
               <div>
-                <label className="mb-1 block font-medium text-slate-300">Name</label>
-                <input
+                <label className="mb-1 block font-medium text-slate-300" htmlFor="customwindowsmanager-name">Name</label>
+                <input id="customwindowsmanager-name"
                   type="text"
                   value={form.name}
                   onChange={(e) =>
@@ -152,8 +152,8 @@ export default function CustomWindowsManager({ isFree }: CustomWindowsManagerPro
 
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <label className="mb-1 block font-medium text-slate-300">Start</label>
-                  <input
+                  <label className="mb-1 block font-medium text-slate-300" htmlFor="customwindowsmanager-start">Start</label>
+                  <input id="customwindowsmanager-start"
                     type="time"
                     value={form.start}
                     onChange={(e) =>
@@ -163,8 +163,8 @@ export default function CustomWindowsManager({ isFree }: CustomWindowsManagerPro
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="mb-1 block font-medium text-slate-300">End</label>
-                  <input
+                  <label className="mb-1 block font-medium text-slate-300" htmlFor="customwindowsmanager-end">End</label>
+                  <input id="customwindowsmanager-end"
                     type="time"
                     value={form.end}
                     onChange={(e) =>
@@ -176,10 +176,8 @@ export default function CustomWindowsManager({ isFree }: CustomWindowsManagerPro
               </div>
 
               <div>
-                <label className="mb-1 block font-medium text-slate-300">
-                  Min gap to next (minutes)
-                </label>
-                <input
+                <label className="mb-1 block font-medium text-slate-300" htmlFor="customwindowsmanager-min-gap-to-next-minutes">Min gap to next (minutes)</label>
+                <input id="customwindowsmanager-min-gap-to-next-minutes"
                   type="number"
                   min={0}
                   value={form.minGapToNext}

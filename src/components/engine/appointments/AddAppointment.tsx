@@ -258,8 +258,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
               {/* BASIC FIELDS */}
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <div className="md:col-span-2">
-                  <label className="mb-1 block font-medium">Name</label>
-                  <input
+                  <label className="mb-1 block font-medium" htmlFor="addappointment-name">Name</label>
+                  <input id="addappointment-name"
                     type="text"
                     value={form.name}
                     onChange={(e) =>
@@ -270,10 +270,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-medium">
-                    House number / name (optional)
-                  </label>
-                  <input
+                  <label className="mb-1 block font-medium" htmlFor="addappointment-house-number-name-optional">House number / name (optional)</label>
+                  <input id="addappointment-house-number-name-optional"
                     type="text"
                     value={form.houseNumberOrName}
                     onChange={(e) =>
@@ -287,8 +285,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-medium">Address</label>
-                  <input
+                  <label className="mb-1 block font-medium" htmlFor="addappointment-address">Address</label>
+                  <input id="addappointment-address"
                     type="text"
                     value={form.address}
                     onChange={(e) =>
@@ -299,8 +297,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-medium">Postcode</label>
-                  <input
+                  <label className="mb-1 block font-medium" htmlFor="addappointment-postcode">Postcode</label>
+                  <input id="addappointment-postcode"
                     type="text"
                     value={form.postcode}
                     onChange={(e) =>
@@ -312,10 +310,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-medium">
-                    Strict time (optional)
-                  </label>
-                  <input
+                  <label className="mb-1 block font-medium" htmlFor="addappointment-strict-time-optional">Strict time (optional)</label>
+                  <input id="addappointment-strict-time-optional"
                     type="time"
                     value={form.strictStartTime}
                     onChange={(e) =>
@@ -329,10 +325,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-medium">
-                    Duration (minutes)
-                  </label>
-                  <input
+                  <label className="mb-1 block font-medium" htmlFor="addappointment-duration-minutes">Duration (minutes)</label>
+                  <input id="addappointment-duration-minutes"
                     type="number"
                     min={0}
                     value={form.durationMinutes}
@@ -347,10 +341,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-medium">
-                    Required staff (1–5)
-                  </label>
-                  <input
+                  <label className="mb-1 block font-medium" htmlFor="addappointment-required-staff-1-5">Required staff (1–5)</label>
+                  <input id="addappointment-required-staff-1-5"
                     type="number"
                     min={1}
                     max={5}
@@ -366,10 +358,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-medium">
-                    Visits required per day
-                  </label>
-                  <input
+                  <label className="mb-1 block font-medium" htmlFor="addappointment-visits-required-per-day">Visits required per day</label>
+                  <input id="addappointment-visits-required-per-day"
                     type="number"
                     min={1}
                     max={10}
@@ -385,10 +375,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                 </div>
 
                 <div>
-                  <label className="mb-1 block font-medium">
-                    Min gap between calls (minutes)
-                  </label>
-                  <input
+                  <label className="mb-1 block font-medium" htmlFor="addappointment-min-gap-between-calls-minutes">Min gap between calls (minutes)</label>
+                  <input id="addappointment-min-gap-between-calls-minutes"
                     type="number"
                     min={0}
                     value={form.minGapMinutes}
@@ -410,8 +398,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
 
                 <div className="flex flex-wrap items-end gap-3 text-xs">
                   <div>
-                    <label className="mb-1 block">Repeats</label>
-                    <select
+                    <label className="mb-1 block" htmlFor="addappointment-repeats">Repeats</label>
+                    <select id="addappointment-repeats"
                       value={form.recurFreq}
                       onChange={(e) =>
                         setForm((f) => ({
@@ -460,8 +448,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
 
                   {form.recurFreq !== "once" && (
                     <div>
-                      <label className="mb-1 block">Until (optional)</label>
-                      <input
+                      <label className="mb-1 block" htmlFor="addappointment-until-optional">Until (optional)</label>
+                      <input id="addappointment-until-optional"
                         type="date"
                         value={form.endsOn}
                         onChange={(e) =>
@@ -522,8 +510,8 @@ export default function AddAppointment({ isFree }: AddAppointmentProps) {
                   Staff Requirements
                 </h4>
 
-                <label className="block text-xs mb-1">Gender preference</label>
-                <select
+                <label className="block text-xs mb-1" htmlFor="addappointment-gender-preference">Gender preference</label>
+                <select id="addappointment-gender-preference"
                   value={form.staffGender}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, staffGender: e.target.value }))

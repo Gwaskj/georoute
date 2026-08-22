@@ -15,6 +15,7 @@ import { saveSchedulerResult } from "@/lib/scheduler/persist";
 import { SchedulerContext } from "@/lib/scheduler/types";
 import { getRouteBatched, clearLocalCache, getRouteErrors } from "@/lib/routing";
 import { checkPostcode } from "@/lib/postcode/validate";
+import { getStaffOriginPostcode } from "@/lib/scheduler/staffOrigin";
 import { logActivity } from "@/lib/logsClient";
 import Link from "next/link";
 
@@ -106,6 +107,29 @@ export default function GenerateSchedule({
           ? "No appointments have been added yet, so there is nothing to schedule."
           : `None of your ${total} appointment${total === 1 ? " is" : "s are"} due on ${scheduleDate}. ` +
             "Check the planning day above, or set the appointment to repeat if it should happen regularly."
+      );
+      setIsRunning(false);
+      return;
+    }
+
+    // Nobody can be routed from nowhere.
+    //
+    // getStaffOriginPostcode falls back through the staff member's own office
+    // postcode to the global one, and returns an empty string when neither is
+    // set. The engine then planned a day starting from "" -- producing a round
+    // with no beginning, no travel to the first visit, and no Share button,
+    // with nothing on screen to say that a blank field was the cause. It was
+    // worse still because the field lived on another page.
+    const originless = staff.filter(
+      (s) => !getStaffOriginPostcode(s, officePostcode).trim()
+    );
+    if (originless.length > 0) {
+      const names = originless.map((s) => s.name).join(", ");
+      setRouteError(
+        originless.length === staff.length
+          ? "No office postcode is set, so there is nowhere for anyone's day to start. Add one under “Where the day starts” above."
+          : `${names} ${originless.length === 1 ? "has" : "have"} nowhere to start from. ` +
+            "Give them a home or office postcode, or set an office postcode above for everyone to use."
       );
       setIsRunning(false);
       return;

@@ -60,7 +60,7 @@ test.describe("Google Analytics", () => {
     expect(leaked, `fragment reached Analytics:\n${leaked.join("\n")}`).toEqual([]);
   });
 
-  test("does not run at all on a carer's round", async ({ page, browser }) => {
+  test("does not run at all on a carer's round", async ({ browser }) => {
     // A fresh context, as a carer would have: no session, no consent choice.
     const carer = await browser.newContext();
     const carerPage = await carer.newPage();

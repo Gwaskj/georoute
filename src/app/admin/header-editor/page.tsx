@@ -552,10 +552,8 @@ export default function HeaderEditorPage() {
             </label>
           </div>
           <div>
-            <label className="block text-xs mb-1 text-slate-300">
-              Brand text
-            </label>
-            <input
+            <label className="block text-xs mb-1 text-slate-300" htmlFor="page-brand-text">Brand text</label>
+            <input id="page-brand-text"
               className="w-full p-2 bg-slate-900 border border-slate-700 rounded text-sm text-white"
               value={brand.text}
               onChange={(e) =>
@@ -589,10 +587,8 @@ export default function HeaderEditorPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs mb-1 text-slate-300">
-                    Text
-                  </label>
-                  <input
+                  <label className="block text-xs mb-1 text-slate-300" htmlFor="page-text">Text</label>
+                  <input id="page-text"
                     className="w-full p-2 bg-slate-950 border border-slate-700 rounded text-sm text-white"
                     value={item.text}
                     onChange={(e) =>
@@ -602,10 +598,8 @@ export default function HeaderEditorPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs mb-1 text-slate-300">
-                    Link (href)
-                  </label>
-                  <input
+                  <label className="block text-xs mb-1 text-slate-300" htmlFor="page-link-href">Link (href)</label>
+                  <input id="page-link-href"
                     className="w-full p-2 bg-slate-950 border border-slate-700 rounded text-sm text-white"
                     value={item.href}
                     onChange={(e) =>
@@ -617,8 +611,8 @@ export default function HeaderEditorPage() {
 
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-slate-300">Admin only:</label>
-                  <input
+                  <label className="text-xs text-slate-300" htmlFor="page-admin-only">Admin only:</label>
+                  <input id="page-admin-only"
                     type="checkbox"
                     checked={item.isAdmin || false}
                     onChange={(e) =>
@@ -632,8 +626,8 @@ export default function HeaderEditorPage() {
                     rendering but never offered here, so where a link appeared
                     could only be changed by editing the database directly. */}
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-slate-300">Show in:</label>
-                  <select
+                  <label className="text-xs text-slate-300" htmlFor="page-show-in">Show in:</label>
+                  <select id="page-show-in"
                     className="bg-slate-950 border border-slate-700 text-xs text-white rounded px-2 py-1"
                     value={item.inMenu ? "menu" : "bar"}
                     onChange={(e) =>
@@ -663,8 +657,8 @@ export default function HeaderEditorPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-slate-300">Align:</label>
-                  <select
+                  <label className="text-xs text-slate-300" htmlFor="page-align">Align:</label>
+                  <select id="page-align"
                     className="bg-slate-950 border border-slate-700 text-xs text-white rounded px-2 py-1"
                     value={item.align || "left"}
                     onChange={(e) =>

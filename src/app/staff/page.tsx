@@ -304,10 +304,8 @@ export default function StaffPage() {
 
               <div className="space-y-4 px-4 py-4 text-sm">
                 <div>
-                  <label className="mb-1 block font-medium text-slate-200">
-                    Name
-                  </label>
-                  <input
+                  <label className="mb-1 block font-medium text-slate-200" htmlFor="page-name">Name</label>
+                  <input id="page-name"
                     type="text"
                     value={form.name}
                     onChange={(e) =>

@@ -411,8 +411,8 @@ function StaffForm({
   return (
     <>
       <div>
-        <label className="mb-1 block font-medium text-slate-200">Name</label>
-        <input
+        <label className="mb-1 block font-medium text-slate-200" htmlFor="addstaff-name">Name</label>
+        <input id="addstaff-name"
           type="text"
           value={form.name}
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -421,8 +421,8 @@ function StaffForm({
       </div>
 
       <div>
-        <label className="mb-1 block font-medium text-slate-200">Home postcode</label>
-        <input
+        <label className="mb-1 block font-medium text-slate-200" htmlFor="addstaff-home-postcode">Home postcode</label>
+        <input id="addstaff-home-postcode"
           type="text"
           value={form.homePostcode}
           onChange={(e) =>
@@ -441,8 +441,8 @@ function StaffForm({
       </div>
 
       <div>
-        <label className="mb-1 block font-medium text-slate-200">Office postcode</label>
-        <input
+        <label className="mb-1 block font-medium text-slate-200" htmlFor="addstaff-office-postcode">Office postcode</label>
+        <input id="addstaff-office-postcode"
           type="text"
           value={form.officePostcode}
           onChange={(e) =>
@@ -487,8 +487,8 @@ function StaffForm({
 
 
       <div>
-        <label className="mb-1 block font-medium text-slate-200">Gender</label>
-        <select
+        <label className="mb-1 block font-medium text-slate-200" htmlFor="addstaff-gender">Gender</label>
+        <select id="addstaff-gender"
           value={form.gender}
           onChange={(e) =>
             setForm((f) => ({

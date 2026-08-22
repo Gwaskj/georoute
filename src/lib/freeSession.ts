@@ -315,3 +315,58 @@ export async function importSchedulerData(json: string): Promise<FreeSchedulerDa
 export async function clearSchedulerData(): Promise<void> {
   await saveFreeSchedulerData(emptyData());
 }
+
+/* ------------------------------------------------------------------ *
+ * The linked backup file.
+ *
+ * A FileSystemFileHandle is structured-cloneable, so IndexedDB can keep the
+ * one the user picked and we can write to the same file again next time
+ * without asking them to find it. That is what makes "save to OneDrive" work
+ * as a single click rather than a file dialog every time.
+ *
+ * Stored under its own key in the existing object store rather than a new
+ * store, which would need a database version bump and a migration for
+ * something this small.
+ * ------------------------------------------------------------------ */
+
+const BACKUP_HANDLE_KEY = "backupFile";
+
+function idbPut(db: IDBDatabase, key: string, value: unknown): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).put(value, key);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+      tx.onabort = () => resolve(false);
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+function idbGet<T>(db: IDBDatabase, key: string): Promise<T | null> {
+  return new Promise((resolve) => {
+    try {
+      const req = db.transaction(STORE, "readonly").objectStore(STORE).get(key);
+      req.onsuccess = () => resolve((req.result as T) ?? null);
+      req.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+export async function rememberBackupFile(
+  handle: FileSystemFileHandle | null
+): Promise<void> {
+  const db = await openDb();
+  if (!db) return;
+  await idbPut(db, BACKUP_HANDLE_KEY, handle);
+}
+
+export async function recallBackupFile(): Promise<FileSystemFileHandle | null> {
+  const db = await openDb();
+  if (!db) return null;
+  return idbGet<FileSystemFileHandle>(db, BACKUP_HANDLE_KEY);
+}

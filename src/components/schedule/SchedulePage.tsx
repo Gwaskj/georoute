@@ -7,6 +7,7 @@ import type { AnyBlock, SchedulerHeaderData, SectionIntroData } from "@/lib/type
 import StaffSelectorSetup from "@/components/engine/staff/StaffSelector";
 import AddAppointment from "@/components/engine/appointments/AddAppointment";
 import GenerateSchedule from "@/components/engine/GenerateSchedule";
+import DayStartSetup from "@/components/engine/setup/DayStartSetup";
 
 // RESULTS COMPONENTS
 import StaffResultsList from "@/components/engine/results/StaffResultsList";
@@ -84,7 +85,7 @@ export default function SchedulePage({ isFree, cmsBlocks = [] }: SchedulePagePro
       {activeTab === "setup" ? (
         <SetupView isFree={isFree} sectionIntros={sectionIntros} />
       ) : (
-        <ResultsView isFree={isFree} />
+        <ResultsView />
       )}
     </div>
   );
@@ -103,6 +104,11 @@ function SetupView({ isFree, sectionIntros }: { isFree: boolean; sectionIntros: 
 
   return (
     <div className="flex flex-col gap-4">
+      {/* First, because it is a precondition rather than an option: a round
+          with no origin cannot be planned, and this used to be the one
+          required value that lived on a different page entirely. */}
+      <DayStartSetup />
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <StaffSelectorSetup isFree={isFree} />
         <AddAppointment isFree={isFree} />
@@ -123,7 +129,9 @@ function SetupView({ isFree, sectionIntros }: { isFree: boolean; sectionIntros: 
 // ────────────────────────────────────────────────────────────────
 //
 
-function ResultsView({ isFree }: { isFree: boolean }) {
+// No isFree: the results are the same on both plans now that neither reads
+// from a server. It lingered as a prop after the storage branching went.
+function ResultsView() {
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
   const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
   const { staff } = useStaffStore();

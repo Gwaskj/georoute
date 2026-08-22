@@ -44,8 +44,8 @@ export default function ChangePasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div className="space-y-1">
-        <label className="text-xs text-slate-400">New password</label>
-        <input
+        <label className="text-xs text-slate-400" htmlFor="changepasswordform-new-password">New password</label>
+        <input id="changepasswordform-new-password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -56,8 +56,8 @@ export default function ChangePasswordForm() {
       </div>
 
       <div className="space-y-1">
-        <label className="text-xs text-slate-400">Confirm new password</label>
-        <input
+        <label className="text-xs text-slate-400" htmlFor="changepasswordform-confirm-new-password">Confirm new password</label>
+        <input id="changepasswordform-confirm-new-password"
           type="password"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}

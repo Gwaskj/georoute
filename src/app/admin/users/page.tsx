@@ -404,8 +404,8 @@ export default function AdminUsersPage() {
           <form className="admin-users-add-form" onSubmit={handleAddUser}>
             <div className="admin-users-add-fields">
               <div className="admin-users-add-field">
-                <label>Email</label>
-                <input
+                <label htmlFor="page-email">Email</label>
+                <input id="page-email"
                   type="email"
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
@@ -414,8 +414,8 @@ export default function AdminUsersPage() {
                 />
               </div>
               <div className="admin-users-add-field">
-                <label>Name (optional)</label>
-                <input
+                <label htmlFor="page-name-optional">Name (optional)</label>
+                <input id="page-name-optional"
                   type="text"
                   value={newUserName}
                   onChange={(e) => setNewUserName(e.target.value)}

@@ -677,8 +677,8 @@ function ScheduleTab({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm text-slate-300 mb-1">Season starts (any year)</label>
-          <input
+          <label className="block text-sm text-slate-300 mb-1" htmlFor="page-season-starts-any-year">Season starts (any year)</label>
+          <input id="page-season-starts-any-year"
             type="date"
             value={seasonalStart}
             onChange={(e) => onStart(e.target.value)}
@@ -686,8 +686,8 @@ function ScheduleTab({
           />
         </div>
         <div>
-          <label className="block text-sm text-slate-300 mb-1">Season ends (any year)</label>
-          <input
+          <label className="block text-sm text-slate-300 mb-1" htmlFor="page-season-ends-any-year">Season ends (any year)</label>
+          <input id="page-season-ends-any-year"
             type="date"
             value={seasonalEnd}
             onChange={(e) => onEnd(e.target.value)}

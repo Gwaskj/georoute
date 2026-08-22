@@ -156,10 +156,8 @@ export default function AdminPricingEditor() {
           >
             <h2 className="text-lg font-semibold capitalize">{plan.plan}</h2>
 
-            <label className="block mt-4 text-sm text-slate-300">
-              Plan name
-            </label>
-            <input
+            <label className="block mt-4 text-sm text-slate-300" htmlFor="page-plan-name">Plan name</label>
+            <input id="page-plan-name"
               className="w-full mt-1 rounded bg-slate-800 border border-slate-700 px-3 py-2 text-sm"
               value={plan.plan}
               onChange={(e) => {
@@ -169,10 +167,8 @@ export default function AdminPricingEditor() {
               }}
             />
 
-            <label className="block mt-4 text-sm text-slate-300">
-              Price (£)
-            </label>
-            <input
+            <label className="block mt-4 text-sm text-slate-300" htmlFor="page-price">Price (£)</label>
+            <input id="page-price"
               type="number"
               className="w-full mt-1 rounded bg-slate-800 border border-slate-700 px-3 py-2 text-sm"
               value={plan.price}
@@ -183,10 +179,8 @@ export default function AdminPricingEditor() {
               }}
             />
 
-            <label className="block mt-4 text-sm text-slate-300">
-              Description
-            </label>
-            <textarea
+            <label className="block mt-4 text-sm text-slate-300" htmlFor="page-description">Description</label>
+            <textarea id="page-description"
               className="w-full mt-1 rounded bg-slate-800 border border-slate-700 px-3 py-2 text-sm"
               value={plan.description}
               onChange={(e) => {

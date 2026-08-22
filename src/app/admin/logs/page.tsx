@@ -328,8 +328,8 @@ export default function AdminLogsPage() {
 
         <div className="admin-logs-filter-row">
           <div className="admin-logs-filter-group">
-            <label>Action</label>
-            <select
+            <label htmlFor="page-action">Action</label>
+            <select id="page-action"
               className="admin-logs-select"
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
@@ -343,8 +343,8 @@ export default function AdminLogsPage() {
           </div>
 
           <div className="admin-logs-filter-group">
-            <label>User type</label>
-            <select
+            <label htmlFor="page-user-type">User type</label>
+            <select id="page-user-type"
               className="admin-logs-select"
               value={userFilter}
               onChange={(e) => setUserFilter(e.target.value as UserFilter)}
@@ -356,8 +356,8 @@ export default function AdminLogsPage() {
           </div>
 
           <div className="admin-logs-filter-group">
-            <label>From</label>
-            <input
+            <label htmlFor="page-from">From</label>
+            <input id="page-from"
               type="date"
               className="admin-logs-date-input"
               value={fromDate}
@@ -366,8 +366,8 @@ export default function AdminLogsPage() {
           </div>
 
           <div className="admin-logs-filter-group">
-            <label>To</label>
-            <input
+            <label htmlFor="page-to">To</label>
+            <input id="page-to"
               type="date"
               className="admin-logs-date-input"
               value={toDate}

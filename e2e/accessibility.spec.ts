@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { addStaff, addAppointment, setOfficePostcode } from "./workspace";
 import AxeBuilder from "@axe-core/playwright";
 
 /**
@@ -74,11 +75,7 @@ test.describe("Results list disclosure", () => {
     const PREFIX = "E2E-A11Y";
     page.on("dialog", (d) => d.accept().catch(() => {}));
 
-    await page.goto("/settings");
-    await page.waitForTimeout(2000);
-    await page.locator('input[placeholder="e.g. SW1A 1AA"]').first().fill("LS1 1UR");
-    await page.getByRole("button", { name: /save/i }).first().click();
-    await page.waitForTimeout(1200);
+    await setOfficePostcode(page, "LS1 1UR");
 
     await page.goto("/scheduler");
     await page.waitForTimeout(2000);
@@ -89,21 +86,9 @@ test.describe("Results list disclosure", () => {
       await page.waitForTimeout(1200);
     }
 
-    await page.getByRole("button", { name: "Add staff", exact: true }).first().click();
-    await page.waitForTimeout(1200);
-    await page.locator("input[type=text]").nth(0).fill(`${PREFIX} Carer`);
-    await page.locator("input[type=text]").nth(1).fill("LS1 1UR");
-    await page.getByRole("button", { name: "Add", exact: true }).first().click();
-    await page.waitForTimeout(1500);
+    await addStaff(page, `${PREFIX} Carer`, "LS1 1UR");
 
-    await page.getByRole("button", { name: "Add appointment", exact: true }).first().click();
-    await page.waitForTimeout(1200);
-    const text = page.locator("input[type=text]");
-    await text.nth(0).fill(`${PREFIX} Client`);
-    await text.nth(3).fill("LS1 4DY");
-    await page.locator("input[type=number]").nth(0).fill("30");
-    await page.getByRole("button", { name: "Add", exact: true }).first().click();
-    await page.waitForTimeout(1500);
+    await addAppointment(page, `${PREFIX} Client`, "LS1 4DY");
 
     await page.getByRole("button", { name: /generate schedule/i }).first().click();
     await page.waitForTimeout(28000);

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { addStaff, addAppointment, setOfficePostcode } from "./workspace";
 
 /**
  * End-to-end generation, with its own data.
@@ -34,6 +35,12 @@ async function clearWorkspace(page: import("@playwright/test").Page) {
 
 test.describe("Generate schedule flow", () => {
   test("explains an empty workspace, then schedules data it creates", async ({ page }) => {
+    // Without an office postcode nobody has anywhere to start from, and
+    // generating is now refused with that explanation rather than producing a
+    // round with no beginning. Set it first so the test exercises the path it
+    // means to.
+    await setOfficePostcode(page, "LS1 1UR");
+
     await page.goto("/scheduler");
     await expect(page).not.toHaveURL(/\/login/);
     await page.waitForTimeout(2500);
@@ -51,21 +58,9 @@ test.describe("Generate schedule flow", () => {
     ).toBeVisible();
 
     // --- Part 2: with real data it should actually schedule.
-    await page.getByRole("button", { name: "Add staff", exact: true }).first().click();
-    await page.waitForTimeout(1400);
-    await page.locator("input[type=text]").nth(0).fill(`${PREFIX} Carer`);
-    await page.locator("input[type=text]").nth(1).fill("LS1 1UR");
-    await page.getByRole("button", { name: "Add", exact: true }).first().click();
-    await page.waitForTimeout(1800);
+    await addStaff(page, `${PREFIX} Carer`, "LS1 1UR");
 
-    await page.getByRole("button", { name: "Add appointment", exact: true }).first().click();
-    await page.waitForTimeout(1400);
-    const text = page.locator("input[type=text]");
-    await text.nth(0).fill(`${PREFIX} Client`);
-    await text.nth(3).fill("LS1 4DY");
-    await page.locator("input[type=number]").nth(0).fill("30");
-    await page.getByRole("button", { name: "Add", exact: true }).first().click();
-    await page.waitForTimeout(1800);
+    await addAppointment(page, `${PREFIX} Client`, "LS1 4DY");
 
     await page.getByRole("button", { name: /generate schedule/i }).first().click();
     await page.waitForTimeout(28000);
@@ -80,5 +75,47 @@ test.describe("Generate schedule flow", () => {
     await page.getByRole("button", { name: "Setup", exact: true }).click();
     await page.waitForTimeout(1500);
     await clearWorkspace(page);
+  });
+});
+
+/**
+ * The office postcode is a precondition, not an option.
+ *
+ * With none set, getStaffOriginPostcode returns an empty string and the engine
+ * used to plan a day starting from nowhere: no travel to the first visit, no
+ * Share button, and nothing on screen to say that a blank field on a different
+ * page was the cause. It is refused explicitly now, and the field lives on the
+ * Setup tab where the round is built.
+ */
+test.describe("Missing office postcode", () => {
+  test("is refused with an explanation rather than planned from nowhere", async ({
+    page,
+  }) => {
+    await setOfficePostcode(page, "");
+
+    await page.goto("/scheduler");
+    await expect(page).not.toHaveURL(/\/login/);
+    await page.waitForTimeout(2500);
+    await clearWorkspace(page);
+
+    await addStaff(page, `${PREFIX} Carer`, "LS1 1UR");
+    await addAppointment(page, `${PREFIX} Client`, "LS1 4DY");
+
+    // The Setup card should already be flagging it before anything is pressed.
+    await expect(
+      page.getByText(/Set this before generating/i),
+      "the missing value should be visible where the round is built"
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: /generate schedule/i }).first().click();
+    await page.waitForTimeout(4000);
+
+    await expect(
+      page.getByText(/nowhere for anyone.s day to start/i),
+      "generating should explain the problem, not produce an originless round"
+    ).toBeVisible();
+
+    await clearWorkspace(page);
+    await setOfficePostcode(page, "LS1 1UR");
   });
 });

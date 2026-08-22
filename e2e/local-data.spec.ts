@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { addStaff, addAppointment, setOfficePostcode } from "./workspace";
 
 /**
  * The behaviour that replaced the database.
@@ -31,21 +32,9 @@ async function clearWorkspace(page: Page) {
 }
 
 async function addStaffAndAppointment(page: Page) {
-  await page.getByRole("button", { name: "Add staff", exact: true }).first().click();
-  await page.waitForTimeout(1200);
-  await page.locator("input[type=text]").nth(0).fill(`${PREFIX} Carer`);
-  await page.locator("input[type=text]").nth(1).fill("LS1 1UR");
-  await page.getByRole("button", { name: "Add", exact: true }).first().click();
-  await page.waitForTimeout(1500);
+  await addStaff(page, `${PREFIX} Carer`, "LS1 1UR");
 
-  await page.getByRole("button", { name: "Add appointment", exact: true }).first().click();
-  await page.waitForTimeout(1200);
-  const text = page.locator("input[type=text]");
-  await text.nth(0).fill(`${PREFIX} Client`);
-  await text.nth(3).fill("LS1 4DY");
-  await page.locator("input[type=number]").nth(0).fill("30");
-  await page.getByRole("button", { name: "Add", exact: true }).first().click();
-  await page.waitForTimeout(1500);
+  await addAppointment(page, `${PREFIX} Client`, "LS1 4DY");
 }
 
 test.describe("Data kept in the browser", () => {
@@ -123,15 +112,9 @@ test.describe("Round links", () => {
 
   test("a carer with no account can open the round", async ({ page, browser }) => {
     // The office postcode has to be set for a round to have a start: with no
-    // origin there is nowhere to navigate from, and the share panel correctly
-    // hides itself. It used to arrive from business_settings; now it is one of
-    // the things a new workspace asks for.
-    await page.goto("/settings");
-    await expect(page).not.toHaveURL(/\/login/);
-    await page.waitForTimeout(2000);
-    await page.locator('input[placeholder="e.g. SW1A 1AA"]').first().fill("LS1 1UR");
-    await page.getByRole("button", { name: /save/i }).first().click();
-    await page.waitForTimeout(1500);
+    // origin there is nowhere to navigate from, and generating is refused.
+    // Set on the Setup tab, which is where it now lives.
+    await setOfficePostcode(page, "LS1 1UR");
 
     await page.goto("/scheduler");
     await expect(page).not.toHaveURL(/\/login/);
