@@ -239,7 +239,7 @@ export function HeaderStructure({
             )}
           </Link>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm">
+          <nav className="hidden lg:flex items-center gap-6 text-sm">
             {leftNav.map((item) => {
               if (item.isAdmin && !isAdmin) return null;
 
@@ -278,7 +278,7 @@ export function HeaderStructure({
           </nav>
         </div>
 
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden lg:flex items-center gap-4">
           {rightNav.map((item) => {
             if (item.isAdmin && !isAdmin) return null;
 
@@ -423,14 +423,14 @@ export function HeaderStructure({
         </div>
 
         <button
-          className="md:hidden text-slate-300"
+          className="lg:hidden text-slate-300"
           onClick={() => setMobileOpen((v) => !v)}
         >
           {mobileOpen ? "✕" : "☰"}
         </button>
 
         {mobileOpen && (
-          <div className="absolute top-16 inset-x-0 bg-slate-950 border-t border-slate-800 md:hidden z-50">
+          <div className="absolute top-16 inset-x-0 bg-slate-950 border-t border-slate-800 lg:hidden z-50">
             <nav className="flex flex-col px-4 py-3 gap-2 text-sm">
               {brand.enabled && (
                 <span className="py-1 font-semibold">{brand.text}</span>

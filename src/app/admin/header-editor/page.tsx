@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
-import type { NavItem, BrandConfig } from "@/components/HeaderStructure";
+import {
+  HeaderStructure,
+  type NavItem,
+  type BrandConfig,
+} from "@/components/HeaderStructure";
 import { HEADER_BOUNDS, clampTo } from "@/lib/header/bounds";
 
 const SNAP = 5;
@@ -370,106 +373,108 @@ export default function HeaderEditorPage() {
     <div className="min-h-screen w-full bg-slate-950 p-6 space-y-6 text-slate-100">
       <h1 className="text-2xl font-bold mb-2 text-slate-50">Header Editor</h1>
 
-      <div className="relative w-full bg-slate-950 border border-slate-800 overflow-hidden">
-        {bannerUrl && (
-          <div
-            className="absolute inset-0 w-full h-full overflow-hidden"
-            style={{
-              transform: `translate(${bannerX}px, ${bannerY}px) scale(${bannerScale}) rotate(${bannerRotation}deg)`,
-              transformOrigin: "top left",
-            }}
-          >
-            <div className="relative w-full h-full">
-              <Image
-                src={bannerUrl}
-                alt="Banner"
-                fill
-                className="object-cover opacity-50 cursor-move"
-                onMouseDown={(e) => startDrag(e, "banner")}
-              />
+      {/* The real header, rendered with the values being edited.
+        *
+        * This was a hand-built copy of HeaderStructure, and a copy of a thing
+        * drifts from it: the preview still showed a banner at 50% with no
+        * scrim, the old top-left transform origin, a fixed 100x100 logo, and a
+        * "Menu (9)" label the header never rendered. Anything laid out
+        * differently is a lie about what saving will do.
+        *
+        * Rendering the component itself makes the preview exact by
+        * construction. Interaction is disabled inside it so the links cannot
+        * be followed and the dropdown cannot be opened; the drag targets sit
+        * above it. */}
+      <div className="relative w-full overflow-hidden rounded border border-slate-800">
+        <div className="pointer-events-none select-none">
+          <HeaderStructure
+            logoUrl={logoUrl}
+            bannerUrl={bannerUrl}
+            logo_x={logoX}
+            logo_y={logoY}
+            logo_scale={logoScale}
+            logo_rotation={logoRotation}
+            banner_offset_x={bannerX}
+            banner_offset_y={bannerY}
+            banner_scale={bannerScale}
+            banner_rotation={bannerRotation}
+            brand={brand}
+            navItems={navItems}
+            // Shown as a signed-in admin: that is the fullest version of the
+            // bar, so anything that fits here fits for everyone.
+            userPresent
+            isPro
+            isAdmin
+            onLogout={() => {}}
+          />
+        </div>
 
+        {/* Drag targets, above the header rather than inside it. */}
+        <div className="absolute inset-0">
+          {bannerUrl && (
+            <>
+              <div
+                onMouseDown={(e) => startDrag(e, "banner")}
+                className="absolute inset-0 cursor-move"
+                title="Drag to move the banner"
+              />
               <div
                 onMouseDown={(e) => startResize(e, "banner")}
-                className="absolute bottom-4 right-4 w-5 h-5 bg-white rounded-full cursor-nwse-resize border border-black"
+                className="absolute bottom-2 right-2 h-4 w-4 cursor-nwse-resize rounded-full border border-black bg-white"
+                title="Drag up or down to resize the banner"
               />
-
               <div
                 onMouseDown={(e) => startRotate(e, "banner")}
-                className="absolute top-4 right-4 w-5 h-5 bg-teal-400 rounded-full cursor-ew-resize border border-black"
+                className="absolute right-8 top-2 h-4 w-4 cursor-ew-resize rounded-full border border-black bg-teal-400"
+                title="Drag left or right to rotate the banner"
+              />
+            </>
+          )}
+
+          {logoUrl && (
+            /* Follows the logo, which the header shifts with margin-left, so
+             * the handle stays over the thing it moves. */
+            <div
+              className="absolute top-0 h-16"
+              style={{ left: `${logoX}px`, width: "170px" }}
+            >
+              <div
+                onMouseDown={(e) => startDrag(e, "logo")}
+                className="absolute inset-0 cursor-move"
+                title="Drag to move the logo"
+              />
+              <div
+                onMouseDown={(e) => startResize(e, "logo")}
+                className="absolute bottom-1 right-1 h-3.5 w-3.5 cursor-nwse-resize rounded-full border border-black bg-white"
+                title="Drag up or down to resize the logo"
+              />
+              <div
+                onMouseDown={(e) => startRotate(e, "logo")}
+                className="absolute right-1 top-1 h-3.5 w-3.5 cursor-ew-resize rounded-full border border-black bg-teal-400"
+                title="Drag left or right to rotate the logo"
               />
             </div>
-          </div>
-        )}
-
-        <div className="relative max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 relative">
-              {logoUrl && (
-                <div
-                  className="relative inline-block"
-                  style={{
-                    transform: `translate(${logoX}px, ${logoY}px) scale(${logoScale}) rotate(${logoRotation}deg)`,
-                    transformOrigin: "top left",
-                  }}
-                >
-                  <Image
-                    src={logoUrl}
-                    alt="Logo"
-                    width={100}
-                    height={100}
-                    className="object-contain cursor-move"
-                    style={{ width: "100px", height: "100px" }}
-                    onMouseDown={(e) => startDrag(e, "logo")}
-                  />
-
-                  <div
-                    onMouseDown={(e) => startResize(e, "logo")}
-                    className="absolute bottom-0 right-0 w-4 h-4 bg-white rounded-full cursor-nwse-resize border border-black"
-                  />
-
-                  <div
-                    onMouseDown={(e) => startRotate(e, "logo")}
-                    className="absolute -top-5 right-0 w-4 h-4 bg-teal-400 rounded-full cursor-ew-resize border border-black"
-                  />
-                </div>
-              )}
-
-              {brand.enabled && (
-                <span className="font-semibold text-lg tracking-tight text-white select-none">
-                  {brand.text}
-                </span>
-              )}
-            </div>
-
-            <nav className="hidden md:flex items-center gap-6 text-sm text-white">
-              {leftNav.map((item) => (
-                <span key={item.id} className="select-none">
-                  {item.text}
-                </span>
-              ))}
-            </nav>
-          </div>
-
-          <div className="hidden md:flex items-center gap-4 text-white opacity-70 select-none">
-            {rightNav.map((item) => (
-              <span key={item.id}>{item.text}</span>
-            ))}
-            {/* Named rather than drawn open: the point of the preview is to
-                show what sits on the bar, and the count is what tells you
-                whether you have pushed too much out of sight. */}
-            {menuNav.length > 0 && (
-              <span title={menuNav.map((n) => n.text).join(", ")}>
-                ☰ Menu ({menuNav.length})
-              </span>
-            )}
-            <span className="px-4 py-2 bg-slate-800 rounded">Logout</span>
-          </div>
-
-          <button className="md:hidden text-slate-300 opacity-50 select-none">
-            ☰
-          </button>
+          )}
         </div>
       </div>
+
+      {/* The count the old preview drew into the bar itself. It is genuinely
+        * useful -- it says whether too much has been pushed out of sight --
+        * but it belongs beside the preview rather than inside it. */}
+      <p className="text-xs text-slate-400">
+        {leftNav.length + rightNav.length} item
+        {leftNav.length + rightNav.length === 1 ? "" : "s"} on the bar
+        {menuNav.length > 0 && (
+          <>
+            {" · "}
+            {menuNav.length} in the menu:{" "}
+            <span className="text-slate-300">
+              {menuNav.map((n) => n.text).join(", ")}
+            </span>
+          </>
+        )}
+      </p>
+
       <div className="max-w-3xl space-y-6">
         <div className="flex gap-3">
           <button
