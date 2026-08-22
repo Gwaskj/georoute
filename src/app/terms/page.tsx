@@ -62,6 +62,14 @@ export default function TermsPage() {
               suggestions for a competent person to review &mdash; not
               instructions to be followed unchecked.
             </p>
+            <p>
+              <strong className="text-slate-200">
+                The Service is designed for use in the United Kingdom.
+              </strong>{" "}
+              Rounds are planned from UK postcodes, and addresses outside the UK
+              cannot be scheduled. We make no representation that the Service is
+              suitable or available for use elsewhere.
+            </p>
           </Section>
 
           <Section title="Where your data lives">

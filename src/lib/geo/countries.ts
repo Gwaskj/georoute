@@ -113,11 +113,32 @@ export function isCountryCode(value: string | null | undefined): value is Countr
 }
 
 /** In the order they appear in the picker. */
-export const COUNTRY_LIST: CountryConfig[] = [
-  COUNTRIES.GB,
-  COUNTRIES.US,
-  COUNTRIES.CA,
-  COUNTRIES.AU,
-];
+/**
+ * What the country picker offers. Deliberately just the UK for now.
+ *
+ * The rest of this file works -- US, Canadian and Australian postcodes geocode
+ * to the right region and route on real roads, all verified against the live
+ * geocoder. Two things stop them being offered.
+ *
+ * A US ZIP covers thousands of homes across several square miles, so two
+ * clients in the same ZIP come back as zero minutes apart and a round is
+ * planned as though they share a doorstep. A UK postcode is about fifteen
+ * addresses, which is why treating one as a point has been sound until now.
+ *
+ * Fixing that means geocoding full addresses, and that is the reason this is
+ * shelved rather than scheduled. route_cache is not personal data because it
+ * holds postcode pairs and nothing else -- the same facts ONS publishes for
+ * every UK postcode. Cache addresses instead and it becomes a list of homes
+ * that have been looked up for care visits: identifiable households, and
+ * arguably health data by inference. That is precisely the custody this
+ * product gave up.
+ *
+ * If it is revisited, the way through is to geocode addresses without caching
+ * them server-side -- more routing calls, but the cache stays a set of facts
+ * about geography rather than about people.
+ *
+ * Adding a country back is this list plus nothing else.
+ */
+export const COUNTRY_LIST: CountryConfig[] = [COUNTRIES.GB];
 
 export { plain as normalisePlain };

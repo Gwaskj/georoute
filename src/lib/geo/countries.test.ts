@@ -38,8 +38,19 @@ describe("country configuration", () => {
     expect(isCountryCode("")).toBe(false);
   });
 
-  it("lists every configured country in the picker", () => {
-    expect(COUNTRY_LIST).toHaveLength(Object.keys(COUNTRIES).length);
+  it("offers only the UK, deliberately", () => {
+    // The others are configured and verified against the live geocoder, but a
+    // US ZIP covers thousands of homes -- two clients in one come back zero
+    // minutes apart. Fixing that needs address-level geocoding, which would
+    // turn route_cache from postcode pairs into a list of households.
+    // See COUNTRY_LIST for the full reasoning.
+    expect(COUNTRY_LIST.map((c) => c.code)).toEqual(["GB"]);
+    expect(DEFAULT_COUNTRY).toBe("GB");
+  });
+
+  it("keeps the other countries configured, ready to re-offer", () => {
+    // Removing them outright would mean rebuilding and re-verifying later.
+    expect(Object.keys(COUNTRIES).sort()).toEqual(["AU", "CA", "GB", "US"]);
   });
 });
 

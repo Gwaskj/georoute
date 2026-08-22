@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSettingsStore } from "@/store/settingsStore";
-import {
-  COUNTRY_LIST,
-  countryConfig,
-  type CountryCode,
-} from "@/lib/geo/countries";
+import { countryConfig } from "@/lib/geo/countries";
 
 /**
  * Where the working day starts, shown on the Setup tab.
@@ -29,7 +25,6 @@ export default function DayStartSetup() {
     setOfficePostcode,
     setDayStart,
     setDayEnd,
-    setCountry,
     loadSettings,
     saveSettings,
   } = useSettingsStore();
@@ -75,34 +70,12 @@ export default function DayStartSetup() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.2fr_2fr_1fr_1fr]">
-        <div>
-          <label
-            htmlFor="setup-country"
-            className="mb-1 block text-xs font-medium text-slate-400"
-          >
-            Country
-          </label>
-          <select
-            id="setup-country"
-            value={settings.country}
-            onChange={(e) => {
-              setCountry(e.target.value as CountryCode);
-              // Committed immediately rather than on blur: a select has no
-              // meaningful blur for a keyboard user, and every label on the
-              // page changes as a result of this one.
-              void commit();
-            }}
-            className={field}
-          >
-            {COUNTRY_LIST.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
+      {/* No country picker. GeoRoutes is UK-only for now, and the settings
+          store still carries a country because the geocoder and the routing
+          cache are both keyed on it -- see COUNTRY_LIST for why the list is
+          one long. Re-adding the control is a select over COUNTRY_LIST and
+          settingsStore's setCountry, both of which already exist. */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_1fr]">
         <div>
           <label
             htmlFor="setup-office-postcode"
@@ -166,7 +139,7 @@ export default function DayStartSetup() {
         ) : (
           <>
             Where staff start and finish, unless a staff member has their own
-            postcode or starts from home. More in{" "}
+            postcode or starts from home. UK postcodes only. More in{" "}
             <Link
               href="/settings"
               className="text-teal-400 underline hover:text-teal-300"

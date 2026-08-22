@@ -32,7 +32,7 @@ import { SITE_URL } from "@/lib/siteUrl";
  * mid-sentence.
  */
 const SITE_DESCRIPTION =
-  "Plan route-optimised rounds for community care and nursing teams. Repeat visits, double-ups and skills matching — with client data that stays in your browser.";
+  "Route-optimised rounds for UK community care and nursing teams. Repeat visits, double-ups and skills matching, with client data that stays in your browser.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

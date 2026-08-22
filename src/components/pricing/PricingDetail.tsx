@@ -41,6 +41,11 @@ export default function PricingDetail() {
           Paying more does not move them onto our servers, because we would
           rather not have them.
         </p>
+        <p>
+          GeoRoutes plans rounds from <strong>UK postcodes</strong> and is
+          designed for use in the United Kingdom. Addresses elsewhere cannot be
+          scheduled yet.
+        </p>
       </div>
 
       <h2 className="mt-10 text-xl font-semibold text-slate-100">

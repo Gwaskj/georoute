@@ -134,7 +134,20 @@ main:focus {
 
 @media (min-width: 640px) {
   .logo-transform {
-    transform: translate(var(--logo-tx, 0px), var(--logo-ty, 0px))
-      scale(var(--logo-scale, 1)) rotate(var(--logo-rotation, 0deg));
+    /*
+     * The horizontal nudge is a margin, not a translate.
+     *
+     * A transform does not affect layout, so the offset moved the logo across
+     * the navigation and sat on top of it -- adding one item to the bar was
+     * enough to turn "Scheduler" into "eduler". A margin reserves the space it
+     * uses, so the nav begins after the logo wherever the logo has been put.
+     *
+     * Vertical stays a transform: there is nothing above or below to collide
+     * with inside a fixed-height bar, and a margin there would change the
+     * height of the bar itself.
+     */
+    margin-left: var(--logo-tx, 0px);
+    transform: translateY(var(--logo-ty, 0px)) scale(var(--logo-scale, 1))
+      rotate(var(--logo-rotation, 0deg));
   }
 }

@@ -42,6 +42,10 @@ const faqs = [
     a: "No. You can use GeoRoutes in free mode without registering, with up to 2 staff and 10 appointments. Creating a Pro account raises those limits and unlocks the calendar for recurring visits. Your scheduling data stays in your own browser on either plan.",
   },
   {
+    q: "Can I use GeoRoutes outside the UK?",
+    a: "Not yet. GeoRoutes plans rounds from UK postcodes, and a UK postcode covers about fifteen addresses — precise enough to treat as a single point when working out travel between visits. A US ZIP code or a Canadian postal area covers thousands of homes across several miles, so routing from one would report two clients as being at the same place. Rather than offer something that appears to work and quietly plans a round that cannot be driven, it is UK-only for now.",
+  },
+  {
     q: "How does GeoRoutes calculate travel times?",
     a: "GeoRoutes uses the OpenRouteService routing API, which calculates real driving distances and times based on live road network data. UK postcodes are geocoded automatically, so you never need to enter coordinates manually.",
   },
