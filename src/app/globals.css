@@ -118,3 +118,23 @@ main:focus {
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * Header logo placement.
+ *
+ * The header editor saves a single offset used at every screen width, so an
+ * offset chosen on a desktop pushed the logo inward on a phone and left a gap
+ * at the left edge. Scale and rotation apply everywhere; the horizontal and
+ * vertical nudge only applies once there is room for it.
+ */
+.logo-transform {
+  transform: scale(var(--logo-scale, 1)) rotate(var(--logo-rotation, 0deg));
+  transform-origin: center;
+}
+
+@media (min-width: 640px) {
+  .logo-transform {
+    transform: translate(var(--logo-tx, 0px), var(--logo-ty, 0px))
+      scale(var(--logo-scale, 1)) rotate(var(--logo-rotation, 0deg));
+  }
+}

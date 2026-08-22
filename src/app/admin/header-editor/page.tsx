@@ -5,6 +5,7 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
 import { useIsAdmin } from "@/lib/hooks/useIsAdmin";
 import type { NavItem, BrandConfig } from "@/components/HeaderStructure";
+import { HEADER_BOUNDS, clampTo } from "@/lib/header/bounds";
 
 const SNAP = 5;
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -186,8 +187,19 @@ export default function HeaderEditorPage() {
       const dx = ev.clientX - startX;
       const dy = ev.clientY - startY;
 
-      const newX = Math.round((initialX + dx) / SNAP) * SNAP;
-      const newY = Math.round((initialY + dy) / SNAP) * SNAP;
+      // Clamped, so dragging past the edge stops the logo at the edge instead
+      // of saving a position off the side of the page that the header then has
+      // to correct for.
+      const newX = clampTo(
+        Math.round((initialX + dx) / SNAP) * SNAP,
+        HEADER_BOUNDS.offsetX,
+        0
+      );
+      const newY = clampTo(
+        Math.round((initialY + dy) / SNAP) * SNAP,
+        HEADER_BOUNDS.offsetY,
+        0
+      );
 
       if (type === "logo") {
         setLogoX(newX);
@@ -216,7 +228,13 @@ export default function HeaderEditorPage() {
 
     function move(ev: MouseEvent) {
       const dy = ev.clientY - startY;
-      const newScale = Math.max(0.2, initialScale + dy * 0.01);
+      // Only the floor was bounded before, so dragging upward far enough saved
+      // a scale of twenty into a header bar 64 pixels tall.
+      const newScale = clampTo(
+        initialScale + dy * 0.01,
+        HEADER_BOUNDS.scale,
+        1
+      );
 
       if (type === "logo") setLogoScale(newScale);
       else setBannerScale(newScale);
@@ -241,7 +259,11 @@ export default function HeaderEditorPage() {
     function move(ev: MouseEvent) {
       const dx = ev.clientX - startX;
       const delta = dx * 0.5;
-      const newRotation = Math.round((initialRotation + delta) / 5) * 5;
+      const newRotation = clampTo(
+        Math.round((initialRotation + delta) / 5) * 5,
+        HEADER_BOUNDS.rotation,
+        0
+      );
 
       if (type === "logo") setLogoRotation(newRotation);
       else setBannerRotation(newRotation);

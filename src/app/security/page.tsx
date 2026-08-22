@@ -69,18 +69,43 @@ export default function SecurityPage() {
             </p>
           </Section>
 
-          <Section title="Sharing a round">
+          <Section title="Sharing a round, and what makes the link safe">
             <p>
               A carer&rsquo;s round is encoded into the web link itself, after
               the &ldquo;#&rdquo; symbol. Browsers never transmit that part of a
-              URL, so the round passes from your device to theirs without
-              reaching our servers, our logs, or our analytics.
+              URL &mdash; it is stripped from the request and from the referrer
+              header &mdash; so the round passes from your device to theirs
+              without reaching our servers, our logs, or our analytics.
             </p>
             <p>
-              The trade-off is honest: anyone holding the link can open it, and
-              it cannot be withdrawn afterwards because there is no server-side
-              record to revoke. Issue a fresh link each day and send it only to
-              the person doing the round.
+              <strong className="text-slate-200">
+                There is nothing to guess.
+              </strong>{" "}
+              Most sharing links work by putting a short secret code in the
+              address, which points at a copy of the data sitting on a server.
+              Anyone who works out a code reaches the data behind it, and a
+              breach of that server exposes every round at once.
+            </p>
+            <p>
+              There is no code here and no copy. The link does not refer to a
+              round; it <em>contains</em> one, as roughly a thousand characters
+              of compressed data. Changing characters at random does not reveal
+              somebody else&rsquo;s round, because there is no store of rounds
+              to land in &mdash; it produces something that fails to decode.
+              There is no list to enumerate, no database to breach, and nothing
+              to hand over if we were compelled to.
+            </p>
+            <p>
+              <strong className="text-slate-200">
+                What that does not protect against.
+              </strong>{" "}
+              Because the link is the round, anyone holding the link can read
+              it. Treat it exactly as you would the printed rota: send it to the
+              person doing the round, and no further. It also cannot be
+              withdrawn once sent, since there is no server-side record to
+              revoke &mdash; so issue a fresh link each day rather than relying
+              on an old one expiring, and expect it to remain readable in the
+              recipient&rsquo;s browser history.
             </p>
           </Section>
 

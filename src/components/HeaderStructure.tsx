@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { useThemeStore } from "@/store/themeStore";
 import SeasonalDoodle from "@/components/effects/SeasonalDoodle";
+import { clampHeaderTransform } from "@/lib/header/bounds";
 
 export type NavItem = {
   id: string;
@@ -119,36 +120,88 @@ export function HeaderStructure({
   // dropdown. Admin-only entries are still filtered by isAdmin below.
   const menuNav = navItems.filter((n) => n.inMenu);
 
+  // Clamped on the way in, so no value in the database can push the logo off
+  // the page or blow the banner up beyond the bar. The editor clamps too; this
+  // is what protects against anything saved before it did, or edited by hand.
+  const logo = clampHeaderTransform({
+    x: logo_x,
+    y: logo_y,
+    scale: logo_scale,
+    rotation: logo_rotation,
+  });
+  const banner = clampHeaderTransform({
+    x: banner_offset_x,
+    y: banner_offset_y,
+    scale: banner_scale,
+    rotation: banner_rotation,
+  });
+
   return (
     <header className="relative w-full bg-slate-950 text-slate-100 border-b border-slate-800">
       {bannerUrl && (
+        /* The clip is on this wrapper, which never moves.
+         *
+         * It used to sit on the transformed element itself, so scaling or
+         * nudging the banner moved its own clipping box and the image could
+         * spill outside the header instead of being cropped by it. Anything
+         * the editor does now happens inside a fixed frame.
+         *
+         * pointer-events-none so the banner cannot swallow clicks meant for
+         * the logo or the navigation sitting above it. */
         <div
-          className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none"
-          style={{
-            transform: `translate(${banner_offset_x}px, ${banner_offset_y}px) scale(${banner_scale}) rotate(${banner_rotation}deg)`,
-            transformOrigin: "top left",
-          }}
+          className="pointer-events-none absolute inset-0 overflow-hidden"
+          aria-hidden="true"
         >
-          <Image
-            src={bannerUrl}
-            alt="Banner"
-            fill
-            className="object-cover opacity-40"
-            priority
-          />
+          <div
+            className="absolute inset-0"
+            style={{
+              transform: `translate(${banner.x}px, ${banner.y}px) scale(${banner.scale}) rotate(${banner.rotation}deg)`,
+              // Centre, so the editor's scale control grows the image about
+              // its middle rather than throwing it down and to the right.
+              transformOrigin: "center",
+            }}
+          >
+            <Image
+              src={bannerUrl}
+              alt=""
+              fill
+              // Was 40%, which left a wide landscape squeezed into a 64px
+              // strip reading as a smudge rather than a picture. The scrim
+              // below now does the contrast work, so the image can be itself.
+              className="object-cover opacity-70"
+              sizes="100vw"
+              priority
+            />
+          </div>
+
+          {/* Keeps the logo and the navigation legible whatever the banner
+              happens to show. Solid at the left where the logo sits, easing
+              off across the middle so the image is still visible, and firming
+              up again on the right behind the menu. */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/55 to-slate-950/85" />
         </div>
       )}
 
       <div className="relative max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2 relative">
+            {/* The nudge below applies from small screens up, not on a phone.
+                The header editor stores one offset for every width, so a value
+                chosen to place the logo nicely on a desktop pushed it inward on
+                a 390px screen and left a gap where the logo should have been.
+                Scale and rotation still apply everywhere; only the translation
+                is held back. See .logo-transform in globals.css. */}
             {logoUrl && (
               <div
-                className="relative inline-block"
-                style={{
-                  transform: `translate(${logo_x}px, ${logo_y}px) scale(${logo_scale}) rotate(${logo_rotation}deg)`,
-                  transformOrigin: "top left",
-                }}
+                className="logo-transform relative inline-block shrink-0"
+                style={
+                  {
+                    "--logo-tx": `${logo.x}px`,
+                    "--logo-ty": `${logo.y}px`,
+                    "--logo-scale": logo.scale,
+                    "--logo-rotation": `${logo.rotation}deg`,
+                  } as React.CSSProperties
+                }
               >
                 {/* The header bar is 64px tall, so a fixed 100x100 logo was
                     being clipped top and bottom on every page. Height is
